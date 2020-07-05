@@ -74,7 +74,7 @@ class Controller(polyinterface.Controller):
                 elif val == 'dimmer':
                     _name = str(val) + ' ' + str(key)
                     self.addNode(VirtualDimmer(self, self.address, key, _name))
-                elif val 'temperature':
+                elif val == 'temperature':
                     _name = str(val) + ' ' + str(key)
                     self.addNode(VirtualTemp(self, self.address, key, _name))
                 else:
