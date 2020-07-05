@@ -31,4 +31,19 @@
             </accepts>
         </cmds>
     </nodeDef>
+	<!-- virtualtempid -->
+    <nodeDef id="virtualtemp" nls="vtemp">
+        <editors />
+        <sts>
+            <st id="ST" editor="temp" />
+        </sts>
+        <cmds>
+            <sends />
+            <accepts>
+                <cmd id="DON" />
+                <cmd id="DOF" />
+            </accepts>
+        </cmds>
+    </nodeDef>
+	
 </nodeDefs>
