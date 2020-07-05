@@ -82,7 +82,8 @@ class Controller(polyinterface.Controller):
                     
                 else:
                     pass
-                
+            else:
+                pass
                 
     def remove_notice_test(self,command):
         LOGGER.info('remove_notice_test: notices={}'.format(self.poly.config['notices']))
