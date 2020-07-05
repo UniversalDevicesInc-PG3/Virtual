@@ -1,0 +1,14 @@
+<editors>
+    <!-- Boolean -->
+    <editor id="bool">
+        <range uom="2" subset="0,1" />
+    </editor>
+    
+        <editor id="on_off">
+        <range uom="25" subset="0,1" nls="ON_OFF" />
+    </editor>
+    
+        <editor id="level">
+        <range uom="56" min="0" max="100" prec="0" step="1"/>
+    </editor>
+</editors>

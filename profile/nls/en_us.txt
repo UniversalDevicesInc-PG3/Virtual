@@ -1,0 +1,16 @@
+# controller
+ND-controller-NAME = Virtual Switch Controller
+CMD-ctl-QUERY"-NAME = Query
+CMD-ctl-DISCOVER-NAME = Re-Discover
+CMD-ctl-UPDATE_PROFILE-NAME = Update Profile
+CMD-ctl-REMOVE_NOTICES_ALL-NAME = Remove All Notices
+CMD-ctl-REMOVE_NOTICE_TEST-NAME = Remove Notice Test
+ST-ctl-ST-NAME = NodeServer Online
+
+
+# virtualswitch
+ND-virtualswitch-NAME = Virtual Switch
+ST-vswitch-ST-NAME = Switch Status
+
+ON_OFF-0 = Off
+ON_OFF-1 = On
