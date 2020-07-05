@@ -1,5 +1,5 @@
 # controller
-ND-controller-NAME = Virtual Switch Controller
+ND-controller-NAME = Virtual Device Controller
 CMD-ctl-QUERY"-NAME = Query
 CMD-ctl-DISCOVER-NAME = Re-Discover
 CMD-ctl-UPDATE_PROFILE-NAME = Update Profile
