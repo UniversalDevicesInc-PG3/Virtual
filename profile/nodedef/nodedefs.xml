@@ -4,8 +4,8 @@
     <nodeDef id="controller" nls="ctl">
         <editors />
         <sts>
-			<st id="ST" editor="bool" />
-		</sts>
+	    <st id="ST" editor="bool" />
+	    </sts>
         <cmds>
             <sends />
             <accepts>
@@ -45,5 +45,4 @@
             </accepts>
         </cmds>
     </nodeDef>
-	
 </nodeDefs>
