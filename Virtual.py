@@ -75,7 +75,8 @@ class Controller(polyinterface.Controller):
                     pass
             else:
                 pass
-                
+        LOGGER.info('Check Params is complete')
+        
     def remove_notice_test(self,command):
         LOGGER.info('remove_notice_test: notices={}'.format(self.poly.config['notices']))
         # Remove all existing notices
