@@ -4,10 +4,11 @@ import polyinterface
 import sys
 import time
 import requests
+import logging
 import subprocess
 
 LOGGER = polyinterface.LOGGER
-#logging.getLogger('urllib3').setLevel(logging.ERROR)
+logging.getLogger('urllib3').setLevel(logging.ERROR)
 
 class Controller(polyinterface.Controller):
     def __init__(self, polyglot):
@@ -97,26 +98,22 @@ class Controller(polyinterface.Controller):
     }
     drivers = [{'driver': 'ST', 'value': 1, 'uom': 2}]
 
-
-
 class VirtualSwitch(polyinterface.Node):
     def __init__(self, controller, primary, address, name):
         super(VirtualSwitch, self).__init__(controller, primary, address, name)
 
     def start(self):
-        # Get the current status of the switch from the init
-        self.setDriver('ST', 1)
         pass
 
     def setOn(self, command):
-        # Set the init and val
         self.setDriver('ST', 1)
-        requests.get('http://10.108.9.161:8350/rest/vars/set/2/82/1', auth=(self.user,self.password))
+        requests.get('http://' + self.parent.isy + '/rest/vars/set/2/' + self.address + '/1', auth=(self.parent.user, self.parent.password))
+        requests.get('http://' + self.parent.isy + '/rest/vars/init/2/' + self.address + '/1', auth=(self.parent.user, self.parent.password))
                 
     def setOff(self, command):
-        # Set the init and val
         self.setDriver('ST', 0)
-        requests.get('http://10.108.9.161:8350/rest/vars/set/2/82/0', auth=(str(USER),str(PASSWORD)))
+        requests.get('http://' + self.parent.isy + '/rest/vars/set/2/' + self.address + '/0', auth=(self.parent.user, self.parent.password))
+        requests.get('http://' + self.parent.isy + '/rest/vars/init/2/' + self.address + '/0', auth=(self.parent.user, self.parent.password))
         
     def query(self):
         self.reportDrivers()
@@ -130,6 +127,66 @@ class VirtualSwitch(polyinterface.Node):
     commands = {
                     'DON': setOn, 'DOF': setOff
                 }
+    
+class VirtualDimmer(polyinterface.Node):
+    def __init__(self, controller, primary, address, name):
+        super(VirtualDimmer, self).__init__(controller, primary, address, name)
+
+    def start(self):
+        pass
+
+    def setOn(self, command):
+        self.setDriver('ST', 1)
+        requests.get('http://' + self.parent.isy + '/rest/vars/set/2/' + self.address + '/1', auth=(self.parent.user, self.parent.password))
+        requests.get('http://' + self.parent.isy + '/rest/vars/init/2/' + self.address + '/1', auth=(self.parent.user, self.parent.password))
+                
+    def setOff(self, command):
+        self.setDriver('ST', 0)
+        requests.get('http://' + self.parent.isy + '/rest/vars/set/2/' + self.address + '/0', auth=(self.parent.user, self.parent.password))
+        requests.get('http://' + self.parent.isy + '/rest/vars/init/2/' + self.address + '/0', auth=(self.parent.user, self.parent.password))
+        
+    def query(self):
+        self.reportDrivers()
+
+    "Hints See: https://github.com/UniversalDevicesInc/hints"
+    hint = [1,2,3,4]
+    drivers = [{'driver': 'ST', 'value': 0, 'uom': 56}]
+
+    id = 'virtualdimmer'
+
+    commands = {
+                    'DON': setOn, 'DOF': setOff
+                }
+    
+class VirtualTemp(polyinterface.Node):
+    def __init__(self, controller, primary, address, name):
+        super(VirtualTemp, self).__init__(controller, primary, address, name)
+
+    def start(self):
+        pass
+
+    def setOn(self, command):
+        self.setDriver('ST', 1)
+        requests.get('http://' + self.parent.isy + '/rest/vars/set/2/' + self.address + '/1', auth=(self.parent.user, self.parent.password))
+        requests.get('http://' + self.parent.isy + '/rest/vars/init/2/' + self.address + '/1', auth=(self.parent.user, self.parent.password))
+                
+    def setOff(self, command):
+        self.setDriver('ST', 0)
+        requests.get('http://' + self.parent.isy + '/rest/vars/set/2/' + self.address + '/0', auth=(self.parent.user, self.parent.password))
+        requests.get('http://' + self.parent.isy + '/rest/vars/init/2/' + self.address + '/0', auth=(self.parent.user, self.parent.password))
+        
+    def query(self):
+        self.reportDrivers()
+
+    "Hints See: https://github.com/UniversalDevicesInc/hints"
+    hint = [1,2,3,4]
+    drivers = [{'driver': 'ST', 'value': 0, 'uom': 17}]
+
+    id = 'virtualtemp'
+
+    commands = {
+                    'DON': setOn, 'DOF': setOff
+                }    
 
 if __name__ == "__main__":
     try:
