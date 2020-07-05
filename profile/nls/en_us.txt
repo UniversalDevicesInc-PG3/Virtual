@@ -17,7 +17,7 @@ ND-virtualdimmer-NAME = Virtual Dimmer
 ST-vdimmer-ST-NAME = Dimmer Status
 
 # virtualtemp
-ND_virtualtemp-NAME = Vitual Temperature
+ND-virtualtemp-NAME = Vitual Temperature
 ST-vtemp-ST-NAME Temperature
 
 ON_OFF-0 = Off
