@@ -13,14 +13,14 @@ logging.getLogger('urllib3').setLevel(logging.ERROR)
 class Controller(polyinterface.Controller):
     def __init__(self, polyglot):
         super(Controller, self).__init__(polyglot)
-        self.name = 'VirtualSwitch Controller'
+        self.name = 'Virtual Device Controller'
         self.poly.onConfig(self.process_config)
         self.user = 'none'
         self.password = 'none'
         self.isy = 'none'
         
     def start(self):
-        LOGGER.info('Started VirtualSwitch NodeServer')
+        LOGGER.info('Started Virtual Device NodeServer')
         self.check_params()
         self.discover()
         self.poly.add_custom_config_docs("<b>And this is some custom config data</b>")
@@ -40,7 +40,7 @@ class Controller(polyinterface.Controller):
         pass
 
     def delete(self):
-        LOGGER.info('Deleting VirtulaSwitch Nodeserver')
+        LOGGER.info('Deleting Virtual Device Nodeserver')
 
     def stop(self):
         LOGGER.debug('NodeServer stopped.')
@@ -71,12 +71,15 @@ class Controller(polyinterface.Controller):
                 if val == 'switch':
                     _name = str(val) + ' ' + str(key)
                     self.addNode(VirtualSwitch(self, self.address, key, _name))
+                    
                 elif val == 'dimmer':
                     _name = str(val) + ' ' + str(key)
                     self.addNode(VirtualDimmer(self, self.address, key, _name))
+                    
                 elif val == 'temperature':
                     _name = str(val) + ' ' + str(key)
                     self.addNode(VirtualTemp(self, self.address, key, _name))
+                    
                 else:
                     pass
                 
