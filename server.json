@@ -1,21 +1,21 @@
 {
-    "name": "VirtualSwitch",
+    "name": "Virtual",
     "docs": "https://github.com/Einstein42/udi-poly-template-python",
     "type": "python3",
-    "executable": "VirtualSwitch.py",
+    "executable": "Virtual.py",
     "install": "install.sh",
-    "description": "Virtual Switch Node Server",
+    "description": "Virtual Device Node Server",
     "notice": "Use at your own risk",
     "shortPoll": "120",
     "longPoll": "240",
     "testMode": true,
     "credits": [
         {
-            "title": "Virtual Switch Nodeserver",
+            "title": "Virtual Device Nodeserver",
             "author": "Mark Vittes (markv58)",
             "version": "0.0.1",
             "date": "July 4, 2020",
-            "source": "https://github.com/markv58/VirtualSwitch.git",
+            "source": "https://github.com/markv58/Virtual.git",
             "license": "https://raw.githubusercontent.com/Einstein42/udi-poly-template-python/master/LICENSE"
         }
     ]
