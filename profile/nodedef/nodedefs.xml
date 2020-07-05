@@ -46,7 +46,7 @@
         </cmds>
     </nodeDef>
 	<!-- virtualdimmerid -->
-    <nodeDef id="virtualdimmer" nls="vdimm">
+    <nodeDef id="virtualdimmer" nls="vdimmer">
         <editors />
         <sts>
             <st id="ST" editor="level" />
