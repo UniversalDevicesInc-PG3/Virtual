@@ -45,4 +45,18 @@
             </accepts>
         </cmds>
     </nodeDef>
+	<!-- virtualdimmerid -->
+    <nodeDef id="virtualdimmer" nls="vdimm">
+        <editors />
+        <sts>
+            <st id="ST" editor="level" />
+        </sts>
+        <cmds>
+            <sends />
+            <accepts>
+                <cmd id="DON" />
+                <cmd id="DOF" />
+            </accepts>
+        </cmds>
+    </nodeDef>	
 </nodeDefs>
