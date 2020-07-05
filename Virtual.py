@@ -53,25 +53,33 @@ class Controller(polyinterface.Controller):
     def check_params(self):
         for key,val in self.polyConfig['customParams'].items():
             a = key
-            if a.isdigit():
-                LOGGER.debug('Is a digit')
-                _name = str(val) + ' ' + str(key)
-                LOGGER.debug(_name)
-                #_addr = str(key) + ' ' + str(val)
-                #LOGGER.debug(_addr)
-                self.addNode(VirtualSwitch(self, self.address, key, _name))
                 
             if a == "isy":
                 LOGGER.debug('ISY ip address is %s ', val)
                 self.isy = str(val)
                 
-            if a == "user":
+            elif a == "user":
                 LOGGER.debug('ISY user is %s', val)
                 self.user = str(val)
                 
-            if a == "password":
+            elif a == "password":
                 LOGGER.debug('ISY password is %s', val)
                 self.password = str(val)
+                
+            elif a.isdigit():
+                
+                if val == 'switch':
+                    _name = str(val) + ' ' + str(key)
+                    self.addNode(VirtualSwitch(self, self.address, key, _name))
+                elif val == 'dimmer':
+                    _name = str(val) + ' ' + str(key)
+                    self.addNode(VirtualDimmer(self, self.address, key, _name))
+                elif val 'temperature':
+                    _name = str(val) + ' ' + str(key)
+                    self.addNode(VirtualTemp(self, self.address, key, _name))
+                else:
+                    pass
+                
                 
     def remove_notice_test(self,command):
         LOGGER.info('remove_notice_test: notices={}'.format(self.poly.config['notices']))
