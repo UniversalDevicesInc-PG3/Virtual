@@ -194,7 +194,7 @@ class VirtualTemp(polyinterface.Node):
 
 if __name__ == "__main__":
     try:
-        polyglot = polyinterface.Interface('Template')
+        polyglot = polyinterface.Interface('Virtual')
 
         polyglot.start()
 
