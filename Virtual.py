@@ -5,7 +5,6 @@ import sys
 import time
 import requests
 import logging
-import subprocess
 
 LOGGER = polyinterface.LOGGER
 logging.getLogger('urllib3').setLevel(logging.ERROR)
@@ -52,34 +51,26 @@ class Controller(polyinterface.Controller):
     
     def check_params(self):
         for key,val in self.polyConfig['customParams'].items():
-            a = key
-                
+            a = key      
             if a == "isy":
                 LOGGER.debug('ISY ip address is %s ', val)
                 self.isy = str(val)
-                
             elif a == "user":
                 LOGGER.debug('ISY user is %s', val)
                 self.user = str(val)
-                
             elif a == "password":
                 LOGGER.debug('ISY password is %s', val)
                 self.password = str(val)
-                
-            elif a.isdigit():
-                
+            elif a.isdigit(): 
                 if val == 'switch':
                     _name = str(val) + ' ' + str(key)
-                    self.addNode(VirtualSwitch(self, self.address, key, _name))
-                    
+                    self.addNode(VirtualSwitch(self, self.address, key, _name))     
                 elif val == 'dimmer':
                     _name = str(val) + ' ' + str(key)
-                    self.addNode(VirtualDimmer(self, self.address, key, _name))
-                    
+                    self.addNode(VirtualDimmer(self, self.address, key, _name))           
                 elif val == 'temperature':
                     _name = str(val) + ' ' + str(key)
-                    self.addNode(VirtualTemp(self, self.address, key, _name))
-                    
+                    self.addNode(VirtualTemp(self, self.address, key, _name))     
                 else:
                     pass
             else:
@@ -130,8 +121,8 @@ class VirtualSwitch(polyinterface.Node):
     def query(self):
         self.reportDrivers()
 
-    "Hints See: https://github.com/UniversalDevicesInc/hints"
-    hint = [1,2,3,4]
+    #"Hints See: https://github.com/UniversalDevicesInc/hints"
+    #hint = [1,2,3,4]
     drivers = [{'driver': 'ST', 'value': 0, 'uom': 25}]
 
     id = 'virtualswitch'
@@ -160,8 +151,8 @@ class VirtualDimmer(polyinterface.Node):
     def query(self):
         self.reportDrivers()
 
-    "Hints See: https://github.com/UniversalDevicesInc/hints"
-    hint = [1,2,3,4]
+    #"Hints See: https://github.com/UniversalDevicesInc/hints"
+    #hint = [1,2,3,4]
     drivers = [{'driver': 'ST', 'value': 0, 'uom': 56}]
 
     id = 'virtualdimmer'
@@ -190,8 +181,8 @@ class VirtualTemp(polyinterface.Node):
     def query(self):
         self.reportDrivers()
 
-    "Hints See: https://github.com/UniversalDevicesInc/hints"
-    hint = [1,2,3,4]
+    #"Hints See: https://github.com/UniversalDevicesInc/hints"
+    #hint = [1,2,3,4]
     drivers = [{'driver': 'ST', 'value': 0, 'uom': 17}]
 
     id = 'virtualtemp'
