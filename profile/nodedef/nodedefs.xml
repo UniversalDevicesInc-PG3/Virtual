@@ -40,8 +40,6 @@
         <cmds>
             <sends />
             <accepts>
-                <cmd id="DON" />
-                <cmd id="DOF" />
 		<cmd id="setTemp">
 	          <p id="" editor="temp" init="ST" />
 		    </cmd>
