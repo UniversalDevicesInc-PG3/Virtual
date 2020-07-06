@@ -27,7 +27,7 @@
             <sends />
             <accepts>
                 <cmd id="DON" />
-                <cmd id="DOF" />
+                <cmd id="DOF" />		    
             </accepts>
         </cmds>
     </nodeDef>
@@ -43,7 +43,7 @@
                 <cmd id="DON" />
                 <cmd id="DOF" />
 		<cmd id="setTemp">
-	          <p id="" editor="setTemp" init="ST" />
+	          <p id="" editor="temp" init="ST" />
 		    </cmd>
             </accepts>
         </cmds>
@@ -59,6 +59,9 @@
             <accepts>
                 <cmd id="DON" />
                 <cmd id="DOF" />
+		<cmd id="setDim">
+	          <p id="" editor="level" init="ST" />
+		    </cmd>		    
             </accepts>
         </cmds>
     </nodeDef>	
