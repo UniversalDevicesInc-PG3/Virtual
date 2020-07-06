@@ -42,6 +42,9 @@
             <accepts>
                 <cmd id="DON" />
                 <cmd id="DOF" />
+		<cmd id="setTemp">
+	          <p id="" editor="setTemp" init="ST" />
+		    </cmd>
             </accepts>
         </cmds>
     </nodeDef>
