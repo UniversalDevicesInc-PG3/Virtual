@@ -140,7 +140,7 @@ class VirtualDimmer(polyinterface.Node):
         pass
 
     def setOn(self, command):
-        self.setDriver('ST', 1)
+        self.setDriver('ST', 100)
         requests.get('http://' + self.parent.isy + '/rest/vars/set/2/' + self.address + '/1', auth=(self.parent.user, self.parent.password))
         requests.get('http://' + self.parent.isy + '/rest/vars/init/2/' + self.address + '/1', auth=(self.parent.user, self.parent.password))
                 
@@ -175,14 +175,16 @@ class VirtualTemp(polyinterface.Node):
         pass
 
     def setOn(self, command):
-        self.setDriver('ST', 1)
-        requests.get('http://' + self.parent.isy + '/rest/vars/set/2/' + self.address + '/1', auth=(self.parent.user, self.parent.password))
-        requests.get('http://' + self.parent.isy + '/rest/vars/init/2/' + self.address + '/1', auth=(self.parent.user, self.parent.password))
+        pass
+        #self.setDriver('ST', 1)
+        #requests.get('http://' + self.parent.isy + '/rest/vars/set/2/' + self.address + '/1', auth=(self.parent.user, self.parent.password))
+        #requests.get('http://' + self.parent.isy + '/rest/vars/init/2/' + self.address + '/1', auth=(self.parent.user, self.parent.password))
                 
     def setOff(self, command):
-        self.setDriver('ST', 0)
-        requests.get('http://' + self.parent.isy + '/rest/vars/set/2/' + self.address + '/0', auth=(self.parent.user, self.parent.password))
-        requests.get('http://' + self.parent.isy + '/rest/vars/init/2/' + self.address + '/0', auth=(self.parent.user, self.parent.password))
+        pass
+        #self.setDriver('ST', 0)
+        #requests.get('http://' + self.parent.isy + '/rest/vars/set/2/' + self.address + '/0', auth=(self.parent.user, self.parent.password))
+        #requests.get('http://' + self.parent.isy + '/rest/vars/init/2/' + self.address + '/0', auth=(self.parent.user, self.parent.password))
     
     def setTemp(self, command):
         _temp = int(command.get('value'))
