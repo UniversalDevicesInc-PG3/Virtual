@@ -151,7 +151,9 @@ class VirtualDimmer(polyinterface.Node):
         
     def setDim(self, command):
         _level = int(command.get('value'))
-        self.setDriver('ST', _level)        
+        self.setDriver('ST', _level)
+        requests.get('http://' + self.parent.isy + '/rest/vars/set/2/' + self.address + '/' + _level, auth=(self.parent.user, self.parent.password))
+        requests.get('http://' + self.parent.isy + '/rest/vars/init/2/' + self.address + '/' + _level, auth=(self.parent.user, self.parent.password))        
         pass
     
     def query(self):
