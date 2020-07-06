@@ -42,7 +42,7 @@
             <accepts>
                 <cmd id="DON" />
                 <cmd id="DOF" />
-		<cmd id="setTemp">
+		<cmd id="">
 	          <p id="" editor="temp" init="ST" />
 		    </cmd>
             </accepts>
