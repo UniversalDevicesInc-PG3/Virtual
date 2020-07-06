@@ -8,4 +8,4 @@ The virtual switch and dimmer devices store their data in their variables, both 
 The virtual temperature device allows you to extract temperature information from a node into a variable then display that as a device that can be put into a folder for other devices or apps.
 
 ![Virtual Node](https://github.com/markv58/github.io/blob/master/VirtualNode.png)
-A simple program captures current temperature data from the ecobee nodeserver and displays that information as an individule device. By ungrouping the devices you could have a folder with only temperature information rather than searching through variables or multiple tabs.
+A simple program captures current temperature data from the ecobee nodeserver and displays that information as an individual device. By ungrouping the devices you could have a folder with only temperature information rather than searching through variables or multiple tabs.
