@@ -1,5 +1,9 @@
 #!/usr/bin/env python
-
+"""
+This is a NodeServer created for Polyglot v2 from a template by Einstein.42 (James Miline)
+This NodeServer was created by markv58 (Mark Vittes) markv58git@gmail.com
+v1.0.0
+"""
 import polyinterface
 import sys
 import time
