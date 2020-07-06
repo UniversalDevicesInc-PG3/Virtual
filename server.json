@@ -4,19 +4,19 @@
     "type": "python3",
     "executable": "Virtual.py",
     "install": "install.sh",
-    "description": "Virtual Device Node Server",
+    "description": "Create Virtual Devices",
     "notice": "Use at your own risk",
     "shortPoll": "120",
     "longPoll": "240",
     "testMode": true,
     "credits": [
         {
-            "title": "Virtual Device Nodeserver",
+            "title": "Virtual Device NodeServer",
             "author": "Mark Vittes (markv58)",
-            "version": "0.0.1",
+            "version": "1.0.0",
             "date": "July 4, 2020",
             "source": "https://github.com/markv58/Virtual.git",
-            "license": "https://raw.githubusercontent.com/Einstein42/udi-poly-template-python/master/LICENSE"
+            "license": "https://github.com/markv58/Virtual/blob/master/LICENSE"
         }
     ]
 }
