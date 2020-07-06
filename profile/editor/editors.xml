@@ -13,8 +13,8 @@
     </editor>
     
     <editor id="temp">
-        <range uom="17" min="-30" max="130" step="1" prec="1"/>
-        <range uom="4" min="-10" max="100" step="1" prec="1" />
+        <range uom="17" min="-30" max="130" step=".5" prec="1"/>
+        <range uom="4" min="-10" max="100" step=".5" prec="1" />
     </editor>    
     
 </editors>
