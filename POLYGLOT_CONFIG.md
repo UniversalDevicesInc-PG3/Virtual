@@ -1,4 +1,11 @@
 
-# This is POLYGLOT_CONFIG.md
+# Virtual Device Controller
 
-This should have any description about how to configure your nodeserver.
+Please enter the following:
+
+    Key             Value
+    isy              xxx.xxx.xxx.xxx:port
+    user             username
+    password         password
+    
+    
