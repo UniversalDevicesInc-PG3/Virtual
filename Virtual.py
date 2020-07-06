@@ -149,6 +149,9 @@ class VirtualDimmer(polyinterface.Node):
         requests.get('http://' + self.parent.isy + '/rest/vars/set/2/' + self.address + '/0', auth=(self.parent.user, self.parent.password))
         requests.get('http://' + self.parent.isy + '/rest/vars/init/2/' + self.address + '/0', auth=(self.parent.user, self.parent.password))
         
+    def setDim(self, command):
+        pass
+    
     def query(self):
         self.reportDrivers()
 
@@ -159,7 +162,7 @@ class VirtualDimmer(polyinterface.Node):
     id = 'virtualdimmer'
 
     commands = {
-                    'DON': setOn, 'DOF': setOff
+                    'DON': setOn, 'DOF': setOff, 'setDim': setDim
                 }
     
 class VirtualTemp(polyinterface.Node):
@@ -178,7 +181,10 @@ class VirtualTemp(polyinterface.Node):
         self.setDriver('ST', 0)
         requests.get('http://' + self.parent.isy + '/rest/vars/set/2/' + self.address + '/0', auth=(self.parent.user, self.parent.password))
         requests.get('http://' + self.parent.isy + '/rest/vars/init/2/' + self.address + '/0', auth=(self.parent.user, self.parent.password))
-        
+    
+    def setTemp(self, command):
+        pass
+    
     def query(self):
         self.reportDrivers()
 
@@ -189,7 +195,7 @@ class VirtualTemp(polyinterface.Node):
     id = 'virtualtemp'
 
     commands = {
-                    'DON': setOn, 'DOF': setOff
+                    'DON': setOn, 'DOF': setOff, 'setTemp': setTemp
                 }    
 
 if __name__ == "__main__":
