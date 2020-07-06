@@ -200,7 +200,7 @@ class VirtualTemp(polyinterface.Node):
     id = 'virtualtemp'
 
     commands = {
-                    'DON': setOn, 'DOF': setOff, 'setTemp': setTemp
+                    'setTemp': setTemp
                 }    
 
 if __name__ == "__main__":
