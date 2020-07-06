@@ -8,7 +8,7 @@
     "notice": "Use at your own risk",
     "shortPoll": "120",
     "longPoll": "240",
-    "testMode": true,
+    "testMode": false,
     "credits": [
         {
             "title": "Virtual Device NodeServer",
