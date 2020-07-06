@@ -35,7 +35,7 @@ class Controller(polyinterface.Controller):
         pass
 
     def query(self):
-        self.check_params()
+        #self.check_params()
         for node in self.nodes:
             self.nodes[node].reportDrivers()
 
