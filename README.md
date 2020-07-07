@@ -13,6 +13,6 @@ A simple program captures current temperature data from the ecobee nodeserver an
 
 ### Updates
 
-1.0.1 Prec bug fix, allows variable prec to be above 0.
+1.0.1 Prec bug fix, allows variable prec to be above 0. Update Profile and restart Admin Console.
 
 1.0.0 Initial version
