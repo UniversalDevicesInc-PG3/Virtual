@@ -1,8 +1,9 @@
+
 #!/usr/bin/env python
 """
 This is a NodeServer created for Polyglot v2 from a template by Einstein.42 (James Miline)
 This NodeServer was created by markv58 (Mark Vittes) markv58git@gmail.com
-v1.0.0
+v1.0.1
 """
 import polyinterface
 import sys
@@ -21,7 +22,7 @@ class Controller(polyinterface.Controller):
         self.user = 'none'
         self.password = 'none'
         self.isy = 'none'
-        
+
     def start(self):
         LOGGER.info('Started Virtual Device NodeServer')
         self.check_params()
@@ -52,10 +53,10 @@ class Controller(polyinterface.Controller):
         #LOGGER.info("process_config: Enter config={}".format(config));
         #LOGGER.info("process_config: Exit");
         pass
-    
+
     def check_params(self):
         for key,val in self.polyConfig['customParams'].items():
-            a = key      
+            a = key
             if a == "isy":
                 LOGGER.debug('ISY ip address is %s ', val)
                 self.isy = str(val)
@@ -68,19 +69,19 @@ class Controller(polyinterface.Controller):
             elif a.isdigit(): 
                 if val == 'switch':
                     _name = str(val) + ' ' + str(key)
-                    self.addNode(VirtualSwitch(self, self.address, key, _name))     
+                    self.addNode(VirtualSwitch(self, self.address, key, _name))
                 elif val == 'dimmer':
                     _name = str(val) + ' ' + str(key)
-                    self.addNode(VirtualDimmer(self, self.address, key, _name))           
+                    self.addNode(VirtualDimmer(self, self.address, key, _name))
                 elif val == 'temperature':
                     _name = str(val) + ' ' + str(key)
-                    self.addNode(VirtualTemp(self, self.address, key, _name))     
+                    self.addNode(VirtualTemp(self, self.address, key, _name))
                 else:
                     pass
             else:
                 pass
         LOGGER.info('Check Params is complete')
-        
+
     def remove_notice_test(self,command):
         LOGGER.info('remove_notice_test: notices={}'.format(self.poly.config['notices']))
         # Remove all existing notices
@@ -117,12 +118,12 @@ class VirtualSwitch(polyinterface.Node):
         self.setDriver('ST', 1)
         requests.get('http://' + self.parent.isy + '/rest/vars/set/2/' + self.address + '/1', auth=(self.parent.user, self.parent.password))
         requests.get('http://' + self.parent.isy + '/rest/vars/init/2/' + self.address + '/1', auth=(self.parent.user, self.parent.password))
-                
+
     def setOff(self, command):
         self.setDriver('ST', 0)
         requests.get('http://' + self.parent.isy + '/rest/vars/set/2/' + self.address + '/0', auth=(self.parent.user, self.parent.password))
         requests.get('http://' + self.parent.isy + '/rest/vars/init/2/' + self.address + '/0', auth=(self.parent.user, self.parent.password))
-        
+
     def query(self):
         self.reportDrivers()
 
@@ -147,19 +148,18 @@ class VirtualDimmer(polyinterface.Node):
         self.setDriver('ST', 100)
         requests.get('http://' + self.parent.isy + '/rest/vars/set/2/' + self.address + '/100', auth=(self.parent.user, self.parent.password))
         requests.get('http://' + self.parent.isy + '/rest/vars/init/2/' + self.address + '/100', auth=(self.parent.user, self.parent.password))
-                
+
     def setOff(self, command):
         self.setDriver('ST', 0)
         requests.get('http://' + self.parent.isy + '/rest/vars/set/2/' + self.address + '/0', auth=(self.parent.user, self.parent.password))
         requests.get('http://' + self.parent.isy + '/rest/vars/init/2/' + self.address + '/0', auth=(self.parent.user, self.parent.password))
-        
+
     def setDim(self, command):
         _level = int(command.get('value'))
         self.setDriver('ST', _level)
         requests.get('http://' + self.parent.isy + '/rest/vars/set/2/' + self.address + '/' + str(_level), auth=(self.parent.user, self.parent.password))
-        requests.get('http://' + self.parent.isy + '/rest/vars/init/2/' + self.address + '/' + str(_level), auth=(self.parent.user, self.parent.password))        
-        pass
-    
+        requests.get('http://' + self.parent.isy + '/rest/vars/init/2/' + self.address + '/' + str(_level), auth=(self.parent.user, self.parent.password))
+
     def query(self):
         self.reportDrivers()
 
@@ -185,17 +185,17 @@ class VirtualTemp(polyinterface.Node):
         #self.setDriver('ST', 1)
         #requests.get('http://' + self.parent.isy + '/rest/vars/set/2/' + self.address + '/1', auth=(self.parent.user, self.parent.password))
         #requests.get('http://' + self.parent.isy + '/rest/vars/init/2/' + self.address + '/1', auth=(self.parent.user, self.parent.password))
-                
+
     def setOff(self, command):
         pass
         #self.setDriver('ST', 0)
         #requests.get('http://' + self.parent.isy + '/rest/vars/set/2/' + self.address + '/0', auth=(self.parent.user, self.parent.password))
         #requests.get('http://' + self.parent.isy + '/rest/vars/init/2/' + self.address + '/0', auth=(self.parent.user, self.parent.password))
-    
+
     def setTemp(self, command):
-        _temp = int(command.get('value'))
+        _temp = float(command.get('value'))
         self.setDriver('ST', _temp)
-    
+
     def query(self):
         self.reportDrivers()
 
