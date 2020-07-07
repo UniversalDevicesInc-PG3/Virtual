@@ -9,3 +9,10 @@ The virtual temperature device allows you to extract temperature information fro
 
 ![Virtual Node](https://github.com/markv58/github.io/blob/master/VirtualNode.png)
 A simple program captures current temperature data from the ecobee nodeserver and displays that information as an individual device. By ungrouping the devices you could have a folder with only temperature information rather than searching through variables or multiple tabs.
+
+
+### Updates
+
+1.0.1 Prec bug fix, allows variable prec to be above 0.
+
+1.0.0 Initial version
