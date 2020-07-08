@@ -209,6 +209,7 @@ class VirtualTemp(polyinterface.Node):
 class VirtualTempC(polyinterface.Node):
     def __init__(self, controller, primary, address, name):
         super(VirtualTempC, self).__init__(controller, primary, address, name)
+        self.tempVal = 0.0
 
     def start(self):
         pass
@@ -221,10 +222,13 @@ class VirtualTempC(polyinterface.Node):
 
     def setTemp(self, command):
         _temp = float(command.get('value'))
-        _check = self.name[12:13]
-        if _check == 'r': _temp = (_temp / 10)
-        #LOGGER.debug(_check)
         self.setDriver('ST', _temp)
+        self.tempVal = _temp
+
+    def setTempRaw(self, command):
+        _command = self.tempVal / 10
+        self.setDriver('ST', _command)
+
 
     def query(self):
         self.reportDrivers()
@@ -236,7 +240,7 @@ class VirtualTempC(polyinterface.Node):
     id = 'virtualtempc'
 
     commands = {
-                    'setTemp': setTemp
+                    'setTemp': setTemp, 'setRaw': setTempRaw
                 }
 
 if __name__ == "__main__":
