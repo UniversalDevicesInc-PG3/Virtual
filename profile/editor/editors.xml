@@ -17,7 +17,7 @@
     </editor>    
     
      <editor id="tempc">
-        <range uom="4" min="-30" max="130" step="1" prec="1"/>
+        <range uom="4" min="-60" max="130" step="1" prec="1"/>
     </editor>
 
 
