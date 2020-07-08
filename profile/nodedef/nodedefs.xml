@@ -46,6 +46,21 @@
             </accepts>
         </cmds>
     </nodeDef>
+        <!-- virtualtempcid -->
+    <nodeDef id="virtualtempc" nls="vtempc">
+        <editors />
+        <sts>
+            <st id="ST" editor="tempc" />
+        </sts>
+        <cmds>
+            <sends />
+            <accepts>
+                <cmd id="setTemp">
+                  <p id="" editor="tempc" init="ST" />
+                    </cmd>
+            </accepts>
+        </cmds>
+    </nodeDef>	
 	<!-- virtualdimmerid -->
     <nodeDef id="virtualdimmer" nls="vdimmer">
         <editors />
