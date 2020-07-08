@@ -3,7 +3,7 @@
 """
 This is a NodeServer created for Polyglot v2 from a template by Einstein.42 (James Miline)
 This NodeServer was created by markv58 (Mark Vittes) markv58git@gmail.com
-v1.0.1
+v1.0.2
 """
 import polyinterface
 import sys
@@ -76,6 +76,9 @@ class Controller(polyinterface.Controller):
                 elif val == 'temperature':
                     _name = str(val) + ' ' + str(key)
                     self.addNode(VirtualTemp(self, self.address, key, _name))
+                elif val == 'temperaturec' or val == 'temperaturecr':
+                    _name = str(val) + ' ' + str(key)
+                    self.addNode(VirtualTempC(self, self.address, key, _name))
                 else:
                     pass
             else:
@@ -172,7 +175,7 @@ class VirtualDimmer(polyinterface.Node):
     commands = {
                     'DON': setOn, 'DOF': setOff, 'setDim': setDim
                 }
-    
+
 class VirtualTemp(polyinterface.Node):
     def __init__(self, controller, primary, address, name):
         super(VirtualTemp, self).__init__(controller, primary, address, name)
@@ -182,15 +185,9 @@ class VirtualTemp(polyinterface.Node):
 
     def setOn(self, command):
         pass
-        #self.setDriver('ST', 1)
-        #requests.get('http://' + self.parent.isy + '/rest/vars/set/2/' + self.address + '/1', auth=(self.parent.user, self.parent.password))
-        #requests.get('http://' + self.parent.isy + '/rest/vars/init/2/' + self.address + '/1', auth=(self.parent.user, self.parent.password))
 
     def setOff(self, command):
         pass
-        #self.setDriver('ST', 0)
-        #requests.get('http://' + self.parent.isy + '/rest/vars/set/2/' + self.address + '/0', auth=(self.parent.user, self.parent.password))
-        #requests.get('http://' + self.parent.isy + '/rest/vars/init/2/' + self.address + '/0', auth=(self.parent.user, self.parent.password))
 
     def setTemp(self, command):
         _temp = float(command.get('value'))
@@ -207,7 +204,40 @@ class VirtualTemp(polyinterface.Node):
 
     commands = {
                     'setTemp': setTemp
-                }    
+                }
+
+class VirtualTempC(polyinterface.Node):
+    def __init__(self, controller, primary, address, name):
+        super(VirtualTempC, self).__init__(controller, primary, address, name)
+
+    def start(self):
+        pass
+
+    def setOn(self, command):
+        pass
+
+    def setOff(self, command):
+        pass
+
+    def setTemp(self, command):
+        _temp = float(command.get('value'))
+        _check = self.name[12:13]
+        if _check == 'r': _temp = (_temp / 10)
+        LOGGER.debug(_check)
+        self.setDriver('ST', _temp)
+
+    def query(self):
+        self.reportDrivers()
+
+    #"Hints See: https://github.com/UniversalDevicesInc/hints"
+    #hint = [1,2,3,4]
+    drivers = [{'driver': 'ST', 'value': 0, 'uom': 4}]
+
+    id = 'virtualtempc'
+
+    commands = {
+                    'setTemp': setTemp
+                }
 
 if __name__ == "__main__":
     try:
