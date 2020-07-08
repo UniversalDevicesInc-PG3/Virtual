@@ -13,6 +13,8 @@ A simple program captures current temperature data from the ecobee nodeserver an
 
 ### Updates
 
+1.0.3 Implemented a better work around for the celsius raw data conversion. Updated icons for nodes.
+
 1.0.2 Added celsius temp node with raw data conversion when needed. Update Profile and restart Admin Console.
 
 1.0.1 Prec bug fix, allows variable prec to be above 0. Update Profile and restart Admin Console.
