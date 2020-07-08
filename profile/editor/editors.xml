@@ -16,4 +16,9 @@
         <range uom="17" min="-30" max="130" step="1" prec="1"/>
     </editor>    
     
+     <editor id="tempc">
+        <range uom="4" min="-30" max="130" step="1" prec="1"/>
+    </editor>
+
+
 </editors>
