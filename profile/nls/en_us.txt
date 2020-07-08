@@ -22,5 +22,10 @@ ND-virtualtemp-NAME = Vitual Temperature
 ST-vtemp-ST-NAME Temperature
 CMD-vtemp-setTemp-NAME = Set Temperature
 
+# virtualtempc
+ND-virtualtempc-NAME = Virtual Temperature C
+ST-vtempc-ST-NAME Temperature
+CMD-vtempc-setTemp-NAME = Set Temperature
+
 ON_OFF-0 = Off
 ON_OFF-1 = On
