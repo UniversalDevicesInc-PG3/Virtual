@@ -1,5 +1,6 @@
 # controller
 ND-controller-NAME = Virtual Device Controller
+ND-controller-ICON = Switch
 CMD-ctl-QUERY"-NAME = Query
 CMD-ctl-DISCOVER-NAME = Re-Discover
 CMD-ctl-UPDATE_PROFILE-NAME = Update Profile
@@ -10,21 +11,26 @@ ST-ctl-ST-NAME = NodeServer Online
 
 # virtualswitch
 ND-virtualswitch-NAME = Virtual Switch
+ND-virtualswitch-ICON = Switch
 ST-vswitch-ST-NAME = Switch Status
  
 # virtualdimmer
 ND-virtualdimmer-NAME = Virtual Dimmer
+ND-virtualdimmer-ICON = Switch
 ST-vdimmer-ST-NAME = Dimmer Status
 CMD-vdimmer-setDim-NAME = Dimmer Level
 
 # virtualtemp
 ND-virtualtemp-NAME = Vitual Temperature
+ND-virtualtemp-ICON = TempSensor
 ST-vtemp-ST-NAME Temperature
 CMD-vtemp-setTemp-NAME = Set Temperature
 
 # virtualtempc
 ND-virtualtempc-NAME = Virtual Temperature C
+ND-virtualtempc-ICON = TempSensor
 ST-vtempc-ST-NAME Temperature
+CMD-vtempc-setRaw-NAME = Convert Raw to Prec
 CMD-vtempc-setTemp-NAME = Set Temperature
 
 ON_OFF-0 = Off
