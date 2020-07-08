@@ -223,7 +223,7 @@ class VirtualTempC(polyinterface.Node):
         _temp = float(command.get('value'))
         _check = self.name[12:13]
         if _check == 'r': _temp = (_temp / 10)
-        LOGGER.debug(_check)
+        #LOGGER.debug(_check)
         self.setDriver('ST', _temp)
 
     def query(self):
