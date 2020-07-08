@@ -55,6 +55,7 @@
         <cmds>
             <sends />
             <accepts>
+                <cmd id="setRaw" />
                 <cmd id="setTemp">
                   <p id="" editor="tempc" init="ST" />
                     </cmd>
