@@ -13,7 +13,7 @@ Please enter the following to allow this nodeserver to access your ISY:
     
 There are 3 kinds of virtual devices, switch, dimmer and temperature. You will need to have a state variable for each entry and note the id number.
 
-Temerature will be displayed as farenheit unless a 'c' is added. Raw data can be converted with an extra step in prorams.
+Temerature will be displayed as farenheit unless a 'c' is added. Raw data can be converted with an extra step in programs.
 
     Key (var ID)    Value (device type)
     78              switch
