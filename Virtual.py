@@ -235,7 +235,7 @@ class VirtualTemp(polyinterface.Node):
         requests.get('http://' + self.parent.isy + '/rest/vars/init/2/' + self.address + '/' + str(_temp), auth=(self.parent.user, self.parent.password))
         self.tempVal = _temp
 
-    def CtoF(self, command):
+    def setCtoF(self, command):
         _CtoFtemp = round(((self.tempVal * 1.8) + 32), 1)
         self.setDriver('ST', _CtoFtemp)
 
@@ -252,7 +252,7 @@ class VirtualTemp(polyinterface.Node):
     id = 'virtualtemp'
 
     commands = {
-                    'setTemp': setTemp, 'setCtoF': CtoF
+                    'setTemp': setTemp, 'setCtoF': setCtoF
                 }
 
 class VirtualTempC(polyinterface.Node):
