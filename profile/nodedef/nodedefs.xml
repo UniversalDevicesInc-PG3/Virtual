@@ -36,6 +36,7 @@
         <editors />
         <sts>
             <st id="ST" editor="temp" />
+            <st id="GV1" editor="temp" />
         </sts>
         <cmds>
             <sends />
@@ -51,11 +52,13 @@
         <editors />
         <sts>
             <st id="ST" editor="tempc" />
+            <st id="GV1" editors="tempc" />
         </sts>
         <cmds>
             <sends />
             <accepts>
                 <cmd id="setRaw" />
+                <cmd id="setFtoC" />
                 <cmd id="setTemp">
                   <p id="" editor="tempc" init="ST" />
                     </cmd>
@@ -78,5 +81,23 @@
 		    </cmd>		    
             </accepts>
         </cmds>
-    </nodeDef>	
+    </nodeDef>
+        <!-- virtualgenericid -->
+    <nodeDef id="virtualgeneric" nls="vgeneric">
+        <editors />
+        <sts>
+            <st id="ST" editor="level" />
+        </sts>
+        <cmds>
+            <sends />
+            <accepts>
+                <cmd id="DON" />
+                <cmd id="DOF" />
+                <cmd id="setDim">
+                  <p id="" editor="level" init="ST" />
+                    </cmd>
+            </accepts>
+        </cmds>
+    </nodeDef>
+	
 </nodeDefs>
