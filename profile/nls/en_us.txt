@@ -33,15 +33,5 @@ ST-vtemp-ST-NAME = Temperature
 ST-vtemp-GV1-NAME = Previous Temperature
 CMD-vtemp-setTemp-NAME = Set Temperature
 
-# virtualtempc
-ND-virtualtempc-NAME = Virtual Temperature C
-ND-virtualtempc-ICON = TempSensor
-ST-vtempc-ST-NAME = Temperature
-CMD-vtempc-setRaw-NAME = Convert Raw to Prec
-CMD-vtempc-setTemp-NAME = Set Temperature
-CMD-vtempc-setFtoC-NAME = Convert F to C
-
-
-
 ON_OFF-0 = Off
 ON_OFF-1 = On
