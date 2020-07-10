@@ -21,7 +21,7 @@ ST-vdimmer-ST-NAME = Dimmer Status
 CMD-vdimmer-setDim-NAME = Dimmer Level
 
 # virtualtemp
-ND-virtualtemp-NAME = Vitual Temperature
+ND-virtualtemp-NAME = Virtual Temperature
 ND-virtualtemp-ICON = TempSensor
 ST-vtemp-ST-NAME Temperature
 CMD-vtemp-setTemp-NAME = Set Temperature
