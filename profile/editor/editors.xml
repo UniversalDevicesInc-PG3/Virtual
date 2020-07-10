@@ -1,21 +1,27 @@
+
 <editors>
     <!-- Boolean -->
     <editor id="bool">
         <range uom="2" subset="0,1" />
     </editor>
-    
+
     <editor id="on_off">
         <range uom="25" subset="0,1" nls="ON_OFF" />
     </editor>
-    
+
+    <editor id="value">
+        <range uom="56" min="0" max="100" prec="0" step="1"/>
+    </editor>
+
+
     <editor id="level">
         <range uom="56" min="0" max="100" prec="0" step="1"/>
     </editor>
-    
+
     <editor id="temp">
         <range uom="17" min="-30" max="130" step="1" prec="1"/>
-    </editor>    
-    
+    </editor>
+
      <editor id="tempc">
         <range uom="4" min="-60" max="130" step="1" prec="1"/>
     </editor>

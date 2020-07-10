@@ -1,3 +1,4 @@
+
 # controller
 ND-controller-NAME = Virtual Device Controller
 ND-controller-ICON = Switch
@@ -13,25 +14,30 @@ ST-ctl-ST-NAME = NodeServer Online
 ND-virtualswitch-NAME = Virtual Switch
 ND-virtualswitch-ICON = Switch
 ST-vswitch-ST-NAME = Switch Status
- 
-# virtualdimmer
-ND-virtualdimmer-NAME = Virtual Dimmer
-ND-virtualdimmer-ICON = Switch
-ST-vdimmer-ST-NAME = Dimmer Status
-CMD-vdimmer-setDim-NAME = Dimmer Level
+
+# virtualgeneric
+ND-virtualgeneric-NAME = Virtual Generic
+ND-virtualgeneric-ICON = Switch
+ST-vgeneric-ST-NAME = Level
+CMD-vgeneric-setDim-NAME = Set Level
 
 # virtualtemp
 ND-virtualtemp-NAME = Virtual Temperature
 ND-virtualtemp-ICON = TempSensor
 ST-vtemp-ST-NAME Temperature
+ST-vtemp-GV1-NAME Previous
+CMD-vtemp-setCtoF-NAME = Convert C to F
 CMD-vtemp-setTemp-NAME = Set Temperature
 
 # virtualtempc
 ND-virtualtempc-NAME = Virtual Temperature C
 ND-virtualtempc-ICON = TempSensor
 ST-vtempc-ST-NAME Temperature
+ST-vtempc-GV1-NAME Previous
+CMD-vtempc-setFtoC-NAME = Convert F to C
 CMD-vtempc-setRaw-NAME = Convert Raw to Prec
 CMD-vtempc-setTemp-NAME = Set Temperature
 
 ON_OFF-0 = Off
 ON_OFF-1 = On
+
