@@ -55,7 +55,7 @@
 	
 	
         <!-- virtualtempcelsiusid -->
-    <nodeDef id="virtualtempcelsius" nls="vtempcelsius">
+    <nodeDef id="celsiusNode" nls="cNode">
         <editors />
         <sts>
             <st id="ST" editor="tempc" />
