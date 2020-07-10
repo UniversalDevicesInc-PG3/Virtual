@@ -41,7 +41,7 @@ ND-virtualtemp-ICON = TempSensor
 ST-vtemp-ST-NAME = Temperature
 ST-vtemp-GV1-NAME = Previous Temperature
 CMD-vtemp-setTemp-NAME = Set Temperature
-CMD-vtemp-setCtoF-NAME = Set Temperature
+CMD-vtemp-setCtoF-NAME = Convert C to F
 
 ON_OFF-0 = Off
 ON_OFF-1 = On
