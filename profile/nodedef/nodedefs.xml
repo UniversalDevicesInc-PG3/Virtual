@@ -45,6 +45,7 @@
         <cmds>
             <sends />
             <accepts>
+		<cmd id="setCtoF" />
 		<cmd id="setTemp">
 	          <p id="" editor="temp" init="ST" />
 		    </cmd>
