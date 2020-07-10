@@ -294,7 +294,7 @@ class VirtualTempC(polyinterface.Node):
                {'driver': 'GV1', 'value': 0, 'uom': 4}
               ]
 
-    id = 'virtualtempcelsius'
+    id = 'celsiusNode'
 
     commands = {
                     'setTemp': setTemp, 'setRaw': setTempRaw, 'setFtoC': FtoC
