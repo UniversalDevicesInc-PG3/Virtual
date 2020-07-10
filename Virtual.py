@@ -77,7 +77,7 @@ class Controller(polyinterface.Controller):
                 elif val == 'temperaturec' or val == 'temperaturecr':
                     _name = str(val) + ' ' + str(key)
                     self.addNode(VirtualTempC(self, self.address, key, _name))
-                elif val == 'generic':
+                elif val == 'generic' or val == 'dimmer':
                     _name = str(val) + ' ' + str(key)
                     self.addNode(VirtualGeneric(self, self.address, key, _name))
                 else:
