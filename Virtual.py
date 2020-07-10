@@ -111,7 +111,7 @@ class Controller(polyinterface.Controller):
     }
     drivers = [{'driver': 'ST', 'value': 1, 'uom': 2}]
     
-    class VirtualSwitch(polyinterface.Node):
+class VirtualSwitch(polyinterface.Node):
     def __init__(self, controller, primary, address, name):
         super(VirtualSwitch, self).__init__(controller, primary, address, name)
 
@@ -141,7 +141,7 @@ class Controller(polyinterface.Controller):
                     'DON': setOn, 'DOF': setOff
                 }
     
-    class VirtualTemp(polyinterface.Node):
+class VirtualTemp(polyinterface.Node):
     def __init__(self, controller, primary, address, name):
         super(VirtualTemp, self).__init__(controller, primary, address, name)
         self.tempVal = 0.0
@@ -182,7 +182,7 @@ class Controller(polyinterface.Controller):
                     'setTemp': setTemp, 'setCtoF': setCtoF
                 }
     
-    class VirtualTempC(polyinterface.Node):
+class VirtualTempC(polyinterface.Node):
     def __init__(self, controller, primary, address, name):
         super(VirtualTempC, self).__init__(controller, primary, address, name)
         self.tempVal = 0.0
@@ -227,7 +227,7 @@ class Controller(polyinterface.Controller):
                     'setTemp': setTemp, 'setRaw': setTempRaw
                 }
     
-    class VirtualGeneric(polyinterface.Node):
+class VirtualGeneric(polyinterface.Node):
     def __init__(self, controller, primary, address, name):
         super(VirtualGeneric, self).__init__(controller, primary, address, name)
 
@@ -263,7 +263,7 @@ class Controller(polyinterface.Controller):
                     'DON': setOn, 'DOF': setOff, 'setDim': setDim
                 }
     
-    if __name__ == "__main__":
+if __name__ == "__main__":
     try:
         polyglot = polyinterface.Interface('Virtual')
 
