@@ -10,7 +10,7 @@ ST-ctl-ST-NAME = NodeServer Online
 
 # virtualtempcelcius
 ND-virtualtempcelsius-NAME = Virtual Temperature C
-ND-virtualtempcelsius-ICON = TempSensor
+ND-virtualtempcelsius-ICON = Switch
 ST-vtempcelsius-ST-NAME = Temperature
 ST-vtempcelsius-GV1-NAME = Previous Temperature
 CMD-vtempcelsius-setTemp-NAME = Set Temperature
