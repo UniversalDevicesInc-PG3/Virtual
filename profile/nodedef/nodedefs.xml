@@ -4,8 +4,8 @@
     <nodeDef id="controller" nls="ctl">
         <editors />
         <sts>
-	    <st id="ST" editor="bool" />
-	    </sts>
+            <st id="ST" editor="bool" />
+            </sts>
         <cmds>
             <sends />
             <accepts>
@@ -17,9 +17,7 @@
             </accepts>
         </cmds>
     </nodeDef>
-	
-	
-	<!-- virtualswitchid -->
+        <!-- virtualswitchid -->
     <nodeDef id="virtualswitch" nls="vswitch">
         <editors />
         <sts>
@@ -29,13 +27,11 @@
             <sends />
             <accepts>
                 <cmd id="DON" />
-                <cmd id="DOF" />		    
+                <cmd id="DOF" />
             </accepts>
         </cmds>
     </nodeDef>
-	
-	
-	<!-- virtualtempid -->
+        <!-- virtualtempid -->
     <nodeDef id="virtualtemp" nls="vtemp">
         <editors />
         <sts>
@@ -45,21 +41,20 @@
         <cmds>
             <sends />
             <accepts>
-		<cmd id="setCtoF" />
-		<cmd id="setTemp">
-	          <p id="" editor="temp" init="ST" />
-		    </cmd>
+                <cmd id="setCtoF" />
+                <cmd id="setTemp">
+                  <p id="" editor="temp" init="ST" />
+                    </cmd>
             </accepts>
         </cmds>
     </nodeDef>
-	
-	
-        <!-- virtualtempcelsiusid -->
-    <nodeDef id="celsiusNode" nls="cNode">
+    </nodeDef>
+        <!-- virtualtempcid -->
+    <nodeDef id="virtualtempc" nls="vtempc">
         <editors />
         <sts>
             <st id="ST" editor="tempc" />
-            <st id="GV1" editors="tempc" />
+            <st id="GV1" editor="tempc" />
         </sts>
         <cmds>
             <sends />
@@ -71,33 +66,12 @@
                     </cmd>
             </accepts>
         </cmds>
-    </nodeDef>	
-	
-	
-	<!-- virtualdimmerid -->
-    <nodeDef id="virtualdimmer" nls="vdimmer">
-        <editors />
-        <sts>
-            <st id="ST" editor="level" />
-        </sts>
-        <cmds>
-            <sends />
-            <accepts>
-                <cmd id="DON" />
-                <cmd id="DOF" />
-		<cmd id="setDim">
-	          <p id="" editor="level" init="ST" />
-		    </cmd>		    
-            </accepts>
-        </cmds>
     </nodeDef>
-	
-	
         <!-- virtualgenericid -->
     <nodeDef id="virtualgeneric" nls="vgeneric">
         <editors />
         <sts>
-            <st id="ST" editor="level" />
+            <st id="ST" editor="value" />
         </sts>
         <cmds>
             <sends />
@@ -105,10 +79,9 @@
                 <cmd id="DON" />
                 <cmd id="DOF" />
                 <cmd id="setDim">
-                  <p id="" editor="level" init="ST" />
+                  <p id="" editor="value" init="ST" />
                     </cmd>
             </accepts>
         </cmds>
     </nodeDef>
-	
 </nodeDefs>
