@@ -221,7 +221,7 @@ class VirtualGeneric(polyinterface.Node):
 class VirtualTemp(polyinterface.Node):
     def __init__(self, controller, primary, address, name):
         super(VirtualTemp, self).__init__(controller, primary, address, name)
-        self.temVal = 0.0
+        self.tempVal = 0.0
 
     def start(self):
         pass
