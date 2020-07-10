@@ -14,10 +14,6 @@ import logging
 LOGGER = polyinterface.LOGGER
 logging.getLogger('urllib3').setLevel(logging.ERROR)
 
-DRIVERTEMPC = 4
-DRIVERTEMPF = 17
-DRIVERTEMPSET = 0
-
 class Controller(polyinterface.Controller):
     def __init__(self, polyglot):
         super(Controller, self).__init__(polyglot)
@@ -298,7 +294,7 @@ class VirtualTempC(polyinterface.Node):
                {'driver': 'GV1', 'value': 0, 'uom': 4}
               ]
 
-    id = 'virtualtempc'
+    id = 'virtualtempcelsius'
 
     commands = {
                     'setTemp': setTemp, 'setRaw': setTempRaw, 'setFtoC': FtoC
