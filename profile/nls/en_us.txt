@@ -8,9 +8,13 @@ CMD-ctl-REMOVE_NOTICES_ALL-NAME = Remove All Notices
 CMD-ctl-REMOVE_NOTICE_TEST-NAME = Remove Notice Test
 ST-ctl-ST-NAME = NodeServer Online
 
-# virtualtempcelcius
+# virtualtempcelsius
 ND-virtualtempcelsius-NAME = Virtual Temperature C
 ND-virtualtempcelsius-ICON = TempSensor
+ST-vtempcelsius-ST-NAME = Temperature Celsuis
+ST-vtempcelsius-GV1-NAME = Previous Temperature Celsius
+CMD-vtempcelsius-setTemp-NAME = Set Temperature Celsius
+CMD-vtempcelsius-setFtoC-NAME = Convert F to C
 
 # virtualswitch
 ND-virtualswitch-NAME = Virtual Switch
