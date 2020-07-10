@@ -34,7 +34,7 @@ CMD-vtemp-setTemp-NAME = Set Temperature
 
 # virtualtempc
 ND-virtualtempc-NAME = Virtual Temperature C
-ND-Virtualtempc-ICON = TempSensor
+ND-virtualtempc-ICON = TempSensor
 ST-vtempc-ST-NAME = Temperature
 ST-vtempc-GV1-NAME = Previous Temperature
 CMD-vtempc-setTemp-NAME = Set Temperature
