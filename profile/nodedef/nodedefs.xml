@@ -53,7 +53,7 @@
     </nodeDef>
 	
 	
-        <!-- virtualtempcid -->
+        <!-- virtualtempcelsiusid -->
     <nodeDef id="virtualtempcelsius" nls="vtempcelsius">
         <editors />
         <sts>
