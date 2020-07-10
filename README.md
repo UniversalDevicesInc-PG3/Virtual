@@ -13,7 +13,7 @@ A simple program captures current temperature data from the ecobee nodeserver an
 
 ### Updates
 
-1.0.4 Pending. F to C and C to F conversions, Temp nodes send data to their state variables. Ditching the Dimmer node for Generic node.
+1.0.4 F to C and C to F conversions, Temp nodes send data to their state variables, previous value stored. Ditching the Dimmer node for Generic node, Dimmers move there.
 
 1.0.3 Implemented a better work around for the celsius raw data conversion. Updated icons for nodes.
 
