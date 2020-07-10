@@ -1,9 +1,10 @@
 
+
 #!/usr/bin/env python
 """
 This is a NodeServer created for Polyglot v2 from a template by Einstein.42 (James Miline)
 This NodeServer was created by markv58 (Mark Vittes) markv58git@gmail.com
-v1.0.4
+v1.0.3
 """
 import polyinterface
 import sys
@@ -99,8 +100,8 @@ class Controller(polyinterface.Controller):
         LOGGER.info('update_profile:')
         st = self.poly.installprofile()
         return st
-
-    id = 'controller'
+    
+        id = 'controller'
     commands = {
         'QUERY': query,
         'DISCOVER': discover,
@@ -109,8 +110,8 @@ class Controller(polyinterface.Controller):
         'REMOVE_NOTICE_TEST': remove_notice_test
     }
     drivers = [{'driver': 'ST', 'value': 1, 'uom': 2}]
-
-class VirtualSwitch(polyinterface.Node):
+    
+    class VirtualSwitch(polyinterface.Node):
     def __init__(self, controller, primary, address, name):
         super(VirtualSwitch, self).__init__(controller, primary, address, name)
 
@@ -139,44 +140,8 @@ class VirtualSwitch(polyinterface.Node):
     commands = {
                     'DON': setOn, 'DOF': setOff
                 }
-
-class VirtualGeneric(polyinterface.Node):
-    def __init__(self, controller, primary, address, name):
-        super(VirtualGeneric, self).__init__(controller, primary, address, name)
-
-    def start(self):
-        pass
-
-    def setOn(self, command):
-        self.setDriver('ST', 100)
-        requests.get('http://' + self.parent.isy + '/rest/vars/set/2/' + self.address + '/100', auth=(self.parent.user, self.parent.password))
-        requests.get('http://' + self.parent.isy + '/rest/vars/init/2/' + self.address + '/100', auth=(self.parent.user, self.parent.password))
-
-    def setOff(self, command):
-        self.setDriver('ST', 0)
-        requests.get('http://' + self.parent.isy + '/rest/vars/set/2/' + self.address + '/0', auth=(self.parent.user, self.parent.password))
-        requests.get('http://' + self.parent.isy + '/rest/vars/init/2/' + self.address + '/0', auth=(self.parent.user, self.parent.password))
-
-    def setDim(self, command):
-        _level = int(command.get('value'))
-        self.setDriver('ST', _level)
-        requests.get('http://' + self.parent.isy + '/rest/vars/set/2/' + self.address + '/' + str(_level), auth=(self.parent.user, self.parent.password))
-        requests.get('http://' + self.parent.isy + '/rest/vars/init/2/' + self.address + '/' + str(_level), auth=(self.parent.user, self.parent.password))
-
-    def query(self):
-        self.reportDrivers()
-
-    #"Hints See: https://github.com/UniversalDevicesInc/hints"
-    #hint = [1,2,3,4]
-    drivers = [{'driver': 'ST', 'value': 0, 'uom': 56}]
-
-    id = 'virtualgeneric'
-
-    commands = {
-                    'DON': setOn, 'DOF': setOff, 'setDim': setDim
-                }
     
-class VirtualTemp(polyinterface.Node):
+    class VirtualTemp(polyinterface.Node):
     def __init__(self, controller, primary, address, name):
         super(VirtualTemp, self).__init__(controller, primary, address, name)
         self.tempVal = 0.0
@@ -216,8 +181,8 @@ class VirtualTemp(polyinterface.Node):
     commands = {
                     'setTemp': setTemp, 'setCtoF': setCtoF
                 }
-
-class VirtualTempC(polyinterface.Node):
+    
+    class VirtualTempC(polyinterface.Node):
     def __init__(self, controller, primary, address, name):
         super(VirtualTempC, self).__init__(controller, primary, address, name)
         self.tempVal = 0.0
@@ -255,14 +220,14 @@ class VirtualTempC(polyinterface.Node):
                 {'driver': 'ST', 'value': 0, 'uom': 4},
                {'driver': 'GV1', 'value': 0, 'uom': 4}
               ]
-    
+
     id = 'virtualtempc'
 
     commands = {
                     'setTemp': setTemp, 'setRaw': setTempRaw
                 }
     
-class VirtualGeneric(polyinterface.Node):
+    class VirtualGeneric(polyinterface.Node):
     def __init__(self, controller, primary, address, name):
         super(VirtualGeneric, self).__init__(controller, primary, address, name)
 
@@ -298,7 +263,7 @@ class VirtualGeneric(polyinterface.Node):
                     'DON': setOn, 'DOF': setOff, 'setDim': setDim
                 }
     
-if __name__ == "__main__":
+    if __name__ == "__main__":
     try:
         polyglot = polyinterface.Interface('Virtual')
 
@@ -311,3 +276,4 @@ if __name__ == "__main__":
     except (KeyboardInterrupt, SystemExit):
         polyglot.stop()
         sys.exit(0)
+        
