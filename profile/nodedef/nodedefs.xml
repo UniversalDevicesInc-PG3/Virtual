@@ -48,7 +48,6 @@
             </accepts>
         </cmds>
     </nodeDef>
-    </nodeDef>
         <!-- virtualtempcid -->
     <nodeDef id="virtualtempc" nls="vtempc">
         <editors />
