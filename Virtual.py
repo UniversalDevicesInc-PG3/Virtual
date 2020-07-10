@@ -262,7 +262,7 @@ class VirtualTempC(polyinterface.Node):
                     'setTemp': setTemp, 'setRaw': setTempRaw
                 }
     
-    class VirtualGeneric(polyinterface.Node):
+class VirtualGeneric(polyinterface.Node):
     def __init__(self, controller, primary, address, name):
         super(VirtualGeneric, self).__init__(controller, primary, address, name)
 
