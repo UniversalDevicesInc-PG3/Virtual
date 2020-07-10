@@ -4,7 +4,7 @@
 """
 This is a NodeServer created for Polyglot v2 from a template by Einstein.42 (James Miline)
 This NodeServer was created by markv58 (Mark Vittes) markv58git@gmail.com
-v1.0.3
+v1.0.4
 """
 import polyinterface
 import sys
@@ -156,6 +156,7 @@ class VirtualTemp(polyinterface.Node):
         pass
 
     def setTemp(self, command):
+        self.setDriver('GV1', self.tempVal)
         _temp = float(command.get('value'))
         self.setDriver('ST', _temp)
         requests.get('http://' + self.parent.isy + '/rest/vars/set/2/' + self.address + '/' + str(_temp), auth=(self.parent.user, self.parent.password))
@@ -192,6 +193,7 @@ class VirtualTempC(polyinterface.Node):
         pass
 
     def setTemp(self, command):
+        self.setDriver('GV1', self.tempVal)
         _temp = float(command.get('value'))
         self.setDriver('ST', _temp)
         requests.get('http://' + self.parent.isy + '/rest/vars/set/2/' + self.address + '/' + str(_temp), auth=(self.parent.user, self.parent.password))
