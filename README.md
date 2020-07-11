@@ -10,10 +10,12 @@ The virtual temperature device allows you to extract temperature information fro
 ![Virtual Node](https://github.com/markv58/github.io/blob/master/VirtualNode.png)
 A simple program captures current temperature data from the ecobee nodeserver and displays that information as an individual device. By ungrouping the devices you could have a folder with only temperature information rather than searching through variables or multiple tabs.
 
+Farenheit can be converted and displayed as Celsius and vice versa. 
+
 
 ### Updates
 
-1.0.6 Fixed a bug, worked on Temp nodes conversions to properly transfer current temp vals to previous and disallow repeat conversions. TempC node will not convert from raw if FtoC has been performed already. No node structure changes, programs will not be affected.
+1.0.6 Fixed a bug, worked on Temp nodes conversions to properly transfer current temp vals to previous after conversions and disallow repeat conversions. TempC node will not convert from raw if FtoC has been performed already. No node structure changes, programs will not be affected.
 
 1.0.5 Fixed code that could stop Conv Raw to Prec
 
