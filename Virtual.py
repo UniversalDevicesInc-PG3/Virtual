@@ -144,7 +144,9 @@ class VirtualSwitch(polyinterface.Node):
 class VirtualTemp(polyinterface.Node):
     def __init__(self, controller, primary, address, name):
         super(VirtualTemp, self).__init__(controller, primary, address, name)
+        self.prevVal = 0.0
         self.tempVal = 0.0
+        self.Cconvert = False
 
     def start(self):
         pass
@@ -156,16 +158,22 @@ class VirtualTemp(polyinterface.Node):
         pass
 
     def setTemp(self, command):
-        self.setDriver('GV1', self.tempVal)
+        self.prevVal = self.tempVal
+        self.setDriver('GV1', self.prevVal)
+        self.Cconvert = False
         _temp = float(command.get('value'))
         self.setDriver('ST', _temp)
-        requests.get('http://' + self.parent.isy + '/rest/vars/set/2/' + self.address + '/' + str(_temp), auth=(self.parent.user, self.parent.password))
-        requests.get('http://' + self.parent.isy + '/rest/vars/init/2/' + self.address + '/' + str(_temp), auth=(self.parent.user, self.parent.password))
+        requests.get('http://' + self.parent.isy + '/rest/vars/set/2/' + self.address + '/' + str(_temp), auth=(self.parent.user, self$
+        requests.get('http://' + self.parent.isy + '/rest/vars/init/2/' + self.address + '/' + str(_temp), auth=(self.parent.user, sel$
         self.tempVal = _temp
 
     def setCtoF(self, command):
-        _CtoFtemp = round(((self.tempVal * 1.8) + 32), 1)
-        self.setDriver('ST', _CtoFtemp)
+        if not self.Cconvert:
+            LOGGER.debug('converting C to F')
+            _CtoFtemp = round(((self.tempVal * 1.8) + 32), 1)
+            self.setDriver('ST', _CtoFtemp)
+            self.tempVal = _CtoFtemp
+            self.Cconvert = True
 
     def query(self):
         self.reportDrivers()
@@ -186,32 +194,40 @@ class VirtualTemp(polyinterface.Node):
 class VirtualTempC(polyinterface.Node):
     def __init__(self, controller, primary, address, name):
         super(VirtualTempC, self).__init__(controller, primary, address, name)
+        self.prevVal = 0.0
         self.tempVal = 0.0
-        self.rawVal = 0.0
+        self.Rconvert = False
+        self.Fconvert = False
 
     def start(self):
         pass
 
     def setTemp(self, command):
-        self.setDriver('GV1', self.tempVal)
+        self.prevVal = self.tempVal
+        self.setDriver('GV1', self.prevVal) # set prev from current
+        self.Cconvert = False
+        self.Fconvert = False
         _temp = float(command.get('value'))
         self.setDriver('ST', _temp)
-        requests.get('http://' + self.parent.isy + '/rest/vars/set/2/' + self.address + '/' + str(_temp), auth=(self.parent.user, self.parent.password))
-        requests.get('http://' + self.parent.isy + '/rest/vars/init/2/' + self.address + '/' + str(_temp), auth=(self.parent.user, self.parent.password))
+        requests.get('http://' + self.parent.isy + '/rest/vars/set/2/' + self.address + '/' + str(_temp), auth=(self.parent.user, self$
+        requests.get('http://' + self.parent.isy + '/rest/vars/init/2/' + self.address + '/' + str(_temp), auth=(self.parent.user, sel$
         self.tempVal = _temp
-        self.rawVal = _temp
 
     def setTempRaw(self, command):
-        if self.rawVal == self.tempVal:
+        if not self.Rconvert and not self.Fconvert:
+            LOGGER.debug('converting raw')
             _command = self.tempVal / 10
             self.setDriver('ST', _command)
-            self.rawVal = _command
-        else:
-            pass
+            self.tempVal = _command
+            self.Rconvert = True
 
     def FtoC(self, command):
-        _FtoCtemp = round(((self.tempVal - 32) / 1.80), 1)
-        self.setDriver('ST', _FtoCtemp)
+        if not self.Fconvert:
+            LOGGER.debug('converting F to C')
+            _FtoCtemp = round(((self.tempVal - 32) / 1.80), 1)
+            self.setDriver('ST', _FtoCtemp)
+            self.tempVal = _FtoCtemp
+            self.Fconvert = True)
 
     def query(self):
         self.reportDrivers()
@@ -226,7 +242,7 @@ class VirtualTempC(polyinterface.Node):
     id = 'virtualtempc'
 
     commands = {
-                    'setTemp': setTemp, 'setRaw': setTempRaw
+                    'setTemp': setTemp, 'setRaw': setTempRaw, 'setFtoC': FtoC
                 }
     
 class VirtualGeneric(polyinterface.Node):
