@@ -215,6 +215,7 @@ class VirtualTempC(polyinterface.Node):
         self.sinceLastUpdate = round((self.updateTime - self.currentTime)/60, 1)
         self.currentTime = time.time()
         LOGGER.debug('Time since last update %s minutes', self.sinceLastUpdate)
+        self.setDriver('GV2', self.sinceLastUpdate)
         self.prevVal = self.tempVal
         self.setDriver('GV1', self.prevVal) # set prev from current
         self.FtoCconvert = False
@@ -253,8 +254,9 @@ class VirtualTempC(polyinterface.Node):
     #"Hints See: https://github.com/UniversalDevicesInc/hints"
     #hint = [1,2,3,4]
     drivers = [
-                {'driver': 'ST', 'value': 0, 'uom': 4},
-               {'driver': 'GV1', 'value': 0, 'uom': 4}
+               {'driver': 'ST', 'value': 0, 'uom': 4},
+               {'driver': 'GV1', 'value': 0, 'uom': 4},
+               {'driver': 'GV2', 'value': 0, 'uom': 45}
               ]
 
     id = 'virtualtempc'
