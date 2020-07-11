@@ -308,7 +308,10 @@ class VirtualGeneric(polyinterface.Node):
         self.setDriver('ST', _level)
         requests.get('http://' + self.parent.isy + '/rest/vars/set/2/' + self.address + '/' + str(_level), auth=(self.parent.user, self.parent.password))
         requests.get('http://' + self.parent.isy + '/rest/vars/init/2/' + self.address + '/' + str(_level), auth=(self.parent.user, self.parent.password))
-
+        
+    def update(self):
+        pass
+    
     def query(self):
         self.reportDrivers()
 
