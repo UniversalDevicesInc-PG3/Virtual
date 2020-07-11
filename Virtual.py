@@ -146,7 +146,7 @@ class VirtualTemp(polyinterface.Node):
         super(VirtualTemp, self).__init__(controller, primary, address, name)
         self.prevVal = 0.0
         self.tempVal = 0.0
-        self.Cconvert = False
+        self.CtoFconvert = False
 
     def start(self):
         pass
@@ -160,20 +160,22 @@ class VirtualTemp(polyinterface.Node):
     def setTemp(self, command):
         self.prevVal = self.tempVal
         self.setDriver('GV1', self.prevVal)
-        self.Cconvert = False
+        self.CtoFconvert = False
         _temp = float(command.get('value'))
         self.setDriver('ST', _temp)
         requests.get('http://' + self.parent.isy + '/rest/vars/set/2/' + self.address + '/' + str(_temp), auth=(self.parent.user, self$
         requests.get('http://' + self.parent.isy + '/rest/vars/init/2/' + self.address + '/' + str(_temp), auth=(self.parent.user, sel$
         self.tempVal = _temp
 
-    def setCtoF(self, command):
-        if not self.Cconvert:
-            LOGGER.debug('converting C to F')
+   def setCtoF(self, command):
+        if not self.CtoFconvert:
+            LOGGER.info('converting C to F')
             _CtoFtemp = round(((self.tempVal * 1.8) + 32), 1)
             self.setDriver('ST', _CtoFtemp)
             self.tempVal = _CtoFtemp
-            self.Cconvert = True
+            self.CtoFconvert = True
+        else:
+            pass
 
     def query(self):
         self.reportDrivers()
@@ -197,7 +199,7 @@ class VirtualTempC(polyinterface.Node):
         self.prevVal = 0.0
         self.tempVal = 0.0
         self.Rconvert = False
-        self.Fconvert = False
+        self.FtoCconvert = False
 
     def start(self):
         pass
@@ -205,8 +207,10 @@ class VirtualTempC(polyinterface.Node):
     def setTemp(self, command):
         self.prevVal = self.tempVal
         self.setDriver('GV1', self.prevVal) # set prev from current
-        self.Cconvert = False
-        self.Fconvert = False
+        self.FtoCconvert = False
+        self.Rconvert = False
+        LOGGER.debug(self.FtoCconvert)
+        LOGGER.debug(self.Rconvert)
         _temp = float(command.get('value'))
         self.setDriver('ST', _temp)
         requests.get('http://' + self.parent.isy + '/rest/vars/set/2/' + self.address + '/' + str(_temp), auth=(self.parent.user, self$
@@ -214,20 +218,24 @@ class VirtualTempC(polyinterface.Node):
         self.tempVal = _temp
 
     def setTempRaw(self, command):
-        if not self.Rconvert and not self.Fconvert:
-            LOGGER.debug('converting raw')
+        if not self.Rconvert and not self.FtoCconvert:
+            LOGGER.info('converting from raw')
             _command = self.tempVal / 10
             self.setDriver('ST', _command)
             self.tempVal = _command
             self.Rconvert = True
+        else:
+            pass
 
     def FtoC(self, command):
-        if not self.Fconvert:
-            LOGGER.debug('converting F to C')
+        if not self.FtoCconvert:
+            LOGGER.info('converting F to C')
             _FtoCtemp = round(((self.tempVal - 32) / 1.80), 1)
             self.setDriver('ST', _FtoCtemp)
             self.tempVal = _FtoCtemp
-            self.Fconvert = True)
+            self.FtoCconvert = True
+        else:
+            pass
 
     def query(self):
         self.reportDrivers()
