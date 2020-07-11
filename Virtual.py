@@ -201,11 +201,20 @@ class VirtualTempC(polyinterface.Node):
         self.tempVal = 0.0
         self.Rconvert = False
         self.FtoCconvert = False
-
+        self.currentTime = 0.0
+        self.updateTime = 0.0
+        self.sinceLastUpdate = 0.0
+        
     def start(self):
+        self.updateTime = time.time()
+        LOGGER.debug(self.updateTime)
         pass
 
     def setTemp(self, command):
+        self.updateTime = time.time()
+        self.sinceLastUpdate = round((self.updateTime - self.currentTime)/60, 1)
+        self.currentTime = time.time()
+        LOGGER.debug('Time since last update %s minutes', self.sinceLastUpdate)
         self.prevVal = self.tempVal
         self.setDriver('GV1', self.prevVal) # set prev from current
         self.FtoCconvert = False
