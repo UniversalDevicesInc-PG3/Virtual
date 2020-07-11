@@ -212,7 +212,9 @@ class VirtualTempC(polyinterface.Node):
 
     def setTemp(self, command):
         self.updateTime = time.time()
-        self.sinceLastUpdate = round((self.updateTime - self.currentTime)/60, 1)
+        self.sinceLastUpdate = round(((self.updateTime - self.currentTime) / 
+                                      
+60), 1)
         self.currentTime = time.time()
         LOGGER.debug('Time since last update %s minutes', self.sinceLastUpdate)
         self.setDriver('GV2', self.sinceLastUpdate)
