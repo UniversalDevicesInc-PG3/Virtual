@@ -222,7 +222,7 @@ class VirtualTempC(polyinterface.Node):
         #LOGGER.debug(self.updateTime)
         pass
 
-    def setTemp(self, command)
+    def setTemp(self, command):
         self.currentTime = time.time()
         _sinceLastUpdate = round(((self.currentTime - self.lastUpdateTime) / 60), 1)
         self.setDriver('GV2', _sinceLastUpdate)
