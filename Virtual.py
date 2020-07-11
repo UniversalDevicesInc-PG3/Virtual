@@ -32,7 +32,8 @@ class Controller(polyinterface.Controller):
         self.poly.add_custom_config_docs("<b>And this is some custom config data</b>")
 
     def shortPoll(self):
-        pass
+        for node in self.nodes:
+            self.nodes[node].update()
 
     def longPoll(self):
         pass
@@ -102,6 +103,9 @@ class Controller(polyinterface.Controller):
         st = self.poly.installprofile()
         return st
     
+    def update(self):
+        pass
+    
         id = 'controller'
     commands = {
         'QUERY': query,
@@ -128,7 +132,10 @@ class VirtualSwitch(polyinterface.Node):
         self.setDriver('ST', 0)
         requests.get('http://' + self.parent.isy + '/rest/vars/set/2/' + self.address + '/0', auth=(self.parent.user, self.parent.password))
         requests.get('http://' + self.parent.isy + '/rest/vars/init/2/' + self.address + '/0', auth=(self.parent.user, self.parent.password))
-
+        
+    def update(self):
+        pass
+        
     def query(self):
         self.reportDrivers()
 
@@ -177,7 +184,9 @@ class VirtualTemp(polyinterface.Node):
             self.CtoFconvert = True
         else:
             pass
-
+    def update(self):
+        pass
+    
     def query(self):
         self.reportDrivers()
 
@@ -202,22 +211,23 @@ class VirtualTempC(polyinterface.Node):
         self.Rconvert = False
         self.FtoCconvert = False
         self.currentTime = 0.0
-        self.updateTime = 0.0
-        self.sinceLastUpdate = 0.0
+        self.lastUpdateTime = 0.0
+        #self.sinceLastUpdate = 0.0
         
     def start(self):
         self.updateTime = time.time()
-        self.sinceLastUpdate = time.time()
+        #self.sinceLastUpdate = time.time()
+        self.lastUpdateTime = time.time()
         self.setDriver('GV2', 0.0)
-        LOGGER.debug(self.updateTime)
+        #LOGGER.debug(self.updateTime)
         pass
 
-    def setTemp(self, command):
-        self.updateTime = time.time()
-        self.sinceLastUpdate = round(((self.updateTime - self.currentTime) / 60), 1)
+    def setTemp(self, command)
         self.currentTime = time.time()
-        LOGGER.debug('Time since last update %s minutes', self.sinceLastUpdate)
-        self.setDriver('GV2', self.sinceLastUpdate)
+        _sinceLastUpdate = round(((self.currentTime - self.lastUpdateTime) / 60), 1)
+        self.setDriver('GV2', _sinceLastUpdate)
+        self.lastUpdateTime = time.time()        
+        #LOGGER.debug('Time since last update %s minutes', self.sinceLastUpdate)
         self.prevVal = self.tempVal
         self.setDriver('GV1', self.prevVal) # set prev from current
         self.FtoCconvert = False
@@ -250,6 +260,15 @@ class VirtualTempC(polyinterface.Node):
         else:
             pass
 
+    def checkLastUpdate(self):
+        _currentTime = time.time()
+        _sinceLastUpdate = round(((_currentTime - self.lastUpdateTime) / 60), 1)
+        self.setDriver('GV2', _sinceLastUpdate)
+        
+    def update(self):
+        self.checkLastUpdate()
+    
+    
     def query(self):
         self.reportDrivers()
 
