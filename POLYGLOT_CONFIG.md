@@ -21,7 +21,7 @@ Raw celsius data can be converted with an extra step in a program. F to C and C 
     78              switch
     79              dimmer or generic
     82              temperature     (will be displayed as farenheit)
-    85              temperaturec or temperaturecr   (will be displayed as celsius) (the r can be used to note raw data)
+    85              temperaturec or temperaturecr   (will be displayed as celsius) (the r can be used to note raw data if you prefer)
     
     
     
