@@ -15,7 +15,7 @@ There are 3 kinds of virtual devices, switch, dimmer and temperature. You will n
 
 Temerature will be displayed as farenheit unless a 'c' is added. 
 
-Raw celsius data can be converted with an extra step in a program.
+Raw celsius data can be converted with an extra step in a program. F to C and C to F conversions are available. In the TempC node convert Raw data before the F to C conversion if nessecary otherwise there will be no conversion.
 
     Key (var ID)    Value (device type)
     78              switch
