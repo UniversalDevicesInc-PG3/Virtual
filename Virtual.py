@@ -207,6 +207,7 @@ class VirtualTempC(polyinterface.Node):
         
     def start(self):
         self.updateTime = time.time()
+        self.setDriver('GV2', 0.0)
         LOGGER.debug(self.updateTime)
         pass
 
