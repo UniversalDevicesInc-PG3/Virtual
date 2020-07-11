@@ -167,7 +167,7 @@ class VirtualTemp(polyinterface.Node):
         requests.get('http://' + self.parent.isy + '/rest/vars/init/2/' + self.address + '/' + str(_temp), auth=(self.parent.user, self.parent.password))
         self.tempVal = _temp
 
-   def setCtoF(self, command):
+    def setCtoF(self, command):
         if not self.CtoFconvert:
             LOGGER.info('converting C to F')
             _CtoFtemp = round(((self.tempVal * 1.8) + 32), 1)
