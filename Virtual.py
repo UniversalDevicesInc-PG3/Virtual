@@ -263,8 +263,11 @@ class VirtualTempC(polyinterface.Node):
     def checkLastUpdate(self):
         _currentTime = time.time()
         _sinceLastUpdate = round(((_currentTime - self.lastUpdateTime) / 60), 1)
-        self.setDriver('GV2', _sinceLastUpdate)
-        
+        if _sindeLastUpdate < 1440:
+            self.setDriver('GV2', _sinceLastUpdate)
+        else:
+            self.setDriver('GV2', 1440)
+            
     def update(self):
         self.checkLastUpdate()
     
