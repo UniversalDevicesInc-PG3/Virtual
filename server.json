@@ -6,7 +6,7 @@
     "install": "install.sh",
     "description": "Create Virtual Devices",
     "notice": "Use at your own risk",
-    "shortPoll": "120",
+    "shortPoll": "30",
     "longPoll": "240",
     "testMode": false,
     "credits": [
