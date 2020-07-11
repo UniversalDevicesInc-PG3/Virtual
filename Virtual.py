@@ -202,12 +202,9 @@ class VirtualTempC(polyinterface.Node):
         self.rawVal = _temp
 
     def setTempRaw(self, command):
-        if self.rawVal == self.tempVal:
-            _command = self.tempVal / 10
-            self.setDriver('ST', _command)
-            self.rawVal = _command
-        else:
-            pass
+        _command = self.tempVal / 10
+        self.setDriver('ST', _command)
+        self.rawVal = _command
 
     def FtoC(self, command):
         _FtoCtemp = round(((self.tempVal - 32) / 1.80), 1)
