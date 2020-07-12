@@ -221,6 +221,8 @@ class VirtualTempC(polyinterface.Node):
         self.currentTime = time.time()
         self.lastUpdateTime = time.time()
         self.setDriver('GV2', 0.0)
+        self.setDriver('GV3', 0.0)
+        self.setDriver('GV3', 0.0)
 
     def setTemp(self, command):
         self.checkHighLow(self.tempVal)
