@@ -214,8 +214,8 @@ class VirtualTempC(polyinterface.Node):
         self.currentTime = 0.0
         self.lastUpdateTime = 0.0
         
-        self.highTemp = 0.0
-        self.lowTemp = 0.0
+        self.highTemp = -60.0
+        self.lowTemp = 130.0
         
     def start(self):
         self.currentTime = time.time()
