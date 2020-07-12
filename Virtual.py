@@ -269,9 +269,14 @@ class VirtualTempC(polyinterface.Node):
             
     def checkHighLow(self, command):
         if command > self.highTemp:
+            LOGGER.debug('checking high')
             self.setDriver('GV3', command)
             self.highTemp = command
+            
+            
+
         if command < self.lowTemp:
+            LOGGER.debug('checking low')
             self.setDriver('GV4', command)
             self.lowTemp = command
     
