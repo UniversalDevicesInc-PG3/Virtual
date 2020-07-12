@@ -223,20 +223,19 @@ class VirtualTempC(polyinterface.Node):
         self.setDriver('GV2', 0.0)
 
     def setTemp(self, command):
+        self.checkHighLow(self.tempVal)
         self.setDriver('GV2', 0.0)
         self.lastUpdateTime = time.time()        
         self.prevVal = self.tempVal
         self.setDriver('GV1', self.prevVal) # set prev from current
         self.FtoCconvert = False
         self.Rconvert = False
-        LOGGER.debug(self.FtoCconvert)
-        LOGGER.debug(self.Rconvert)
         _temp = float(command.get('value'))
         self.setDriver('ST', _temp)
-        self.checkHighLow(_temp)
         requests.get('http://' + self.parent.isy + '/rest/vars/set/2/' + self.address + '/' + str(_temp), auth=(self.parent.user, self.parent.password))
         requests.get('http://' + self.parent.isy + '/rest/vars/init/2/' + self.address + '/' + str(_temp), auth=(self.parent.user, self.parent.password))
         self.tempVal = _temp
+
 
     def setTempRaw(self, command):
         if not self.Rconvert and not self.FtoCconvert:
