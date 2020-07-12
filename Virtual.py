@@ -210,24 +210,21 @@ class VirtualTempC(polyinterface.Node):
         self.tempVal = 0.0
         self.Rconvert = False
         self.FtoCconvert = False
+        
         self.currentTime = 0.0
         self.lastUpdateTime = 0.0
-        #self.sinceLastUpdate = 0.0
+        
+        self.highTemp = 0.0
+        self.lowTemp = 0.0
         
     def start(self):
-        self.updateTime = time.time()
-        #self.sinceLastUpdate = time.time()
+        self.currentTime = time.time()
         self.lastUpdateTime = time.time()
         self.setDriver('GV2', 0.0)
-        #LOGGER.debug(self.updateTime)
-        pass
 
     def setTemp(self, command):
-        #self.currentTime = time.time()
-        #_sinceLastUpdate = round(((self.currentTime - self.lastUpdateTime) / 60), 1)
         self.setDriver('GV2', 0.0)
         self.lastUpdateTime = time.time()        
-        #LOGGER.debug('Time since last update %s minutes', self.sinceLastUpdate)
         self.prevVal = self.tempVal
         self.setDriver('GV1', self.prevVal) # set prev from current
         self.FtoCconvert = False
@@ -236,6 +233,7 @@ class VirtualTempC(polyinterface.Node):
         LOGGER.debug(self.Rconvert)
         _temp = float(command.get('value'))
         self.setDriver('ST', _temp)
+        self.checkHighLow(_temp)
         requests.get('http://' + self.parent.isy + '/rest/vars/set/2/' + self.address + '/' + str(_temp), auth=(self.parent.user, self.parent.password))
         requests.get('http://' + self.parent.isy + '/rest/vars/init/2/' + self.address + '/' + str(_temp), auth=(self.parent.user, self.parent.password))
         self.tempVal = _temp
@@ -268,6 +266,11 @@ class VirtualTempC(polyinterface.Node):
         else:
             self.setDriver('GV2', 1440)
             
+    def checkHighLow(self, command):
+        if command > self.highTemp: self.setDriver('GV3', command)
+        if command < self.lowTemp: self.setDriver('GV4', command)
+    
+    
     def update(self):
         self.checkLastUpdate()
     
@@ -280,7 +283,9 @@ class VirtualTempC(polyinterface.Node):
     drivers = [
                {'driver': 'ST', 'value': 0, 'uom': 4},
                {'driver': 'GV1', 'value': 0, 'uom': 4},
-               {'driver': 'GV2', 'value': 0, 'uom': 45}
+               {'driver': 'GV2', 'value': 0, 'uom': 45},
+               {'driver': 'GV3', 'value': 0, 'uom': 4},
+               {'driver': 'GV4', 'value': 0, 'uom': 4}        
               ]
 
     id = 'virtualtempc'
