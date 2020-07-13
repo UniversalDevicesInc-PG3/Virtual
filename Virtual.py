@@ -4,7 +4,7 @@
 """
 This is a NodeServer created for Polyglot v2 from a template by Einstein.42 (James Miline)
 This NodeServer was created by markv58 (Mark Vittes) markv58git@gmail.com
-v1.0.6
+v1.0.7
 """
 
 import polyinterface
@@ -32,7 +32,8 @@ class Controller(polyinterface.Controller):
         self.poly.add_custom_config_docs("<b>And this is some custom config data</b>")
 
     def shortPoll(self):
-        pass
+        for node in self.nodes:
+            self.nodes[node].update()
 
     def longPoll(self):
         pass
@@ -102,6 +103,9 @@ class Controller(polyinterface.Controller):
         st = self.poly.installprofile()
         return st
     
+    def update(self):
+        pass
+    
         id = 'controller'
     commands = {
         'QUERY': query,
@@ -128,7 +132,10 @@ class VirtualSwitch(polyinterface.Node):
         self.setDriver('ST', 0)
         requests.get('http://' + self.parent.isy + '/rest/vars/set/2/' + self.address + '/0', auth=(self.parent.user, self.parent.password))
         requests.get('http://' + self.parent.isy + '/rest/vars/init/2/' + self.address + '/0', auth=(self.parent.user, self.parent.password))
-
+        
+    def update(self):
+        pass
+        
     def query(self):
         self.reportDrivers()
 
@@ -177,7 +184,9 @@ class VirtualTemp(polyinterface.Node):
             self.CtoFconvert = True
         else:
             pass
-
+    def update(self):
+        pass
+    
     def query(self):
         self.reportDrivers()
 
@@ -201,22 +210,35 @@ class VirtualTempC(polyinterface.Node):
         self.tempVal = 0.0
         self.Rconvert = False
         self.FtoCconvert = False
-
+        self.firstRun = True
+        
+        self.currentTime = 0.0
+        self.lastUpdateTime = 0.0
+        
+        self.highTemp = -60.0
+        self.lowTemp = 129.0
+        
     def start(self):
-        pass
+        self.currentTime = time.time()
+        self.lastUpdateTime = time.time()
+        self.setDriver('GV2', 0.0)
+        self.setDriver('GV3', self.highTemp)
+        self.setDriver('GV4', self.lowTemp)
 
     def setTemp(self, command):
+        self.checkHighLow(self.tempVal)
+        self.setDriver('GV2', 0.0)
+        self.lastUpdateTime = time.time()        
         self.prevVal = self.tempVal
         self.setDriver('GV1', self.prevVal) # set prev from current
         self.FtoCconvert = False
         self.Rconvert = False
-        LOGGER.debug(self.FtoCconvert)
-        LOGGER.debug(self.Rconvert)
         _temp = float(command.get('value'))
         self.setDriver('ST', _temp)
         requests.get('http://' + self.parent.isy + '/rest/vars/set/2/' + self.address + '/' + str(_temp), auth=(self.parent.user, self.parent.password))
         requests.get('http://' + self.parent.isy + '/rest/vars/init/2/' + self.address + '/' + str(_temp), auth=(self.parent.user, self.parent.password))
         self.tempVal = _temp
+
 
     def setTempRaw(self, command):
         if not self.Rconvert and not self.FtoCconvert:
@@ -238,14 +260,43 @@ class VirtualTempC(polyinterface.Node):
         else:
             pass
 
+    def checkLastUpdate(self):
+        _currentTime = time.time()
+        _sinceLastUpdate = round(((_currentTime - self.lastUpdateTime) / 60), 1)
+        if _sinceLastUpdate < 1440:
+            self.setDriver('GV2', _sinceLastUpdate)
+        else:
+            self.setDriver('GV2', 1440)
+            
+    def checkHighLow(self, command):
+        if self.firstRun:
+            pass
+        else:
+            if command > self.highTemp:
+                LOGGER.debug('check high')
+                self.setDriver('GV3', command)
+                self.highTemp = command            
+            if command < self.lowTemp:
+                LOGGER.debug('check low')
+                self.setDriver('GV4', command)
+                self.lowTemp = command
+        self.firstRun = False
+
+    def update(self):
+        self.checkLastUpdate()
+    
+    
     def query(self):
         self.reportDrivers()
 
     #"Hints See: https://github.com/UniversalDevicesInc/hints"
     #hint = [1,2,3,4]
     drivers = [
-                {'driver': 'ST', 'value': 0, 'uom': 4},
-               {'driver': 'GV1', 'value': 0, 'uom': 4}
+               {'driver': 'ST', 'value': 0, 'uom': 4},
+               {'driver': 'GV1', 'value': 0, 'uom': 4},
+               {'driver': 'GV2', 'value': 0, 'uom': 45},
+               {'driver': 'GV3', 'value': 0, 'uom': 4},
+               {'driver': 'GV4', 'value': 0, 'uom': 4}        
               ]
 
     id = 'virtualtempc'
@@ -276,7 +327,10 @@ class VirtualGeneric(polyinterface.Node):
         self.setDriver('ST', _level)
         requests.get('http://' + self.parent.isy + '/rest/vars/set/2/' + self.address + '/' + str(_level), auth=(self.parent.user, self.parent.password))
         requests.get('http://' + self.parent.isy + '/rest/vars/init/2/' + self.address + '/' + str(_level), auth=(self.parent.user, self.parent.password))
-
+        
+    def update(self):
+        pass
+    
     def query(self):
         self.reportDrivers()
 

@@ -55,6 +55,9 @@
         <sts>
             <st id="ST" editor="tempc" />
             <st id="GV1" editor="tempc" />
+            <st id="GV2" editor="minutes" />
+            <st id="GV3" editor="tempc" />
+            <st id="GV4" editor="tempc" />
         </sts>
         <cmds>
             <sends />

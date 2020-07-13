@@ -6,14 +6,14 @@
     "install": "install.sh",
     "description": "Create Virtual Devices",
     "notice": "Use at your own risk",
-    "shortPoll": "120",
+    "shortPoll": "30",
     "longPoll": "240",
     "testMode": false,
     "credits": [
         {
             "title": "Virtual Device NodeServer",
             "author": "Mark Vittes (markv58)",
-            "version": "1.0.6",
+            "version": "1.0.7",
             "date": "July 4, 2020",
             "source": "https://github.com/markv58/Virtual.git",
             "license": "https://raw.githubusercontent.com/markv58/Virtual/master/LICENSE"

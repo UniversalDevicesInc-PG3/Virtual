@@ -13,7 +13,10 @@
         <range uom="56" min="0" max="100" prec="0" step="1"/>
     </editor>
 
-
+    <editor id="minutes">
+        <range uom="45" min="0" max="1440" prec="1" step="1"/>
+    </editor>
+    
     <editor id="level">
         <range uom="56" min="0" max="100" prec="0" step="1"/>
     </editor>
