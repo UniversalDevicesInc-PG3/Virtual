@@ -239,7 +239,7 @@ class VirtualTemp(polyinterface.Node):
     #"Hints See: https://github.com/UniversalDevicesInc/hints"
     #hint = [1,2,3,4]
     drivers = [
-               {'driver': 'ST', 'value': 0, 'uom': 17,
+               {'driver': 'ST', 'value': 0, 'uom': 17},
                {'driver': 'GV1', 'value': 0, 'uom': 17},
                {'driver': 'GV2', 'value': 0, 'uom': 45},
                {'driver': 'GV3', 'value': 0, 'uom': 17},
