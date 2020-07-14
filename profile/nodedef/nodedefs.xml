@@ -66,6 +66,8 @@
         <cmds>
             <sends />
             <accepts>
+                <cmd id="setHigh" />
+                <cmd id="setLow" />
                 <cmd id="setRaw" />
                 <cmd id="setFtoC" />
                 <cmd id="setTemp">
