@@ -4,7 +4,7 @@
 """
 This is a NodeServer created for Polyglot v2 from a template by Einstein.42 (James Miline)
 This NodeServer was created by markv58 (Mark Vittes) markv58git@gmail.com
-v1.0.7
+v1.0.8
 """
 
 import polyinterface
@@ -154,10 +154,20 @@ class VirtualTemp(polyinterface.Node):
         super(VirtualTemp, self).__init__(controller, primary, address, name)
         self.prevVal = 0.0
         self.tempVal = 0.0
+        self.Rconvert = False
         self.CtoFconvert = False
-
+        self.firstRun = True
+        
+        self.currentTime = 0.0
+        self.lastUpdateTime = 0.0
+        
+        self.highTemp = -30.0
+        self.lowTemp = 129.0
+        
     def start(self):
-        pass
+        self.currentTime = time.time()
+        self.lastUpdateTime = time.time()
+        self.setDriver('GV2', 0.0)
 
     def setOn(self, command):
         pass
@@ -166,15 +176,29 @@ class VirtualTemp(polyinterface.Node):
         pass
 
     def setTemp(self, command):
+        self.checkHighLow(self.tempVal)
+        self.setDriver('GV2', 0.0)
+        self.lastUpdateTime = time.time()        
         self.prevVal = self.tempVal
-        self.setDriver('GV1', self.prevVal)
-        self.CtoFconvert = False
+        self.setDriver('GV1', self.prevVal) # set prev from current
+        self.FtoCconvert = False
+        self.Rconvert = False
         _temp = float(command.get('value'))
         self.setDriver('ST', _temp)
         requests.get('http://' + self.parent.isy + '/rest/vars/set/2/' + self.address + '/' + str(_temp), auth=(self.parent.user, self.parent.password))
         requests.get('http://' + self.parent.isy + '/rest/vars/init/2/' + self.address + '/' + str(_temp), auth=(self.parent.user, self.parent.password))
         self.tempVal = _temp
 
+    def setTempRaw(self, command):
+        if not self.Rconvert and not self.CtoFconvert:
+            LOGGER.info('converting from raw')
+            _command = self.tempVal / 10
+            self.setDriver('ST', _command)
+            self.tempVal = _command
+            self.Rconvert = True
+        else:
+            pass
+        
     def setCtoF(self, command):
         if not self.CtoFconvert:
             LOGGER.info('converting C to F')
@@ -184,8 +208,30 @@ class VirtualTemp(polyinterface.Node):
             self.CtoFconvert = True
         else:
             pass
+    def checkLastUpdate(self):
+        _currentTime = time.time()
+        _sinceLastUpdate = round(((_currentTime - self.lastUpdateTime) / 60), 1)
+        if _sinceLastUpdate < 1440:
+            self.setDriver('GV2', _sinceLastUpdate)
+        else:
+            self.setDriver('GV2', 1440)
+            
+    def checkHighLow(self, command):
+        if self.firstRun:
+            pass
+        else:
+            if command > self.highTemp:
+                LOGGER.debug('check high')
+                self.setDriver('GV3', command)
+                self.highTemp = command            
+            if command < self.lowTemp:
+                LOGGER.debug('check low')
+                self.setDriver('GV4', command)
+                self.lowTemp = command
+        self.firstRun = False
+
     def update(self):
-        pass
+        self.checkLastUpdate()
     
     def query(self):
         self.reportDrivers()
@@ -193,14 +239,17 @@ class VirtualTemp(polyinterface.Node):
     #"Hints See: https://github.com/UniversalDevicesInc/hints"
     #hint = [1,2,3,4]
     drivers = [
-                {'driver': 'ST', 'value': 0, 'uom': 17},
-               {'driver': 'GV1', 'value': 0, 'uom': 17}
+               {'driver': 'ST', 'value': 0, 'uom': 17},
+               {'driver': 'GV1', 'value': 0, 'uom': 17},
+               {'driver': 'GV2', 'value': 0, 'uom': 45},
+               {'driver': 'GV3', 'value': 0, 'uom': 17},
+               {'driver': 'GV4', 'value': 0, 'uom': 17}
               ]
 
     id = 'virtualtemp'
 
     commands = {
-                    'setTemp': setTemp, 'setCtoF': setCtoF
+                    'setTemp': setTemp, 'setCtoF': setCtoF, 'setRaw': setTempRaw
                 }
     
 class VirtualTempC(polyinterface.Node):
@@ -222,8 +271,8 @@ class VirtualTempC(polyinterface.Node):
         self.currentTime = time.time()
         self.lastUpdateTime = time.time()
         self.setDriver('GV2', 0.0)
-        self.setDriver('GV3', self.highTemp)
-        self.setDriver('GV4', self.lowTemp)
+        #self.setDriver('GV3', self.highTemp)
+        #self.setDriver('GV4', self.lowTemp)
 
     def setTemp(self, command):
         self.checkHighLow(self.tempVal)

@@ -38,10 +38,14 @@
         <sts>
             <st id="ST" editor="temp" />
             <st id="GV1" editor="temp" />
+            <st id="GV2" editor="minutes" />
+            <st id="GV3" editor="temp" />
+            <st id="GV4" editor="temp" />            
         </sts>
         <cmds>
             <sends />
             <accepts>
+                <cmd id="setRaw" />                
                 <cmd id="setCtoF" />
                 <cmd id="setTemp">
                   <p id="" editor="temp" init="ST" />

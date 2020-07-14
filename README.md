@@ -15,6 +15,8 @@ Farenheit can be converted and displayed as Celsius and vice versa.
 
 ### Updates
 
+1.0.8 Updated the Temp node, added Highest, Lowest, Since Last Update and Convert Raw to Prec to mirror the TempC node. Update Profile and restart AC to see changes. Changed code for TempC node so a restart does not effect Highest and Lowest values.
+
 1.0.7 Updated the Temp C node with added Highest and Lowest temps and a Since Last Update tracker.
 
 1.0.6 Fixed a bug, worked on Temp nodes conversions to properly transfer current temp vals to previous after conversions and disallow repeat conversions. TempC node will not convert from raw if FtoC has been performed already. No node structure changes, programs will not be affected.
