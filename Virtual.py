@@ -208,6 +208,7 @@ class VirtualTemp(polyinterface.Node):
             self.CtoFconvert = True
         else:
             pass
+        
     def checkLastUpdate(self):
         _currentTime = time.time()
         _sinceLastUpdate = round(((_currentTime - self.lastUpdateTime) / 60), 1)
@@ -331,6 +332,14 @@ class VirtualTempC(polyinterface.Node):
                 self.lowTemp = command
         self.firstRun = False
 
+    def resetHighTemp(self):
+        self.highTemp = -60
+        self.setDriver('GV3', 0)
+    
+    def resetLowTemp(self):
+        self.lowTemp = 130
+        self.setDriver('GV4', 0)
+    
     def update(self):
         self.checkLastUpdate()
     
@@ -351,7 +360,7 @@ class VirtualTempC(polyinterface.Node):
     id = 'virtualtempc'
 
     commands = {
-                    'setTemp': setTemp, 'setRaw': setTempRaw, 'setFtoC': FtoC
+                    'setTemp': setTemp, 'setRaw': setTempRaw, 'setFtoC': FtoC, 'resetHigh': resetHighTemp, 'resetLow': resetLowTemp
                 }
     
 class VirtualGeneric(polyinterface.Node):
