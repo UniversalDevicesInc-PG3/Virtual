@@ -333,10 +333,12 @@ class VirtualTempC(polyinterface.Node):
         self.firstRun = False
 
     def resetHighTemp(self):
+        LOGGER.info('Resetting the High Temp')
         self.highTemp = -60
         self.setDriver('GV3', 0)
     
     def resetLowTemp(self):
+        LOGGER.info('Resetting the Low Temp')
         self.lowTemp = 130
         self.setDriver('GV4', 0)
     
