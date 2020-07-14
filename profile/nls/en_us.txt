@@ -24,9 +24,13 @@ CMD-vgeneric-setDim-NAME = Set Level
 # virtualtemp
 ND-virtualtemp-NAME = Virtual Temperature
 ND-virtualtemp-ICON = TempSensor
-ST-vtemp-ST-NAME = Temperature
+ST-vtemp-ST-NAME = Current
 ST-vtemp-GV1-NAME = Previous
+ST-vtemp-GV2-NAME = Since Last Update
+ST-vtemp-GV3-NAME = Highest
+ST-vtemp-GV4-NAME = Lowest
 CMD-vtemp-setCtoF-NAME = Convert C to F
+CMD-vtempcsetRaw-NAME = Convert Raw to Prec
 CMD-vtemp-setTemp-NAME = Set Temperature
 
 # virtualtempc
