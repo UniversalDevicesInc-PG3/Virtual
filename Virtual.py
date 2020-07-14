@@ -362,7 +362,7 @@ class VirtualTempC(polyinterface.Node):
     id = 'virtualtempc'
 
     commands = {
-                    'setTemp': setTemp, 'setRaw': setTempRaw, 'setFtoC': FtoC, 'resetHigh': resetHighTemp, 'resetLow': resetLowTemp
+                    'setTemp': setTemp, 'setRaw': setTempRaw, 'setFtoC': FtoC, 'setHigh': resetHighTemp, 'setLow': resetLowTemp
                 }
     
 class VirtualGeneric(polyinterface.Node):
