@@ -62,17 +62,28 @@
             <st id="GV2" editor="minutes" />
             <st id="GV3" editor="tempc" />
             <st id="GV4" editor="tempc" />
+            <st id="GV5" editor="tempc" />
         </sts>
         <cmds>
             <sends />
             <accepts>
                 <cmd id="setHigh" />
                 <cmd id="setLow" />
+                <cmd id="highLowBackup" />
                 <cmd id="setRaw" />
                 <cmd id="setFtoC" />
                 <cmd id="setTemp">
                   <p id="" editor="tempc" init="ST" />
-                    </cmd>
+                </cmd>
+                <cmd id="setSid">
+                  <p id="" editor="push_var" />
+                </cmd>
+                <cmd id="setIid">
+                  <p id="" editor="push_var" />
+                </cmd>
+                <cmd id="pushToID">
+                  <p id="" editor="variableID" />
+                </cmd>                
             </accepts>
         </cmds>
     </nodeDef>
