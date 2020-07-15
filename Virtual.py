@@ -276,9 +276,17 @@ class VirtualTempC(polyinterface.Node):
         self.currentTime = time.time()
         self.lastUpdateTime = time.time()
         self.setDriver('GV2', 0.0)
-
+        self.retrieveValues()
+       
+    def storeValues(self,command):
+        pass
+    
+    def retreiveValues(self, command):
+        pass
+    
     def setTemp(self, command):
         self.checkHighLow(self.tempVal)
+        self.storeValues()
         self.setDriver('GV2', 0.0)
         self.lastUpdateTime = time.time()        
         self.prevVal = self.tempVal
@@ -291,10 +299,11 @@ class VirtualTempC(polyinterface.Node):
 
 # State      
     def setStateID(self, command):
-        pass
+        self.StateID = command.get('value')
+
 # Integer       
     def setIntegerID(self, command):    
-        pass           
+        self.IntegeriD = command.get('value')           
 # Push
     def pushToID(self.command):
         _ID = command.get('value')
