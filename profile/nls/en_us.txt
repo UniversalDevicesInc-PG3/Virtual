@@ -48,9 +48,9 @@ CMD-vtempc-highLowBackUp-NAME = Restore Previous High Low
 CMD-vtempc-setRaw-NAME = Convert Raw to Prec
 CMD-vtempc-setFtoC-NAME = Convert F to C
 CMD-vtempc-setTemp-NAME = Set Current
-CMD-vtempc-setSid-NAME = Set State Varialbe
-CMD-vtempc-setIid-NAME = Set Integer Varialbe
-CMD-vtempc-pushToID-NAME = Push to ID
+CMD-vtempc-setSid-NAME = Set State Variable ID
+CMD-vtempc-setIid-NAME = Set Integer Variable ID
+CMD-vtempc-pushToID-NAME = Push to Variable
 
 ON_OFF-0 = Off
 ON_OFF-1 = On
