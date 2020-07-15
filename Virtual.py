@@ -302,10 +302,12 @@ class VirtualTempC(polyinterface.Node):
 # State      
     def setStateID(self, command):
         self.StateID = command.get('value')
+        LOGGER.debug('State ID %s ', self.StateID)
 
 # Integer       
     def setIntegerID(self, command):    
-        self.IntegeriD = command.get('value')           
+        self.IntegeriD = command.get('value')
+        LOGGER.debug('Integer ID %s ', self.IntegerID)        
 # Push
     def pushToID(self, command):
         _ID = command.get('value')
