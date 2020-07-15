@@ -288,10 +288,6 @@ class VirtualTempC(polyinterface.Node):
         self.Rconvert = False
         _temp = float(command.get('value'))
         self.setDriver('ST', _temp)
-        self.pushToStateValue(_temp)
-        self.pushToStateInit(_temp)
-        #requests.get('http://' + self.parent.isy + '/rest/vars/set/2/' + self.address + '/' + str(_temp), auth=(self.parent.user, self.parent.password))
-        #requests.get('http://' + self.parent.isy + '/rest/vars/init/2/' + self.address + '/' + str(_temp), auth=(self.parent.user, self.parent.password))
         self.tempVal = _temp
 
 # State      
@@ -302,30 +298,17 @@ class VirtualTempC(polyinterface.Node):
     def setIntegerID(self, command):    
         pass
                   
-# Push     
-    def pushToStateValue(self, command):
-        if self.StateID != 0:
-            requests.get('http://' + self.parent.isy + '/rest/vars/set/2/' + self.StateID + '/' + str(_temp), auth=(self.parent.user, self.parent.password))
-        else:
+# Push
+    def pushToID(self.command):
+        _ID = command.get('value')
+        if _ID == 0:
             pass
-        
-    def pushToStateInit(self, command);
-        if self.StateID != 0:    
-            requests.get('http://' + self.parent.isy + '/rest/vars/init/2/' + self.StateID + '/' + str(_temp), auth=(self.parent.user, self.parent.password))
         else:
-            pass
-          
-    def pushToIntegerValue(self, command);
-        if self.IntegerID != 0:
-            requests.get('http://' + self.parent.isy + '/rest/vars/set/1/' + self.IntegerID + '/' + str(_temp), auth=(self.parent.user, self.parent.password))
-        else:
-            pass
-        
-    def pushToIntegerInit(self, command);
-        if self.IntegerID != 0:    
-            requests.get('http://' + self.parent.isy + '/rest/vars/init/1/' + self.IntegerID + '/' + str(_temp), auth=(self.parent.user, self.parent.password))
-        else:
-            pass
+            if _ID == 1: requests.get('http://' + self.parent.isy + '/rest/vars/set/2/' + self.StateID + '/' + str(self.tempVal), auth=(self.parent.user, self.parent.password))
+            if _ID == 2: requests.get('http://' + self.parent.isy + '/rest/vars/init/2/' + self.StateID + '/' + str(self.tempVal), auth=(self.parent.user, self.parent.password))
+            if _ID == 3: requests.get('http://' + self.parent.isy + '/rest/vars/set/1/' + self.IntegerID + '/' + str(self.tempVal), auth=(self.parent.user, self.parent.password))
+            if _ID == 4: requests.get('http://' + self.parent.isy + '/rest/vars/init/1/' + self.IntegerID + '/' + str(self.tempVal), auth=(self.parent.user, self.parent.password))
+                
             
     def setTempRaw(self, command):
         if not self.Rconvert and not self.FtoCconvert:
@@ -406,8 +389,7 @@ class VirtualTempC(polyinterface.Node):
 
     commands = {
                     'setTemp': setTemp, 'setRaw': setTempRaw, 'setFtoC': FtoC, 'setHigh': resetHighTemp, 'setLow': resetLowTemp,
-                    # off or on
-                    #'pushStateV': pushStateValue, 'pushStateI': pushStateInteger, 'pushIntegerV': pushIntegerValue, 'pushIntegerI' : pushIntegerInit,
+                    'pushToID': pushToID,
                     'setSid': setStateID, 'setIid': setIntegerID,
                     'highLowBackUp': restoreHighLow
                 }
