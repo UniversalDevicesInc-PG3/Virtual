@@ -265,18 +265,17 @@ class VirtualTempC(polyinterface.Node):
         self.lastUpdateTime = 0.0
         self.highTemp = -60.0
         self.lowTemp = 129.0
+        self.avgTemp = 0
         self.previousHigh = 0
         self.previousLow = 0
         self.StateID = 0
         self.IntegerID = 0
-        
+        self.prevAvgTemp = 0
         
     def start(self):
         self.currentTime = time.time()
         self.lastUpdateTime = time.time()
         self.setDriver('GV2', 0.0)
-        #self.setDriver('GV3', self.highTemp)
-        #self.setDriver('GV4', self.lowTemp)
 
     def setTemp(self, command):
         self.checkHighLow(self.tempVal)
@@ -293,11 +292,9 @@ class VirtualTempC(polyinterface.Node):
 # State      
     def setStateID(self, command):
         pass
-    
 # Integer       
     def setIntegerID(self, command):    
-        pass
-                  
+        pass           
 # Push
     def pushToID(self.command):
         _ID = command.get('value')
@@ -308,8 +305,7 @@ class VirtualTempC(polyinterface.Node):
             if _ID == 2: requests.get('http://' + self.parent.isy + '/rest/vars/init/2/' + self.StateID + '/' + str(self.tempVal), auth=(self.parent.user, self.parent.password))
             if _ID == 3: requests.get('http://' + self.parent.isy + '/rest/vars/set/1/' + self.IntegerID + '/' + str(self.tempVal), auth=(self.parent.user, self.parent.password))
             if _ID == 4: requests.get('http://' + self.parent.isy + '/rest/vars/init/1/' + self.IntegerID + '/' + str(self.tempVal), auth=(self.parent.user, self.parent.password))
-                
-            
+                   
     def setTempRaw(self, command):
         if not self.Rconvert and not self.FtoCconvert:
             LOGGER.info('converting from raw')
@@ -353,7 +349,13 @@ class VirtualTempC(polyinterface.Node):
                 self.setDriver('GV4', command)
                 self.lowTemp = command
         self.firstRun = False
-
+        self.avgHighLow()
+    
+    def avgHighLow(self):
+        self.prevAvgTemp = self.avgTemp
+        self.avgTemp = round(((self.highTemp + self.lowTemp) / 2), 1)
+        self.setDriver('GV5', self.avgTemp)
+        
     def resetHighTemp(self, command):
         LOGGER.info('Resetting the High Temp')
         self.highTemp = -60
@@ -378,20 +380,20 @@ class VirtualTempC(polyinterface.Node):
     #"Hints See: https://github.com/UniversalDevicesInc/hints"
     #hint = [1,2,3,4]
     drivers = [
-               {'driver': 'ST', 'value': 0, 'uom': 4},
-               {'driver': 'GV1', 'value': 0, 'uom': 4},
-               {'driver': 'GV2', 'value': 0, 'uom': 45},
-               {'driver': 'GV3', 'value': 0, 'uom': 4},
-               {'driver': 'GV4', 'value': 0, 'uom': 4}        
+               {'driver': 'ST', 'value': 0, 'uom': 4},  #current
+               {'driver': 'GV1', 'value': 0, 'uom': 4}, #previou
+               {'driver': 'GV2', 'value': 0, 'uom': 45},#update
+               {'driver': 'GV3', 'value': 0, 'uom': 4}, #high
+               {'driver': 'GV4', 'value': 0, 'uom': 4}, #low
+               {'driver': 'GV5', 'value': 0, 'uom': 4}  #avg high - low
               ]
 
     id = 'virtualtempc'
 
     commands = {
-                    'setTemp': setTemp, 'setRaw': setTempRaw, 'setFtoC': FtoC, 'setHigh': resetHighTemp, 'setLow': resetLowTemp,
-                    'pushToID': pushToID,
-                    'setSid': setStateID, 'setIid': setIntegerID,
-                    'highLowBackUp': restoreHighLow
+                    'setTemp': setTemp, 'setSid': setStateID, 'setIid': setIntegerID, 'pushToID': pushToID,  #these are drop downs
+                    'setHigh': resetHighTemp, 'setLow': resetLowTemp, 'highLowBackUp': restoreHighLow, 'setRaw': setTempRaw, 'setFtoC': FtoC #bottom 
+                    
                 }
     
 class VirtualGeneric(polyinterface.Node):
