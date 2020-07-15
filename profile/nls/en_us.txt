@@ -55,3 +55,8 @@ CMD-vtempc_-setII-NAME = Set Integer Init
 ON_OFF-0 = Off
 ON_OFF-1 = On
 
+PUSH_VAR-0 = None
+PUSH_VAR-1 = State Value
+PUSH_VAR-2 = State Init
+PUSH_VAR-3 = Integer Value
+PUSH_VAR-4 = Intever Init
