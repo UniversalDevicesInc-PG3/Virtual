@@ -305,7 +305,7 @@ class VirtualTempC(polyinterface.Node):
     def setIntegerID(self, command):    
         self.IntegeriD = command.get('value')           
 # Push
-    def pushToID(self.command):
+    def pushToID(self, command):
         _ID = command.get('value')
         if _ID == 0:
             pass
