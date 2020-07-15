@@ -8,11 +8,19 @@
     <editor id="on_off">
         <range uom="25" subset="0,1" nls="ON_OFF" />
     </editor>
-
+    
+    <editor id="push_var">
+        <range uom="25" subset="0-4" nls="PUSH_VAR" />
+    </editor>
+    
     <editor id="value">
         <range uom="56" min="0" max="100" prec="0" step="1"/>
     </editor>
 
+    <editor id="variableID">
+        <range uom="56" min="0" max="1000" prec="0" step="1"/>
+    </editor>
+    
     <editor id="minutes">
         <range uom="45" min="0" max="1440" prec="1" step="1"/>
     </editor>
