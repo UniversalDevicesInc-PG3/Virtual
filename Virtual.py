@@ -268,6 +268,9 @@ class VirtualTempC(polyinterface.Node):
         self.highTemp = -60.0
         self.lowTemp = 129.0
         
+        self.previousHigh = 0
+        self.previousLow = 0
+        
     def start(self):
         self.currentTime = time.time()
         self.lastUpdateTime = time.time()
@@ -285,11 +288,52 @@ class VirtualTempC(polyinterface.Node):
         self.Rconvert = False
         _temp = float(command.get('value'))
         self.setDriver('ST', _temp)
-        requests.get('http://' + self.parent.isy + '/rest/vars/set/2/' + self.address + '/' + str(_temp), auth=(self.parent.user, self.parent.password))
-        requests.get('http://' + self.parent.isy + '/rest/vars/init/2/' + self.address + '/' + str(_temp), auth=(self.parent.user, self.parent.password))
+        self.pushToStateValue(_temp)
+        self.pushToStateInit(_temp)
+        #requests.get('http://' + self.parent.isy + '/rest/vars/set/2/' + self.address + '/' + str(_temp), auth=(self.parent.user, self.parent.password))
+        #requests.get('http://' + self.parent.isy + '/rest/vars/init/2/' + self.address + '/' + str(_temp), auth=(self.parent.user, self.parent.password))
         self.tempVal = _temp
 
-
+# State Value        
+    def setSVvariable(self, command):
+        pass
+        
+    def pushToStateValue(self, command):
+        if command != 0:
+            requests.get('http://' + self.parent.isy + '/rest/vars/set/2/' + self.address + '/' + str(_temp), auth=(self.parent.user, self.parent.password))
+        else:
+            pass
+        
+# State Init        
+    def setSIvariable(self, command):    
+        pass
+    
+    def pushToStateInit(self, command);
+        if command != 0:    
+            requests.get('http://' + self.parent.isy + '/rest/vars/init/2/' + self.address + '/' + str(_temp), auth=(self.parent.user, self.parent.password))
+        else:
+            pass
+        
+# Integer Value        
+    def setIVvariable(self, command):    
+        pass
+                
+    def pushToIntegerValue(self, command);
+        if command != 0:
+            requests.get('http://' + self.parent.isy + '/rest/vars/set/1/' + self.address + '/' + str(_temp), auth=(self.parent.user, self.parent.password))
+        else:
+            pass
+        
+#  Integer Init     
+    def setIIvariable(self, command):    
+        pass
+    
+    def pushToIntegerInit(self, command);
+        if command != 0:    
+            requests.get('http://' + self.parent.isy + '/rest/vars/init/1/' + self.address + '/' + str(_temp), auth=(self.parent.user, self.parent.password))
+        else:
+            pass
+            
     def setTempRaw(self, command):
         if not self.Rconvert and not self.FtoCconvert:
             LOGGER.info('converting from raw')
@@ -322,6 +366,8 @@ class VirtualTempC(polyinterface.Node):
         if self.firstRun:
             pass
         else:
+            self.previousHigh = self.highTemp
+            self.previousLow = self.lowTemp
             if command > self.highTemp:
                 LOGGER.debug('check high')
                 self.setDriver('GV3', command)
@@ -342,6 +388,10 @@ class VirtualTempC(polyinterface.Node):
         self.lowTemp = 130
         self.setDriver('GV4', 0)
     
+    def restoreHighLow(self, command):
+        self.highTemp = self.previousHigh
+        self.lowTemp = self.previousLow
+        
     def update(self):
         self.checkLastUpdate()
     
@@ -362,7 +412,10 @@ class VirtualTempC(polyinterface.Node):
     id = 'virtualtempc'
 
     commands = {
-                    'setTemp': setTemp, 'setRaw': setTempRaw, 'setFtoC': FtoC, 'setHigh': resetHighTemp, 'setLow': resetLowTemp
+                    'setTemp': setTemp, 'setRaw': setTempRaw, 'setFtoC': FtoC, 'setHigh': resetHighTemp, 'setLow': resetLowTemp,
+                    'pushStateV': pushStateValue, 'pushStateI': pushStateInteger, 'pushIntegerV': pushIntegerValue, 'pushIntegerI' : pushIntegerInit,
+                    'setSV': setSVvariable, 'setSI': setSIvariable, 'setIV': setIVvariable, 'setSI': setIIvariable, 
+                    'highLowBackUp': restoreHighLow
                 }
     
 class VirtualGeneric(polyinterface.Node):
