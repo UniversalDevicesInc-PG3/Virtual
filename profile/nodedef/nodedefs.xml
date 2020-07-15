@@ -76,13 +76,13 @@
                   <p id="" editor="tempc" init="ST" />
                 </cmd>
                 <cmd id="setSid">
-                  <p id="" editor="push_var" />
+                  <p id="" editor="variableID" />
                 </cmd>
                 <cmd id="setIid">
-                  <p id="" editor="push_var" />
+                  <p id="" editor="variableID" />
                 </cmd>
                 <cmd id="pushToID">
-                  <p id="" editor="variableID" />
+                  <p id="" editor="push_var" />
                 </cmd>                
             </accepts>
         </cmds>
