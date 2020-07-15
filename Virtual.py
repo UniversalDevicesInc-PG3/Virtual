@@ -315,6 +315,7 @@ class VirtualTempC(polyinterface.Node):
         if _ID == 0:
             pass
         else:
+            LOGGER.debug('Got inside')
             if _ID == 1:
                 LOGGER.debug('PUSHING')
                 requests.get('http://' + self.parent.isy + '/rest/vars/set/2/' + str(self.StateID) + '/' + str(self.tempVal), auth=(self.parent.user, self.parent.password))
