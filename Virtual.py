@@ -311,6 +311,7 @@ class VirtualTempC(polyinterface.Node):
 # Push
     def pushToID(self, command):
         _ID = command.get('value')
+        LOGGER.debug('PushToID command %s to ID %s ', _ID, self.StateID)
         if _ID == 0:
             pass
         else:
