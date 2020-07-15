@@ -278,10 +278,12 @@ class VirtualTempC(polyinterface.Node):
         self.setDriver('GV2', 0.0)
         self.retrieveValues()
        
-    def storeValues(self,command):
+    def storeValues(self):
+        LOGGER.info('Storing Values')
         pass
     
-    def retrieveValues(self, command):
+    def retrieveValues(self):
+        LOGGER.info('Retrieving Values')
         pass
     
     def setTemp(self, command):
