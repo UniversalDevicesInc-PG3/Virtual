@@ -315,10 +315,10 @@ class VirtualTempC(polyinterface.Node):
         if _ID == 0:
             pass
         else:
-            if _ID == 1: requests.get('http://' + self.parent.isy + '/rest/vars/set/2/' + self.StateID + '/' + str(self.tempVal), auth=(self.parent.user, self.parent.password))
-            if _ID == 2: requests.get('http://' + self.parent.isy + '/rest/vars/init/2/' + self.StateID + '/' + str(self.tempVal), auth=(self.parent.user, self.parent.password))
-            if _ID == 3: requests.get('http://' + self.parent.isy + '/rest/vars/set/1/' + self.IntegerID + '/' + str(self.tempVal), auth=(self.parent.user, self.parent.password))
-            if _ID == 4: requests.get('http://' + self.parent.isy + '/rest/vars/init/1/' + self.IntegerID + '/' + str(self.tempVal), auth=(self.parent.user, self.parent.password))
+            if _ID == 1: requests.get('http://' + self.parent.isy + '/rest/vars/set/2/' + str(self.StateID) + '/' + str(self.tempVal), auth=(self.parent.user, self.parent.password))
+            if _ID == 2: requests.get('http://' + self.parent.isy + '/rest/vars/init/2/' + str(self.StateID) + '/' + str(self.tempVal), auth=(self.parent.user, self.parent.password))
+            if _ID == 3: requests.get('http://' + self.parent.isy + '/rest/vars/set/1/' + str(self.IntegerID) + '/' + str(self.tempVal), auth=(self.parent.user, self.parent.password))
+            if _ID == 4: requests.get('http://' + self.parent.isy + '/rest/vars/init/1/' + str(self.IntegerID) + '/' + str(self.tempVal), auth=(self.parent.user, self.parent.password))
                    
     def setTempRaw(self, command):
         if not self.Rconvert and not self.FtoCconvert:
