@@ -69,7 +69,7 @@
             <accepts>
                 <cmd id="setHigh" />
                 <cmd id="setLow" />
-                <cmd id="highLowBackup" />
+                <cmd id="highLowBackUp" />
                 <cmd id="setRaw" />
                 <cmd id="setFtoC" />
                 <cmd id="setTemp">
