@@ -352,9 +352,10 @@ class VirtualTempC(polyinterface.Node):
         self.avgHighLow()
     
     def avgHighLow(self):
-        self.prevAvgTemp = self.avgTemp
-        self.avgTemp = round(((self.highTemp + self.lowTemp) / 2), 1)
-        self.setDriver('GV5', self.avgTemp)
+        if self.highTemp != -60 and self.lowTemp != 130: # make sure values have been set from startup
+            self.prevAvgTemp = self.avgTemp
+            self.avgTemp = round(((self.highTemp + self.lowTemp) / 2), 1)
+            self.setDriver('GV5', self.avgTemp)
         
     def resetHighTemp(self, command):
         LOGGER.info('Resetting the High Temp')
@@ -367,6 +368,7 @@ class VirtualTempC(polyinterface.Node):
         self.setDriver('GV4', 0)
     
     def restoreHighLow(self, command):
+        self.avgTemp = self.prevAvgTemp
         self.highTemp = self.previousHigh
         self.lowTemp = self.previousLow
         
@@ -392,8 +394,7 @@ class VirtualTempC(polyinterface.Node):
 
     commands = {
                     'setTemp': setTemp, 'setSid': setStateID, 'setIid': setIntegerID, 'pushToID': pushToID,  #these are drop downs
-                    'setHigh': resetHighTemp, 'setLow': resetLowTemp, 'highLowBackUp': restoreHighLow, 'setRaw': setTempRaw, 'setFtoC': FtoC #bottom 
-                    
+                    'setHigh': resetHighTemp, 'setLow': resetLowTemp, 'highLowBackUp': restoreHighLow, 'setRaw': setTempRaw, 'setFtoC': FtoC #bottom   
                 }
     
 class VirtualGeneric(polyinterface.Node):
