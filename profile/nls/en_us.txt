@@ -47,7 +47,10 @@ CMD-vtempc-restoreHighLow-NAME = Restore Previous High Low
 CMD-vtempc-setFtoC-NAME = Convert F to C
 CMD-vtempc-setRaw-NAME = Convert Raw to Prec
 CMD-vtempc-setTemp-NAME = Set Current
-
+CMD-vtempc_setSV-NAME = Set State Varialbe
+CMD-vtempc_-setSI-NAME = Set State Init
+CMD-vtempc_setIV-NAME = Set Integer Varialbe
+CMD-vtempc_-setII-NAME = Set Integer Init
 
 ON_OFF-0 = Off
 ON_OFF-1 = On
