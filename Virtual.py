@@ -281,7 +281,7 @@ class VirtualTempC(polyinterface.Node):
     def storeValues(self,command):
         pass
     
-    def retreiveValues(self, command):
+    def retrieveValues(self, command):
         pass
     
     def setTemp(self, command):
