@@ -43,9 +43,11 @@ ST-vtempc-GV3-NAME = Highest
 ST-vtempc-GV4-NAME = Lowest
 CMD-vtempc-setHigh-NAME = Reset High Temp
 CMD-vtempc-setLow-NAME = Reset Low Temp
+CMD-vtempc-restoreHighLow-NAME = Restore Previous High Low
 CMD-vtempc-setFtoC-NAME = Convert F to C
 CMD-vtempc-setRaw-NAME = Convert Raw to Prec
-CMD-vtempc-setTemp-NAME = Set Temperature
+CMD-vtempc-setTemp-NAME = Set Current
+
 
 ON_OFF-0 = Off
 ON_OFF-1 = On
