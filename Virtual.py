@@ -300,7 +300,7 @@ class VirtualTempC(polyinterface.Node):
         _temp = float(command.get('value'))
         self.setDriver('ST', _temp)
         self.tempVal = _temp
-        self.pushToID(int(self.pushToIDcommand))
+        self.pushTheValue()
 # State      
     def setStateID(self, command):
         self.StateID = command.get('value')
@@ -311,15 +311,18 @@ class VirtualTempC(polyinterface.Node):
         self.IntegerID = command.get('value')
         LOGGER.debug('Integer ID %s ', self.IntegerID)        
 # Push
-    def pushToID(self, command):
+    def pushToID(self, command)
         _command = int(command.get('value'))
         self.pushToIDcommand = _command
-        if _command == 0: pass
+        
+    def pushTheValue(self):
+        if self.pushToIDcommand == 0:
+            pass
         else:
-            if _command == 1: requests.get('http://' + self.parent.isy + '/rest/vars/set/2/' + str(self.StateID) + '/' + str(self.tempVal), auth=(self.parent.user, self.parent.password))
-            if _command == 2: requests.get('http://' + self.parent.isy + '/rest/vars/init/2/' + str(self.StateID) + '/' + str(self.tempVal), auth=(self.parent.user, self.parent.password))
-            if _command == 3: requests.get('http://' + self.parent.isy + '/rest/vars/set/1/' + str(self.IntegerID) + '/' + str(self.tempVal), auth=(self.parent.user, self.parent.password))
-            if _command == 4: requests.get('http://' + self.parent.isy + '/rest/vars/init/1/' + str(self.IntegerID) + '/' + str(self.tempVal), auth=(self.parent.user, self.parent.password))
+            if self.pushToIDcommand == 1: requests.get('http://' + self.parent.isy + '/rest/vars/set/2/' + str(self.StateID) + '/' + str(self.tempVal), auth=(self.parent.user, self.parent.password))
+            if self.pushToIDcommand == 2: requests.get('http://' + self.parent.isy + '/rest/vars/init/2/' + str(self.StateID) + '/' + str(self.tempVal), auth=(self.parent.user, self.parent.password))
+            if self.pushToIDcommand == 3: requests.get('http://' + self.parent.isy + '/rest/vars/set/1/' + str(self.IntegerID) + '/' + str(self.tempVal), auth=(self.parent.user, self.parent.password))
+            if self.pushToIDcommand == 4: requests.get('http://' + self.parent.isy + '/rest/vars/init/1/' + str(self.IntegerID) + '/' + str(self.tempVal), auth=(self.parent.user, self.parent.password))
 # Pull
     def pullFromID(self, command): # this pulls but does not set temp yet
         _command = int(command.get('value'))
