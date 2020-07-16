@@ -272,10 +272,7 @@ class VirtualTempC(polyinterface.Node):
         self.IntegerID = 0
         self.prevAvgTemp = 0
         self.currentAvgTemp = 0
-        self.resetHigh = False
-        self.resetLow = False
-        self.resetCurrent = False
-        
+
     def start(self):
         self.currentTime = time.time()
         self.lastUpdateTime = time.time()
@@ -291,8 +288,7 @@ class VirtualTempC(polyinterface.Node):
         pass
     
     def setTemp(self, command):
-        if not self.resetCurrent:            # if you haven't hit the Restore button
-            self.checkHighLow(self.tempVal)
+        self.checkHighLow(self.tempVal)
         self.storeValues()
         self.setDriver('GV2', 0.0)
         self.lastUpdateTime = time.time()        
@@ -300,11 +296,7 @@ class VirtualTempC(polyinterface.Node):
         self.setDriver('GV1', self.prevVal) # set prev from current
         self.FtoCconvert = False
         self.Rconvert = False
-        if not self.resetCurrent:
-            _temp = float(command.get('value'))
-        elif self.resetCurrent:
-            _temp = self.tempVal
-            self.resetCurrent = False
+        _temp = float(command.get('value'))
         self.setDriver('ST', _temp)
         self.tempVal = _temp
 
@@ -327,7 +319,7 @@ class VirtualTempC(polyinterface.Node):
             if _command == 3: requests.get('http://' + self.parent.isy + '/rest/vars/set/1/' + str(self.IntegerID) + '/' + str(self.tempVal), auth=(self.parent.user, self.parent.password))
             if _command == 4: requests.get('http://' + self.parent.isy + '/rest/vars/init/1/' + str(self.IntegerID) + '/' + str(self.tempVal), auth=(self.parent.user, self.parent.password))
 # Pull
-    def pullFromID(self, command):
+    def pullFromID(self, command): # this pulls but does not set temp yet
         _command = int(command.get('value'))
         if _command == 0: pass
         else:
@@ -397,31 +389,17 @@ class VirtualTempC(polyinterface.Node):
         
     def resetHighTemp(self, command):
         LOGGER.info('Resetting the High Temp')
-        self.highTemp = -60
-        self.setDriver('GV3', 0)
-        self.resetHigh = True
+        self.highTemp = self.previousHigh
+        self.setDriver('GV3', self.highTemp)
                                  
     def resetLowTemp(self, command):
         LOGGER.info('Resetting the Low Temp')
-        self.lowTemp = 130
-        self.setDriver('GV4', 0)
-        self.resetLow - True
-                                 
-    def restoreHighLow(self, command): ############## work on this to get it right
-        self.tempVal = self.prevVal
-        self.setTemp(self.tempVal)
-        self.resetCurrent = True
-        self.currentAvgTemp = self.prevAvgTemp
-        self.highTemp = self.previousHigh
         self.lowTemp = self.previousLow
-        self.setDriver('GV5', self.currentAvgTemp)
-        self.setDriver('GV3', self.highTemp)
-        self.setDriver('GV4', self.lowTemp)
+        self.setDriver('GV4', self.lowTemp)  
             
     def update(self):
         self.checkLastUpdate()
-    
-    
+
     def query(self):
         self.reportDrivers()
 
@@ -429,8 +407,8 @@ class VirtualTempC(polyinterface.Node):
     #hint = [1,2,3,4]
     drivers = [
                {'driver': 'ST', 'value': 0, 'uom': 4},  #current
-               {'driver': 'GV1', 'value': 0, 'uom': 4}, #previou
-               {'driver': 'GV2', 'value': 0, 'uom': 45},#update
+               {'driver': 'GV1', 'value': 0, 'uom': 4}, #previous
+               {'driver': 'GV2', 'value': 0, 'uom': 45},#update time
                {'driver': 'GV3', 'value': 0, 'uom': 4}, #high
                {'driver': 'GV4', 'value': 0, 'uom': 4}, #low
                {'driver': 'GV5', 'value': 0, 'uom': 4}  #avg high - low
@@ -440,7 +418,7 @@ class VirtualTempC(polyinterface.Node):
 
     commands = {
                     'setTemp': setTemp, 'setSid': setStateID, 'setIid': setIntegerID, 'pushToID': pushToID,  #these are drop downs
-                    'setHigh': resetHighTemp, 'setLow': resetLowTemp, 'highLowBackUp': restoreHighLow, 'setRaw': setTempRaw, 'setFtoC': FtoC #bottom   
+                    'setHigh': resetHighTemp, 'setLow': resetLowTemp, 'setRaw': setTempRaw, 'setFtoC': FtoC #bottom   
                 }
     
 class VirtualGeneric(polyinterface.Node):
