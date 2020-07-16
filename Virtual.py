@@ -272,6 +272,7 @@ class VirtualTempC(polyinterface.Node):
         self.IntegerID = 0
         self.prevAvgTemp = 0
         self.currentAvgTemp = 0
+        self.pushToIDcommand = 0
 
     def start(self):
         self.currentTime = time.time()
@@ -299,7 +300,7 @@ class VirtualTempC(polyinterface.Node):
         _temp = float(command.get('value'))
         self.setDriver('ST', _temp)
         self.tempVal = _temp
-
+        self.pushToID(int(self.pushToIDcommand))
 # State      
     def setStateID(self, command):
         self.StateID = command.get('value')
@@ -311,7 +312,8 @@ class VirtualTempC(polyinterface.Node):
         LOGGER.debug('Integer ID %s ', self.IntegerID)        
 # Push
     def pushToID(self, command):
-        _command = int(command.get('value'))
+        if _command = int(command.get('value')) != command:
+            self.pushToIDcommand = _command
         if _command == 0: pass
         else:
             if _command == 1: requests.get('http://' + self.parent.isy + '/rest/vars/set/2/' + str(self.StateID) + '/' + str(self.tempVal), auth=(self.parent.user, self.parent.password))
