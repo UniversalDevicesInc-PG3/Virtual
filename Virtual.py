@@ -444,7 +444,8 @@ class VirtualGeneric(polyinterface.Node):
         _level = int(command.get('value'))
         self.setDriver('ST', _level)
         requests.get('http://' + self.parent.isy + '/rest/vars/set/2/' + self.address + '/' + str(_level), auth=(self.parent.user, self.parent.password))
-        requests.get('http://' + self.parent.isy + '/rest/vars/init/2/' + self.address + '/' + str(_level), auth=(self.parent.user, self.parent.password))
+        r = requests.get('http://' + self.parent.isy + '/rest/vars/get/2/' + self.address + '/' + str(_level), auth=(self.parent.user, self.parent.password))
+        LOGGER.info(r)
         
     def update(self):
         pass
