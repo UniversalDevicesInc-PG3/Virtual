@@ -271,6 +271,9 @@ class VirtualTempC(polyinterface.Node):
         self.IntegerID = 0
         self.prevAvgTemp = 0
         self.currentAvgTemp = 0
+        self.resetHigh = False
+        self.resetLow = False
+        self.resetCurrent = False
         
     def start(self):
         self.currentTime = time.time()
@@ -287,7 +290,8 @@ class VirtualTempC(polyinterface.Node):
         pass
     
     def setTemp(self, command):
-        self.checkHighLow(self.tempVal)
+        if not self.resetCurrent:            # if you haven't hit the Restore button
+            self.checkHighLow(self.tempVal)
         self.storeValues()
         self.setDriver('GV2', 0.0)
         self.lastUpdateTime = time.time()        
@@ -295,7 +299,11 @@ class VirtualTempC(polyinterface.Node):
         self.setDriver('GV1', self.prevVal) # set prev from current
         self.FtoCconvert = False
         self.Rconvert = False
-        _temp = float(command.get('value'))
+        if not self.resetCurrent:
+            _temp = float(command.get('value'))
+        elif self.resetCurrent:
+            _temp = self.tempVal
+            self.resetCurrent = False
         self.setDriver('ST', _temp)
         self.tempVal = _temp
 
@@ -322,13 +330,13 @@ class VirtualTempC(polyinterface.Node):
         _command = int(command.get('value'))
         if _command == 0: pass
         else:
-            if _command == 1:
+            if _command == 1 or _command == 2:
                 r = requests.get('http://' + self.parent.isy + '/rest/vars/get/2/' + str(self.StateID)
                 _content = str(r.content)
                 _value =  re.split('.*<init>(\d+).*<prec>(\d).*<val>(\d+)',_content)
                 LOGGER.info(_value)
                 LOGGER.info('Init = %s Prec = %s Value = %s',_value[1], _value[2], _value[3])
-            if _command == 2:
+            if _command == 3 or _command == 4:
                 r = requests.get('http://' + self.parent.isy + '/rest/vars/get/1/' + str(self.IntegerID)
                 _content = str(r.content)
                 _value =  re.split('.*<init>(\d+).*<prec>(\d).*<val>(\d+)',_content)
@@ -390,13 +398,18 @@ class VirtualTempC(polyinterface.Node):
         LOGGER.info('Resetting the High Temp')
         self.highTemp = -60
         self.setDriver('GV3', 0)
-    
+        self.resetHigh = True
+                                 
     def resetLowTemp(self, command):
         LOGGER.info('Resetting the Low Temp')
         self.lowTemp = 130
         self.setDriver('GV4', 0)
-    
-    def restoreHighLow(self, command):
+        self.resetLow - True
+                                 
+    def restoreHighLow(self, command): ############## work on this to get it right
+        self.tempVal = self.prevVal
+        self.setTemp(self.tempVal)
+        self.resetCurrent = True
         self.currentAvgTemp = self.prevAvgTemp
         self.highTemp = self.previousHigh
         self.lowTemp = self.previousLow
