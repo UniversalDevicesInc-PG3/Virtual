@@ -310,25 +310,31 @@ class VirtualTempC(polyinterface.Node):
         LOGGER.debug('Integer ID %s ', self.IntegerID)        
 # Push
     def pushToID(self, command):
-        _ID = int(command.get('value'))
-        LOGGER.debug('PushToID command %s to ID %s ', _ID, self.StateID)
-        if _ID == 0:
-            pass
+        _command = int(command.get('value'))
+        if _command == 0: pass
         else:
-            LOGGER.debug('Got inside')
-            if _ID == 1:
-                LOGGER.debug('PUSHING')
-                requests.get('http://' + self.parent.isy + '/rest/vars/set/2/' + str(self.StateID) + '/' + str(self.tempVal), auth=(self.parent.user, self.parent.password))
-            if _ID == 2:
-                LOGGER.debug('PUSHING')
-                requests.get('http://' + self.parent.isy + '/rest/vars/init/2/' + str(self.StateID) + '/' + str(self.tempVal), auth=(self.parent.user, self.parent.password))
-            if _ID == 3:
-                LOGGER.debug('PUSHING')
-                requests.get('http://' + self.parent.isy + '/rest/vars/set/1/' + str(self.IntegerID) + '/' + str(self.tempVal), auth=(self.parent.user, self.parent.password))
-            if _ID == 4:
-                LOGGER.debug('PUSHING')
-                requests.get('http://' + self.parent.isy + '/rest/vars/init/1/' + str(self.IntegerID) + '/' + str(self.tempVal), auth=(self.parent.user, self.parent.password))
-                   
+            if _command == 1: requests.get('http://' + self.parent.isy + '/rest/vars/set/2/' + str(self.StateID) + '/' + str(self.tempVal), auth=(self.parent.user, self.parent.password))
+            if _command == 2: requests.get('http://' + self.parent.isy + '/rest/vars/init/2/' + str(self.StateID) + '/' + str(self.tempVal), auth=(self.parent.user, self.parent.password))
+            if _command == 3: requests.get('http://' + self.parent.isy + '/rest/vars/set/1/' + str(self.IntegerID) + '/' + str(self.tempVal), auth=(self.parent.user, self.parent.password))
+            if _command == 4: requests.get('http://' + self.parent.isy + '/rest/vars/init/1/' + str(self.IntegerID) + '/' + str(self.tempVal), auth=(self.parent.user, self.parent.password))
+# Pull
+    def pullFromID(self, command):
+        _command = int(command.get('value'))
+        if _command == 0: pass
+        else:
+            if _command == 1:
+                r = requests.get('http://' + self.parent.isy + '/rest/vars/get/2/' + str(self.StateID)
+                _content = str(r.content)
+                _value =  re.split('.*<init>(\d+).*<prec>(\d).*<val>(\d+)',_content)
+                LOGGER.info(_value)
+                LOGGER.info('Init = %s Prec = %s Value = %s',_value[1], _value[2], _value[3])
+            if _command == 2:
+                r = requests.get('http://' + self.parent.isy + '/rest/vars/get/1/' + str(self.IntegerID)
+                _content = str(r.content)
+                _value =  re.split('.*<init>(\d+).*<prec>(\d).*<val>(\d+)',_content)
+                LOGGER.info(_value)
+                LOGGER.info('Init = %s Prec = %s Value = %s',_value[1], _value[2], _value[3])
+           
     def setTempRaw(self, command):
         if not self.Rconvert and not self.FtoCconvert:
             LOGGER.info('converting from raw')
