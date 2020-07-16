@@ -312,8 +312,8 @@ class VirtualTempC(polyinterface.Node):
         LOGGER.debug('Integer ID %s ', self.IntegerID)        
 # Push
     def pushToID(self, command):
-        if _command = int(command.get('value')) != command:
-            self.pushToIDcommand = _command
+        _command = int(command.get('value'))
+        self.pushToIDcommand = _command
         if _command == 0: pass
         else:
             if _command == 1: requests.get('http://' + self.parent.isy + '/rest/vars/set/2/' + str(self.StateID) + '/' + str(self.tempVal), auth=(self.parent.user, self.parent.password))
