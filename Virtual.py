@@ -12,6 +12,7 @@ import sys
 import time
 import requests
 import logging
+import re
 
 LOGGER = polyinterface.LOGGER
 logging.getLogger('urllib3').setLevel(logging.ERROR)
