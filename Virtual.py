@@ -311,7 +311,7 @@ class VirtualTempC(polyinterface.Node):
         self.IntegerID = command.get('value')
         LOGGER.debug('Integer ID %s ', self.IntegerID)        
 # Push
-    def pushToID(self, command)
+    def pushToID(self, command):
         _command = int(command.get('value'))
         self.pushToIDcommand = _command
         
