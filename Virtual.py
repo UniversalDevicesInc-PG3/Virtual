@@ -332,13 +332,13 @@ class VirtualTempC(polyinterface.Node):
         if _command == 0: pass
         else:
             if _command == 1 or _command == 2:
-                r = requests.get('http://' + self.parent.isy + '/rest/vars/get/2/' + str(self.StateID)
+                r = requests.get('http://' + self.parent.isy + '/rest/vars/get/2/' + str(self.StateID))
                 _content = str(r.content)
                 _value =  re.split('.*<init>(\d+).*<prec>(\d).*<val>(\d+)',_content)
                 LOGGER.info(_value)
                 LOGGER.info('Init = %s Prec = %s Value = %s',_value[1], _value[2], _value[3])
             if _command == 3 or _command == 4:
-                r = requests.get('http://' + self.parent.isy + '/rest/vars/get/1/' + str(self.IntegerID)
+                r = requests.get('http://' + self.parent.isy + '/rest/vars/get/1/' + str(self.IntegerID))
                 _content = str(r.content)
                 _value =  re.split('.*<init>(\d+).*<prec>(\d).*<val>(\d+)',_content)
                 LOGGER.info(_value)
