@@ -316,29 +316,30 @@ class VirtualTempC(polyinterface.Node):
         self.setTempRaw()
         self.setFtoC()
         
-        if self.Action1 = 1:
-            self.pushTheValue(self.StateID1, self.StateType1,)
-        else:
-            pass
-        if self.Action2 == 1:
-            self.pushTheValue()
+        if self.action1 = 1:
+            self.pushTheValue(self.action1id, self.action1type)
         else:
             pass
         
+        if self.action2 == 1:
+            self.pushTheValue(self.action2id, self.action2type)
+        else:
+            pass
         
-# State      
-    def setStateID(self, command):
-        self.StateID = command.get('value')
-        LOGGER.debug('State ID %s ', self.StateID)
-
-# Integer       
-    def setIntegerID(self, command):    
-        self.IntegerID = command.get('value')
-        LOGGER.debug('Integer ID %s ', self.IntegerID)        
-# Push
+             
+    def setAction1id(self, command):
+        self.action1id = int(command.get('value'))
+        LOGGER.debug('Action 1 ID %s ', self.action1id)
+       
+    def setAction2id(self, command):    
+        self.action2id = int(command.get('value'))
+        LOGGER.debug('Action 2 ID %s ', self.action2id)
+        
     def pushToID(self, command):
         _command = int(command.get('value'))
         self.pushToIDcommand = _command
+        
+
         
     def pushTheValue(self):
 
@@ -441,7 +442,9 @@ class VirtualTempC(polyinterface.Node):
     id = 'virtualtempc'
 
     commands = {
-                    'setTemp': setTemp, 'setSid': setStateID, 'setIid': setIntegerID, 'pushToID': pushToID,  #these are drop downs
+                    'setTemp': setTemp, 'setAction1': setAction1, 'setAction1id': setAction1id, 'setAction1type': setAction1type,
+                                        'setAction2': setAction2, 'setAction2id': setAction2id, 'setAction2type': setAction2type,
+                                        'pushToID': pushToID,  #these are drop downs
                     'setStats': resetStats #bottom   
                 }
     
