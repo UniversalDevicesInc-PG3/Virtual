@@ -74,20 +74,20 @@
                 <cmd id="setAction1">
                   <p id="" editor="action_type" />
                 </cmd>
-                <cmd id="setAction1id">
-                  <p id="" editor="variableID" />
-                </cmd>
                 <cmd id="setAction1type">
                   <p id="" editor="variable_type" />
+                </cmd>
+                <cmd id="setAction1id">
+                  <p id="" editor="variableID" />
                 </cmd> 
                 <cmd id="setAction2">
                   <p id="" editor="action_type" />
                 </cmd>
-                <cmd id="setAction2id">
-                  <p id="" editor="variableID" />
-                </cmd>
                 <cmd id="setAction2type">
                   <p id="" editor="variable_type" />
+                </cmd>
+                <cmd id="setAction2id">
+                  <p id="" editor="variableID" />
                 </cmd>
                 <cmd id="setRawToPrec">
                   <p id="" editor="on_off" />
