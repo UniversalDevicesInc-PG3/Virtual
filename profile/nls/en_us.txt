@@ -53,6 +53,7 @@ CMD-vtempc-setAction2type-NAME = Action 2 Var Type
 CMD-vtempc-setRawToPrec-NAME = Convert Raw to Prec
 CMD-vtempc-setFtoC-NAME = Convert F to C
 
+
 ON_OFF-0 = Off
 ON_OFF-1 = On
  
