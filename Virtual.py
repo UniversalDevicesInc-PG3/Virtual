@@ -359,10 +359,10 @@ class VirtualTempC(polyinterface.Node):
         
     def pushTheValue(self):
         pass
-            if self.pushToIDcommand == 1: requests.get('http://' + self.parent.isy + '/rest/vars/set/2/' + str(self.StateID) + '/' + str(self.tempVal), auth=(self.parent.user, self.parent.password))
-            if self.pushToIDcommand == 2: requests.get('http://' + self.parent.isy + '/rest/vars/init/2/' + str(self.StateID) + '/' + str(self.tempVal), auth=(self.parent.user, self.parent.password))
-            if self.pushToIDcommand == 3: requests.get('http://' + self.parent.isy + '/rest/vars/set/1/' + str(self.IntegerID) + '/' + str(self.tempVal), auth=(self.parent.user, self.parent.password))
-            if self.pushToIDcommand == 4: requests.get('http://' + self.parent.isy + '/rest/vars/init/1/' + str(self.IntegerID) + '/' + str(self.tempVal), auth=(self.parent.user, self.parent.password))
+            #if self.pushToIDcommand == 1: requests.get('http://' + self.parent.isy + '/rest/vars/set/2/' + str(self.StateID) + '/' + str(self.tempVal), auth=(self.parent.user, self.parent.password))
+            #if self.pushToIDcommand == 2: requests.get('http://' + self.parent.isy + '/rest/vars/init/2/' + str(self.StateID) + '/' + str(self.tempVal), auth=(self.parent.user, self.parent.password))
+            #if self.pushToIDcommand == 3: requests.get('http://' + self.parent.isy + '/rest/vars/set/1/' + str(self.IntegerID) + '/' + str(self.tempVal), auth=(self.parent.user, self.parent.password))
+            #if self.pushToIDcommand == 4: requests.get('http://' + self.parent.isy + '/rest/vars/init/1/' + str(self.IntegerID) + '/' + str(self.tempVal), auth=(self.parent.user, self.parent.password))
 # Pull
     def pullFromID(self, command): # this pulls but does not set temp yet
         _command = int(command.get('value'))
