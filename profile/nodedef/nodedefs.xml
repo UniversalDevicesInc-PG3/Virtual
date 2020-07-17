@@ -92,7 +92,7 @@
                 <cmd id="setRawToPrec">
                   <p id="" editor="on_off" />
                 </cmd>                
-                <cmd id="setFtoc">
+                <cmd id="setFtoC">
                   <p id="" editor="on_off" />
                 </cmd>                
             </accepts>
