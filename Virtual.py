@@ -259,20 +259,32 @@ class VirtualTempC(polyinterface.Node):
         super(VirtualTempC, self).__init__(controller, primary, address, name)
         self.prevVal = 0.0
         self.tempVal = 0.0
+        
         self.Rconvert = False
         self.FtoCconvert = False
-        self.firstRun = True 
+        
         self.currentTime = 0.0
         self.lastUpdateTime = 0.0
+        
         self.highTemp = -60.0
         self.lowTemp = 129.0
         self.previousHigh = 0
         self.previousLow = 0
-        self.StateID = 0
-        self.IntegerID = 0
         self.prevAvgTemp = 0
         self.currentAvgTemp = 0
-        self.pushToIDcommand = 0
+        
+        self.action1 = 0  # none, push, pull
+        self.action1id = 0 # 0 - 400
+        self.action1type = 0 # State var, State init, Int var, Int init
+        
+        self.action2 = 0  
+        self.action2id = 0
+        self.action2type = 0
+        
+        self.RtoPrec = 0
+        self.FtoC = 0
+        
+
 
     def start(self):
         self.currentTime = time.time()
@@ -300,7 +312,20 @@ class VirtualTempC(polyinterface.Node):
         _temp = float(command.get('value'))
         self.setDriver('ST', _temp)
         self.tempVal = _temp
-        self.pushTheValue()
+        
+        self.setTempRaw()
+        self.setFtoC()
+        
+        if self.Action1 = 1:
+            self.pushTheValue(self.StateID1, self.StateType1,)
+        else:
+            pass
+        if self.Action2 == 1:
+            self.pushTheValue()
+        else:
+            pass
+        
+        
 # State      
     def setStateID(self, command):
         self.StateID = command.get('value')
@@ -316,8 +341,7 @@ class VirtualTempC(polyinterface.Node):
         self.pushToIDcommand = _command
         
     def pushTheValue(self):
-        if self.pushToIDcommand == 0:
-            pass
+
         else:
             if self.pushToIDcommand == 1: requests.get('http://' + self.parent.isy + '/rest/vars/set/2/' + str(self.StateID) + '/' + str(self.tempVal), auth=(self.parent.user, self.parent.password))
             if self.pushToIDcommand == 2: requests.get('http://' + self.parent.isy + '/rest/vars/init/2/' + str(self.StateID) + '/' + str(self.tempVal), auth=(self.parent.user, self.parent.password))
@@ -341,8 +365,8 @@ class VirtualTempC(polyinterface.Node):
                 LOGGER.info(_value)
                 LOGGER.info('Init = %s Prec = %s Value = %s',_value[1], _value[2], _value[3])
            
-    def setTempRaw(self, command):
-        if not self.Rconvert and not self.FtoCconvert:
+    def setTempRaw(self):
+        if not self.Rconvert and not self.FtoCconvert and self.RtoPrec == 1:
             LOGGER.info('converting from raw')
             _command = self.tempVal / 10
             self.setDriver('ST', _command)
@@ -351,8 +375,8 @@ class VirtualTempC(polyinterface.Node):
         else:
             pass
 
-    def FtoC(self, command):
-        if not self.FtoCconvert:
+    def setFtoC(self):
+        if not self.FtoCconvert and self.FtoC == 1:
             LOGGER.info('converting F to C')
             _FtoCtemp = round(((self.tempVal - 32) / 1.80), 1)
             self.setDriver('ST', _FtoCtemp)
@@ -361,7 +385,7 @@ class VirtualTempC(polyinterface.Node):
         else:
             pass
 
-    def checkLastUpdate(self):
+    def checkLastUpdate(self): # happens on the short poll
         _currentTime = time.time()
         _sinceLastUpdate = round(((_currentTime - self.lastUpdateTime) / 60), 1)
         if _sinceLastUpdate < 1440:
@@ -370,37 +394,32 @@ class VirtualTempC(polyinterface.Node):
             self.setDriver('GV2', 1440)
             
     def checkHighLow(self, command):
-        if self.firstRun:
-            pass
-        else:
-            self.previousHigh = self.highTemp
-            self.previousLow = self.lowTemp
-            if command > self.highTemp:
-                LOGGER.debug('check high')
-                self.setDriver('GV3', command)
-                self.highTemp = command            
-            if command < self.lowTemp:
-                LOGGER.debug('check low')
-                self.setDriver('GV4', command)
-                self.lowTemp = command
-        self.firstRun = False
+        self.previousHigh = self.highTemp
+        self.previousLow = self.lowTemp
+        if command > self.highTemp:
+            LOGGER.debug('check high')
+            self.setDriver('GV3', command)
+            self.highTemp = command            
+        if command < self.lowTemp:
+            LOGGER.debug('check low')
+            self.setDriver('GV4', command)
+            self.lowTemp = command
         self.avgHighLow()
     
     def avgHighLow(self):
-        if self.highTemp != -60 and self.lowTemp != 130: # make sure values have been set from startup
+        if self.highTemp != -60 and self.lowTemp != 129: # make sure values have been set from startup
             self.prevAvgTemp = self.currentAvgTemp
             self.currentAvgTemp = round(((self.highTemp + self.lowTemp) / 2), 1)
             self.setDriver('GV5', self.currentAvgTemp)
         
-    def resetHighTemp(self, command):
-        LOGGER.info('Resetting the High Temp')
-        self.highTemp = self.previousHigh
+    def resetStats(self, command):
+        self.lowTemp = 129
+        self.highTemp = -60
+        self.currentAvgTemp = 0
+        self.setDriver('GV5', self.currentAvgTemp)
         self.setDriver('GV3', self.highTemp)
-                                 
-    def resetLowTemp(self, command):
-        LOGGER.info('Resetting the Low Temp')
-        self.lowTemp = self.previousLow
-        self.setDriver('GV4', self.lowTemp)  
+        self.setDriver('GV4', self.lowTemp)                         
+ 
             
     def update(self):
         self.checkLastUpdate()
@@ -423,7 +442,7 @@ class VirtualTempC(polyinterface.Node):
 
     commands = {
                     'setTemp': setTemp, 'setSid': setStateID, 'setIid': setIntegerID, 'pushToID': pushToID,  #these are drop downs
-                    'setHigh': resetHighTemp, 'setLow': resetLowTemp, 'setRaw': setTempRaw, 'setFtoC': FtoC #bottom   
+                    'setStats': resetStats #bottom   
                 }
     
 class VirtualGeneric(polyinterface.Node):
