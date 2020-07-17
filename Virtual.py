@@ -349,7 +349,11 @@ class VirtualTempC(polyinterface.Node):
     def setAction2type(self):
         pass
     
+    def setFtoC(self):
+        pass
     
+    def setRawToPrec(self):
+        psss
     
     def pushToID(self, command):
         _command = int(command.get('value'))
@@ -381,7 +385,7 @@ class VirtualTempC(polyinterface.Node):
                 LOGGER.info(_value)
                 LOGGER.info('Init = %s Prec = %s Value = %s',_value[1], _value[2], _value[3])
            
-    def setTempRaw(self):
+    def convertTempFromRaw(self):
         if not self.Rconvert and not self.FtoCconvert and self.RtoPrec == 1:
             LOGGER.info('converting from raw')
             _command = self.tempVal / 10
@@ -391,7 +395,7 @@ class VirtualTempC(polyinterface.Node):
         else:
             pass
 
-    def setFtoC(self):
+    def convertFtoC(self):
         if not self.FtoCconvert and self.FtoC == 1:
             LOGGER.info('converting F to C')
             _FtoCtemp = round(((self.tempVal - 32) / 1.80), 1)
@@ -459,7 +463,7 @@ class VirtualTempC(polyinterface.Node):
     commands = {
                     'setTemp': setTemp, 'setAction1': setAction1, 'setAction1id': setAction1id, 'setAction1type': setAction1type,
                                         'setAction2': setAction2, 'setAction2id': setAction2id, 'setAction2type': setAction2type,
-                                        'pushToID': pushToID,  #these are drop downs
+                                        'setFtoC': setFtoC, 'setRawToPrec': setRawToPrec
                     'setStats': resetStats #bottom   
                 }
     
