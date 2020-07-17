@@ -312,8 +312,8 @@ class VirtualTempC(polyinterface.Node):
         _temp = float(command.get('value'))
         self.setDriver('ST', _temp)
         self.tempVal = _temp
-        self.setTempRaw()
-        self.setFtoC()
+        self.convertTempFromRaw()
+        self.convertFtoC()
         
         if self.action1 == 1:
             self.pushTheValue(self.action1id, self.action1type)
