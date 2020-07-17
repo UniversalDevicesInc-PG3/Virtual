@@ -433,6 +433,7 @@ class VirtualTempC(polyinterface.Node):
             self.setDriver('GV5', self.currentAvgTemp)
         
     def resetStats(self, command):
+        LOGGER.debug('Resetting Stats')
         self.lowTemp = 129
         self.highTemp = -60
         self.currentAvgTemp = 0
