@@ -79,7 +79,16 @@
                 </cmd>
                 <cmd id="action1type">
                   <p id="" editor="variable_type" />
-                </cmd>                
+                </cmd> 
+                <cmd id="action2">
+                  <p id="" editor="action_type" />
+                </cmd>
+                <cmd id="action2id">
+                  <p id="" editor="variableID" />
+                </cmd>
+                <cmd id="action2type">
+                  <p id="" editor="variable_type" />
+                </cmd>
             </accepts>
         </cmds>
     </nodeDef>
