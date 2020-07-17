@@ -353,7 +353,6 @@ class VirtualTempC(polyinterface.Node):
     def setRawToPrec(self, command):
         self.RtoPrec = int(command.get('value')
 
-
     def pushToID(self, command):
         _command = int(command.get('value'))
         self.pushToIDcommand = _command
