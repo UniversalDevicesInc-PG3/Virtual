@@ -327,7 +327,7 @@ class VirtualTempC(polyinterface.Node):
             pass
      
     
-    def setAction1(self):
+    def setAction1(self, command):
         pass
              
     def setAction1id(self, command):
@@ -335,10 +335,10 @@ class VirtualTempC(polyinterface.Node):
         self.action1id = int(command.get('value'))
         LOGGER.debug('Action 1 ID %s ', self.action1id)
     
-    def setAction1type(self):
+    def setAction1type(self, command):
         pass
     
-    def setAction2(self):
+    def setAction2(self, command):
         pass
     
     def setAction2id(self, command):
@@ -346,14 +346,14 @@ class VirtualTempC(polyinterface.Node):
         self.action2id = int(command.get('value'))
         LOGGER.debug('Action 2 ID %s ', self.action2id)
     
-    def setAction2type(self):
+    def setAction2type(self, command):
         pass
     
-    def setFtoC(self):
+    def setFtoC(self, command):
         pass
     
-    def setRawToPrec(self):
-        psss
+    def setRawToPrec(self, command):
+        pass
     
     def pushToID(self, command):
         _command = int(command.get('value'))
