@@ -58,8 +58,8 @@ ON_OFF-0 = Off
 ON_OFF-1 = On
  
 ACTION-0 = None
-ACTION-1 = Push
-ACTION-2 = Pull
+ACTION-1 = Push to
+ACTION-2 = Pull from
 
 TYPE-0 = None
 TYPE-1 = State Variable
