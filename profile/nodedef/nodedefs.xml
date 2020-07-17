@@ -90,10 +90,10 @@
                   <p id="" editor="variable_type" />
                 </cmd>
                 <cmd id="setRawToPrec">
-                  <p id="" editor="variable_type" />
+                  <p id="" editor="on_off" />
                 </cmd>                
                 <cmd id="setFtoc">
-                  <p id="" editor="variable_type" />
+                  <p id="" editor="on_off" />
                 </cmd>                
             </accepts>
         </cmds>
