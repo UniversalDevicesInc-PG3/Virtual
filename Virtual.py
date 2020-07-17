@@ -325,16 +325,32 @@ class VirtualTempC(polyinterface.Node):
             self.pushTheValue(self.action2id, self.action2type)
         else:
             pass
-        
+     
+    
+    def setAction1(self):
+        pass
              
     def setAction1id(self, command):
+        pass
         self.action1id = int(command.get('value'))
         LOGGER.debug('Action 1 ID %s ', self.action1id)
-       
-    def setAction2id(self, command):    
+    
+    def setAction1type(self):
+        pass
+    
+    def setAction2(self):
+        pass
+    
+    def setAction2id(self, command):
+        pass
         self.action2id = int(command.get('value'))
         LOGGER.debug('Action 2 ID %s ', self.action2id)
-        
+    
+    def setAction2type(self):
+        pass
+    
+    
+    
     def pushToID(self, command):
         _command = int(command.get('value'))
         self.pushToIDcommand = _command
@@ -342,8 +358,7 @@ class VirtualTempC(polyinterface.Node):
 
         
     def pushTheValue(self):
-
-        else:
+        pass
             if self.pushToIDcommand == 1: requests.get('http://' + self.parent.isy + '/rest/vars/set/2/' + str(self.StateID) + '/' + str(self.tempVal), auth=(self.parent.user, self.parent.password))
             if self.pushToIDcommand == 2: requests.get('http://' + self.parent.isy + '/rest/vars/init/2/' + str(self.StateID) + '/' + str(self.tempVal), auth=(self.parent.user, self.parent.password))
             if self.pushToIDcommand == 3: requests.get('http://' + self.parent.isy + '/rest/vars/set/1/' + str(self.IntegerID) + '/' + str(self.tempVal), auth=(self.parent.user, self.parent.password))
