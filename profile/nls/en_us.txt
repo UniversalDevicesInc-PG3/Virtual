@@ -42,20 +42,25 @@ ST-vtempc-GV2-NAME = Since Last Update
 ST-vtempc-GV3-NAME = Highest
 ST-vtempc-GV4-NAME = Lowest
 ST-vtempc-GV5-NAME = Average
-CMD-vtempc-setHigh-NAME = Reset High Temp
-CMD-vtempc-setLow-NAME = Reset Low Temp
-CMD-vtempc-setRaw-NAME = Convert Raw to Prec
-CMD-vtempc-setFtoC-NAME = Convert F to C
+CMD-vtempc-resetStats-NAME = Reset Statistics
 CMD-vtempc-setTemp-NAME = Set Current
-CMD-vtempc-setSid-NAME = Set State Variable ID
-CMD-vtempc-setIid-NAME = Set Integer Variable ID
-CMD-vtempc-pushToID-NAME = Push to Variable
+CMD-vtempc-setACtion1-NAME = Set Action 1
+CMD-vtempc-setAction1id-NAME = Action 1 ID
+CMD-vtempc-setAction1type-NAME = Action 1 Type
+CMD-vtempc-setACtion2-NAME = Set Action 2
+CMD-vtempc-setAction2id-NAME = Action 2 ID
+CMD-vtempc-setAction2type-NAME = Action 2 Type
 
 ON_OFF-0 = Off
 ON_OFF-1 = On
+ 
+ACTION-0 = None
+ACTION-1 = Push
+ACTION-2 = Pull
 
-PUSH_VAR-0 = None
-PUSH_VAR-1 = State Value
-PUSH_VAR-2 = State Init
-PUSH_VAR-3 = Integer Value
-PUSH_VAR-4 = Intever Init
+TYPE-0 = None
+TYPE-1 = State Variable
+TYPE-2 = State Init
+TYPE-3 = Integer Variable
+TYPE-4 = Integer Init
+
