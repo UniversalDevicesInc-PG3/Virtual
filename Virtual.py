@@ -312,7 +312,6 @@ class VirtualTempC(polyinterface.Node):
         _temp = float(command.get('value'))
         self.setDriver('ST', _temp)
         self.tempVal = _temp
-        
         self.setTempRaw()
         self.setFtoC()
         
@@ -342,7 +341,6 @@ class VirtualTempC(polyinterface.Node):
         pass
     
     def setAction2id(self, command):
-        pass
         self.action2id = int(command.get('value'))
         LOGGER.debug('Action 2 ID %s ', self.action2id)
     
@@ -350,11 +348,12 @@ class VirtualTempC(polyinterface.Node):
         pass
     
     def setFtoC(self, command):
-        pass
+        self.FtoC = int(command.get('value')
     
     def setRawToPrec(self, command):
-        pass
-    
+        self.RtoPrec = int(command.get('value')
+
+
     def pushToID(self, command):
         _command = int(command.get('value'))
         self.pushToIDcommand = _command
