@@ -67,20 +67,17 @@
         <cmds>
             <sends />
             <accepts>
-                <cmd id="setHigh" />
-                <cmd id="setLow" />
-                <cmd id="setRaw" />
-                <cmd id="setFtoC" />
+                <cmd id="resetStats" />
                 <cmd id="setTemp">
                   <p id="" editor="tempc" init="ST" />
                 </cmd>
-                <cmd id="setSid">
+                <cmd id="action1">
                   <p id="" editor="variableID" />
                 </cmd>
-                <cmd id="setIid">
+                <cmd id="action1id">
                   <p id="" editor="variableID" />
                 </cmd>
-                <cmd id="pushToID">
+                <cmd id="action1type">
                   <p id="" editor="push_var" />
                 </cmd>                
             </accepts>
