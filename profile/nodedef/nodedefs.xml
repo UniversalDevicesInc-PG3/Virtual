@@ -72,13 +72,13 @@
                   <p id="" editor="tempc" init="ST" />
                 </cmd>
                 <cmd id="action1">
-                  <p id="" editor="variableID" />
+                  <p id="" editor="action_type" />
                 </cmd>
                 <cmd id="action1id">
                   <p id="" editor="variableID" />
                 </cmd>
                 <cmd id="action1type">
-                  <p id="" editor="push_var" />
+                  <p id="" editor="variable_type" />
                 </cmd>                
             </accepts>
         </cmds>
