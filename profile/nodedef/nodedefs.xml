@@ -89,6 +89,12 @@
                 <cmd id="setAction2type">
                   <p id="" editor="variable_type" />
                 </cmd>
+                <cmd id="setRawToPrec">
+                  <p id="" editor="variable_type" />
+                </cmd>                
+                <cmd id="setFtoc">
+                  <p id="" editor="variable_type" />
+                </cmd>                
             </accepts>
         </cmds>
     </nodeDef>
