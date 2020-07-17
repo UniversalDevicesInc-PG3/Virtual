@@ -463,7 +463,7 @@ class VirtualTempC(polyinterface.Node):
     commands = {
                     'setTemp': setTemp, 'setAction1': setAction1, 'setAction1id': setAction1id, 'setAction1type': setAction1type,
                                         'setAction2': setAction2, 'setAction2id': setAction2id, 'setAction2type': setAction2type,
-                                        'setFtoC': setFtoC, 'setRawToPrec': setRawToPrec
+                                        'setFtoC': setFtoC, 'setRawToPrec': setRawToPrec,
                     'setStats': resetStats #bottom   
                 }
     
