@@ -316,7 +316,7 @@ class VirtualTempC(polyinterface.Node):
         self.setTempRaw()
         self.setFtoC()
         
-        if self.action1 = 1:
+        if self.action1 == 1:
             self.pushTheValue(self.action1id, self.action1type)
         else:
             pass
