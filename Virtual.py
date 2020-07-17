@@ -385,23 +385,23 @@ class VirtualTempC(polyinterface.Node):
            
     def convertTempFromRaw(self):
         if self.RtoPrec == 1:
-        LOGGER.info('converting from raw')
-        _command = self.tempVal / 10
-        self.setDriver('ST', _command)
-        self.tempVal = _command
-        self.Rconvert = True
-        #else:
-        #    pass
+            LOGGER.info('converting from raw')
+            _command = self.tempVal / 10
+            self.setDriver('ST', _command)
+            self.tempVal = _command
+            self.Rconvert = True
+        else:
+            pass
 
     def convertFtoC(self):
         if self.FtoC == 1:
-        LOGGER.info('converting F to C')
-        _FtoCtemp = round(((self.tempVal - 32) / 1.80), 1)
-        self.setDriver('ST', _FtoCtemp)
-        self.tempVal = _FtoCtemp
-        self.FtoCconvert = True
-        #else:
-        #    pass
+            LOGGER.info('converting F to C')
+            _FtoCtemp = round(((self.tempVal - 32) / 1.80), 1)
+            self.setDriver('ST', _FtoCtemp)
+            self.tempVal = _FtoCtemp
+            self.FtoCconvert = True
+        else:
+            pass
 
     def checkLastUpdate(self): # happens on the short poll
         _currentTime = time.time()
