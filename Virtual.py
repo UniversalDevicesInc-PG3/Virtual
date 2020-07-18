@@ -324,10 +324,10 @@ class VirtualTempC(polyinterface.Node):
        
     def storeValues(self):
         _name = str(self.name) + '.db'
+        _key = 'key' + str(self.address)
         LOGGER.debug(_name)
-        s = shelve.open(_name)
-        
         LOGGER.debug(_key)
+        s = shelve.open(_name)
         try:
             s[_key] = { 'created': 'yes', 'action1': str(self.action1), 'action1type': str(self.action1type), 'action1id': str(self.action1id) }
         finally:
