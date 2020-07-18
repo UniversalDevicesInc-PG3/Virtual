@@ -384,6 +384,7 @@ class VirtualTempC(polyinterface.Node):
     def pushTheValue(self, command1, command2):
         _type = str(command1)
         _id = str(command2)
+        LOGGER.debug('Pushing to http://%s/rest/vars%s%s/%s', self.parent.isy, _type, _id, self.tempVal)
         requests.get('http://' + self.parent.isy + '/rest/vars' + _type + _id + '/' + str(self.tempVal), auth=(self.parent.user, self.parent.password))
             
     def getDataFromID(self):
@@ -397,7 +398,7 @@ class VirtualTempC(polyinterface.Node):
     def pullFromID(self, command1, command2): # this pulls but does not set temp yet
         _type = str(command1)
         _id = str(command2)
-        LOGGER.debug('http://%s/rest/vars/get%s%s/', self.parent.isy, _type, _id)
+        LOGGER.debug('Pulling from http://%s/rest/vars/get%s%s/', self.parent.isy, _type, _id)
         r = requests.get('http://' + self.parent.isy + '/rest/vars/get' + _type + _id, auth=(self.parent.user, self.parent.password))
         _content = str(r.content)
         LOGGER.debug(_content)
