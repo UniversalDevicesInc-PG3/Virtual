@@ -343,6 +343,8 @@ class VirtualTempC(polyinterface.Node):
         pass
     
     def setAction2(self, command):
+        self.action2 = int(command.get('value'))
+        LOGGER.debug('Action 2 %s', self.action2)
         pass
     
     def setAction2id(self, command):
