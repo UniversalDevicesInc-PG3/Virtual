@@ -147,6 +147,9 @@ class VirtualSwitch(polyinterface.Node):
         
     def update(self):
         pass
+
+    def getDataFromID(self):
+        pass
         
     def query(self):
         self.reportDrivers()
@@ -245,6 +248,9 @@ class VirtualTemp(polyinterface.Node):
 
     def update(self):
         self.checkLastUpdate()
+
+    def getDataFromID(self):
+        pass
     
     def query(self):
         self.reportDrivers()
@@ -514,6 +520,9 @@ class VirtualGeneric(polyinterface.Node):
         LOGGER.info(r.headers)
         
     def update(self):
+        pass
+
+    def getDataFromID(self):
         pass
     
     def query(self):
