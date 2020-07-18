@@ -365,16 +365,12 @@ class VirtualTempC(polyinterface.Node):
     def pushToID(self, command):
         _command = int(command.get('value'))
         self.pushToIDcommand = _command
-        
-
-        
+          
     def pushTheValue(self, command1, command2):
         _type = str(command1)
-        LOGGER.debug(_type)
         _id = str(command2)
-        LOGGER.debug(_id)
         requests.get('http://' + self.parent.isy + '/rest/vars' + _type + _id + '/' + str(self.tempVal), auth=(self.parent.user, self.parent.password))
-        LOGGER.debug('Pushed to %s %s', _type, _id)isy + '/rest/vars/init/1/' + str(self.IntegerID) + '/' + str(self.tempVal), auth=(self.parent.user, self.parent.password))
+            
 # Pull
     def pullFromID(self, command): # this pulls but does not set temp yet
         _command = int(command.get('value'))
