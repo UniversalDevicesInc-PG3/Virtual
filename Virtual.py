@@ -437,6 +437,10 @@ class VirtualTempC(polyinterface.Node):
         self.lowTemp = 129
         self.highTemp = -60
         self.currentAvgTemp = 0
+        self.prevTemp = 0
+        self.tempVal = 0
+        self.setDriver('ST', self.tempVal)
+        self.setDriver('GV1', self.prevTemp)
         self.setDriver('GV5', self.currentAvgTemp)
         self.setDriver('GV3', self.highTemp)
         self.setDriver('GV4', self.lowTemp)                         
