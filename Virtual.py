@@ -410,6 +410,7 @@ class VirtualTempC(polyinterface.Node):
         _newTemp = 0    
         if command1 == '/2/' : _newTemp = _value[3]
         if command1 == '/1/' : _newTemp = _value[1]
+        if _value[2] == 1: _newTemp = (_newTemp / 10)
         self.setTempFromData(_newTemp)
 
     def setTempFromData(self, command):
