@@ -19,7 +19,12 @@ TYPELIST = ['/set/2/', #1
             '/set/1/', #3
             'init/1/'  #4
            ]
-            
+
+GETLIST = ['/2/',
+           '/1/',
+           '/2/',
+           '/1/'
+          ]
             
 LOGGER = polyinterface.LOGGER
 logging.getLogger('urllib3').setLevel(logging.ERROR)
