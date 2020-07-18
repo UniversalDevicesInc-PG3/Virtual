@@ -319,7 +319,7 @@ class VirtualTempC(polyinterface.Node):
         s = shelve.open(_name)
         s[_key] = { 'created': 'yes'}
         time.sleep(2)
-        s.close
+        s.close()
         self.retrieveValues()
        
     def storeValues(self):
@@ -331,7 +331,7 @@ class VirtualTempC(polyinterface.Node):
         try:
             s[_key] = { 'created': 'yes', 'action1': str(self.action1), 'action1type': str(self.action1type), 'action1id': str(self.action1id) }
         finally:
-            s.close
+            s.close()
         LOGGER.info('Storing Values')
         pass
     
@@ -344,7 +344,7 @@ class VirtualTempC(polyinterface.Node):
         try:
             existing = s[_key]
         finally:
-            s.close
+            s.close()
         LOGGER.info('Retrieving Values')
         LOGGER.info(existing)
         pass
