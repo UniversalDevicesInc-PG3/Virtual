@@ -420,7 +420,7 @@ class VirtualTempC(polyinterface.Node):
         self.prevVal = self.tempVal
         self.setDriver('GV1', self.prevVal) # set prev from current
         self.setDriver('ST', command)
-        self.tempVal = command
+        self.tempVal = int(command)
         self.convertTempFromRaw()
         self.convertFtoC()                
                         
