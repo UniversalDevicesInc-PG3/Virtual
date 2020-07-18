@@ -397,9 +397,10 @@ class VirtualTempC(polyinterface.Node):
     def pullFromID(self, command1, command2): # this pulls but does not set temp yet
         _type = str(command1)
         _id = str(command2)
-
+        LOGGER.debug('http://%s/rest/vars/get%s%s', self.parent.isy, _type, _id)
         r = requests.get('http://' + self.parent.isy + '/rest/vars/get' + _type + _id)
         _content = str(r.content)
+        LOGGER.debug(_content)
         _value =  re.split('.*<init>(\d+).*<prec>(\d).*<val>(\d+)',_content)
         LOGGER.info(_value)
         LOGGER.info('Init = %s Prec = %s Value = %s',_value[1], _value[2], _value[3])
