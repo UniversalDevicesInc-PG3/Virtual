@@ -378,7 +378,7 @@ class VirtualTempC(polyinterface.Node):
             LOGGER.debug('Action 2 Pushing')
         else:
             pass
-     
+        self.retrieveValues() 
     
     def setAction1(self, command):
         self.action1 = int(command.get('value'))
