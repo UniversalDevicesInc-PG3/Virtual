@@ -114,7 +114,10 @@ class Controller(polyinterface.Controller):
     
     def update(self):
         pass
-    
+
+    def getDataFromID(self):
+        pass
+
         id = 'controller'
     commands = {
         'QUERY': query,
