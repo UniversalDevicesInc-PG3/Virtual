@@ -264,6 +264,9 @@ class VirtualTemp(polyinterface.Node):
 class VirtualTempC(polyinterface.Node):
     def __init__(self, controller, primary, address, name):
         super(VirtualTempC, self).__init__(controller, primary, address, name)
+        
+        self.firstPass = True
+            
         self.prevVal = 0.0
         self.tempVal = 0.0
         
@@ -423,17 +426,20 @@ class VirtualTempC(polyinterface.Node):
             self.setDriver('GV2', 1440)
             
     def checkHighLow(self, command):
-        self.previousHigh = self.highTemp
-        self.previousLow = self.lowTemp
-        if command > self.highTemp:
-            LOGGER.debug('check high')
-            self.setDriver('GV3', command)
-            self.highTemp = command            
-        if command < self.lowTemp:
-            LOGGER.debug('check low')
-            self.setDriver('GV4', command)
-            self.lowTemp = command
-        self.avgHighLow()
+        if self.firstPass:
+            pass
+        else:
+            self.previousHigh = self.highTemp
+            self.previousLow = self.lowTemp
+            if command > self.highTemp:
+                LOGGER.debug('check high')
+                self.setDriver('GV3', command)
+                self.highTemp = command            
+            if command < self.lowTemp:
+                LOGGER.debug('check low')
+                self.setDriver('GV4', command)
+                self.lowTemp = command
+            self.avgHighLow()
     
     def avgHighLow(self):
         if self.highTemp != -60 and self.lowTemp != 129: # make sure values have been set from startup
