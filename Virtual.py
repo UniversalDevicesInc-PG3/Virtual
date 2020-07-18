@@ -381,7 +381,7 @@ class VirtualTempC(polyinterface.Node):
         _id = str(command2)
         requests.get('http://' + self.parent.isy + '/rest/vars' + _type + _id + '/' + str(self.tempVal), auth=(self.parent.user, self.parent.password))
             
-    def getDatafromID(self):
+    def getDataFromID(self):
         if self.action1 == 2:
             _type = TYPELIST[self.action1type]
             self.pullFromID(_type, self.action1id)                
