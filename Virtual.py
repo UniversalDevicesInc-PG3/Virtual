@@ -455,7 +455,7 @@ class VirtualTempC(polyinterface.Node):
             _FtoCtemp = round(((self.tempVal - 32) / 1.80), 1)
             LOGGER.debug(_FtoCtemp)
             self.tempVal = _FtoCtemp
-            time.sleep(.5)
+            time.sleep(1)
             self.setDriver('ST', self.tempVal)
         else:
             pass
