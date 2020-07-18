@@ -14,6 +14,7 @@ import requests
 import logging
 import re
 import shelve
+from pathlib import Path
 
 TYPELIST = ['/set/2/', #1
             '/init/2/',#2
