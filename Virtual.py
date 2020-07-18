@@ -406,9 +406,8 @@ class VirtualTempC(polyinterface.Node):
             LOGGER.info('converting F to C')
             _FtoCtemp = round(((self.tempVal - 32) / 1.80), 1)
             LOGGER.debug(_FtoCtemp)
-            self.setDriver('ST', _FtoCtemp)
-            self.tempVal = _FtoCtemp
-            self.FtoCconvert = True
+            self.tempVal = _FtoCtemp            
+            self.setDriver('ST', self.tempVal)
         else:
             pass
 
