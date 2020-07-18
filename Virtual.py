@@ -335,7 +335,7 @@ class VirtualTempC(polyinterface.Node):
         try:
             existing = s[_key]
         finally:
-            close
+            s.close
         LOGGER.info('Retrieving Values')
         LOGGER.info(existing)
         pass
