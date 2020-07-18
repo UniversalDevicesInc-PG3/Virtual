@@ -275,7 +275,7 @@ class VirtualTemp(polyinterface.Node):
     commands = {
                     'setTemp': setTemp, 'setCtoF': setCtoF, 'setRaw': setTempRaw
                 }
-##############################################################################    
+################################################################################################################################    
 class VirtualTempC(polyinterface.Node):
     def __init__(self, controller, primary, address, name):
         super(VirtualTempC, self).__init__(controller, primary, address, name)
@@ -398,12 +398,12 @@ class VirtualTempC(polyinterface.Node):
         _type = str(command1)
         _id = str(command2)
         LOGGER.debug('http://%s/rest/vars/get%s%s/', self.parent.isy, _type, _id)
-        r = requests.get('http://' + self.parent.isy + '/rest/vars/get/2/97/', auth=(self.parent.user, self.parent.password))
+        r = requests.get('http://' + self.parent.isy + '/rest/vars/get' + _type + _id, auth=(self.parent.user, self.parent.password))
         _content = str(r.content)
         LOGGER.debug(_content)
         _value =  re.split('.*<init>(\d+).*<prec>(\d).*<val>(\d+)',_content)
         LOGGER.info(_value)
-        #LOGGER.info('Init = %s Prec = %s Value = %s',_value[1], _value[2], _value[3])
+        LOGGER.info('Init = %s Prec = %s Value = %s',_value[1], _value[2], _value[3])
 
            
     def convertTempFromRaw(self):
