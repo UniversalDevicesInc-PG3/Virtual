@@ -313,6 +313,11 @@ class VirtualTempC(polyinterface.Node):
         self.lastUpdateTime = time.time()
         self.setDriver('GV2', 0.0)
         self.resetStats(1)
+        _name = str(self.name) + '.db'
+        LOGGER.debug(_name)
+        s = shelve.open(_name)
+        time.sleep(2)
+        s.close
         self.retrieveValues()
        
     def storeValues(self):
