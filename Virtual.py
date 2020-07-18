@@ -336,6 +336,8 @@ class VirtualTempC(polyinterface.Node):
     def retrieveValues(self):
         _name = str(self.name) + '.db'
         _key = 'key' + str(self.address)
+        LOGGER.debug(_name)
+        LOGGER.debug(_key)
         s = shelve.open(_name)            
         try:
             existing = s[_key]
