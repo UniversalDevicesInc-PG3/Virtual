@@ -320,35 +320,44 @@ class VirtualTempC(polyinterface.Node):
         self.convertFtoC()
         
         if self.action1 == 1:
-            self.pushTheValue(self.action1id, self.action1type)
+            _type = TYPELIST[self.action1type]
+            self.pushTheValue(_type, self.action1id)
+            LOGGER.debug('Action 1 Pushing')
         else:
             pass
         
         if self.action2 == 1:
             _type = TYPELIST[self.action2type]
             self.pushTheValue(_type, self.action2id)
+            LOGGER.debug('Action 2 Pushing')
         else:
             pass
      
     
     def setAction1(self, command):
         self.action1 = int(command.get('value'))
-             
+        LOGGER.debug('Action 1 %s', self.action1)
+            
     def setAction1id(self, command):
         self.action1id = int(command.get('value'))
+        LOGGER.debug('Action 1 ID %s', self.action1id)
     
     def setAction1type(self, command):
         self.action1type = int(command.get('value'))
-    
+        LOGGER.debug('Action 1 type %s', self.action1type)
+            
     def setAction2(self, command):
         self.action2 = int(command.get('value'))
-    
+        LOGGER.debug('Action 2 %s', self.action2)
+            
     def setAction2id(self, command):
         self.action2id = int(command.get('value'))
-
+        LOGGER.debug('Action 2 ID %s', self.action2id)
+            
     def setAction2type(self, command):
         self.action2type = int(command.get('value'))
-    
+        LOGGER.debug('Action  type %s', self.action1type)
+            
     def setFtoC(self, command):
         self.FtoC = int(command.get('value'))
         LOGGER.debug('F to C conversion %s', self.FtoC)
@@ -357,10 +366,6 @@ class VirtualTempC(polyinterface.Node):
         self.RtoPrec = int(command.get('value'))
         LOGGER.debug('Raw to Prec %s',self.RtoPrec)
         
-    def pushToID(self, command):
-        _command = int(command.get('value'))
-        self.pushToIDcommand = _command
-          
     def pushTheValue(self, command1, command2):
         _type = str(command1)
         _id = str(command2)
@@ -380,7 +385,7 @@ class VirtualTempC(polyinterface.Node):
            
     def convertTempFromRaw(self):
         if self.RtoPrec == 1:
-            LOGGER.info('converting from raw')
+            LOGGER.info('Converting from raw')
             _command = self.tempVal / 10
             self.setDriver('ST', _command)
             self.tempVal = _command
@@ -410,6 +415,7 @@ class VirtualTempC(polyinterface.Node):
     def checkHighLow(self, command):
         if self.firstPass:
             self.firstPass = False
+            LOGGER.debug('First pass skip')
             pass
         else:
             self.previousHigh = self.highTemp
@@ -426,6 +432,7 @@ class VirtualTempC(polyinterface.Node):
     
     def avgHighLow(self):
         if self.highTemp != -60 and self.lowTemp != 129: # make sure values have been set from startup
+            LOGGER.debug('Updating the average temperatue')
             self.prevAvgTemp = self.currentAvgTemp
             self.currentAvgTemp = round(((self.highTemp + self.lowTemp) / 2), 1)
             self.setDriver('GV5', self.currentAvgTemp)
