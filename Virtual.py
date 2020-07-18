@@ -405,8 +405,8 @@ class VirtualTempC(polyinterface.Node):
         _value =  re.split('.*<init>(\d+).*<prec>(\d).*<val>(\d+)',_content)
         LOGGER.info(_value)
         LOGGER.info('Init = %s Prec = %s Value = %s',_value[1], _value[2], _value[3])
-        if _type == 0 or _type == 2: _newTemp = _value[3]
-        if _type == 1 or _type == 3: _newTemp = _value[1]
+        if _type == '/2/' : _newTemp = _value[3]
+        if _type == '/1/' : _newTemp = _value[1]
         self.setTempFromData(_newTemp)
 
     def setTempFromData(self, command):
