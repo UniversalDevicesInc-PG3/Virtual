@@ -450,7 +450,8 @@ class VirtualTempC(polyinterface.Node):
         self.tempVal = command
         self.convertTempFromRaw()
         self.convertFtoC()
-            
+        self.retrieveValues()
+
         if self.action1 == 1:
             _type = TYPELIST[(self.action1type - 1)]
             self.pushTheValue(_type, self.action1id)
