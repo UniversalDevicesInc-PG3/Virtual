@@ -20,7 +20,8 @@ TYPELIST = ['/set/2/', #1
             'init/1/'  #4
            ]
 
-GETLIST = ['/2/',
+GETLIST = [' ',
+           '/2/',
            '/2/',
            '/1/',
            '/1/'
@@ -389,10 +390,10 @@ class VirtualTempC(polyinterface.Node):
             
     def getDataFromID(self):
         if self.action1 == 2:
-            _type = GETLIST[(self.action1type - 1)]
+            _type = GETLIST[(self.action1type]
             self.pullFromID(_type, self.action1id)                
         if self.action2 == 2:
-            _type = GETLIST[self.action2type]
+            _type = GETLIST[(self.action2type]
             self.pullFromID(_type, self.action2id)
             
     def pullFromID(self, command1, command2): # this pulls but does not set temp yet
@@ -406,9 +407,10 @@ class VirtualTempC(polyinterface.Node):
         LOGGER.info(_value)
         LOGGER.info('Init = %s Prec = %s Value = %s',_value[1], _value[2], _value[3])
         LOGGER.debug(_type)
-        if _type == '/2/' : _newTemp = _value[3]
-        if _type == '/1/' : _newTemp = _value[1]
-        #self.setTempFromData(_newTemp)
+        _newTemp = 0    
+        if command1 == '/2/' : _newTemp = _value[3]
+        if command1 == '/1/' : _newTemp = _value[1]
+        self.setTempFromData(_newTemp)
 
     def setTempFromData(self, command):
         self.checkHighLow(self.tempVal)
