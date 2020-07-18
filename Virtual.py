@@ -408,8 +408,8 @@ class VirtualTempC(polyinterface.Node):
         LOGGER.info('Init = %s Prec = %s Value = %s',_value[1], _value[2], _value[3])
         LOGGER.debug(_type)
         _newTemp = 0    
-        if command1 == '/2/' : _newTemp = _value[3]
-        if command1 == '/1/' : _newTemp = _value[1]
+        if command1 == '/2/' : _newTemp = int(_value[3])
+        if command1 == '/1/' : _newTemp = int(_value[1])
         if _value[2] == '1': _newTemp = (_newTemp / 10)
         self.setTempFromData(_newTemp)
 
@@ -421,7 +421,7 @@ class VirtualTempC(polyinterface.Node):
         self.prevVal = self.tempVal
         self.setDriver('GV1', self.prevVal) # set prev from current
         self.setDriver('ST', command)
-        self.tempVal = int(command)
+        self.tempVal = command
         self.convertTempFromRaw()
         self.convertFtoC()                
                         
