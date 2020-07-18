@@ -42,6 +42,7 @@ class Controller(polyinterface.Controller):
     def shortPoll(self):
         for node in self.nodes:
             self.nodes[node].update()
+            self.nodes[node].getDataFromID()
 
     def longPoll(self):
         pass
@@ -371,7 +372,7 @@ class VirtualTempC(polyinterface.Node):
         _id = str(command2)
         requests.get('http://' + self.parent.isy + '/rest/vars' + _type + _id + '/' + str(self.tempVal), auth=(self.parent.user, self.parent.password))
             
-    def getDatafromID(self)
+    def getDatafromID(self):
         if self.action1 == 2:
             _type = TYPELIST[self.action1type]
             self.pullFromID(_type, self.action1id)                
