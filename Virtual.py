@@ -14,6 +14,13 @@ import requests
 import logging
 import re
 
+TYPELIST = ['/set/2/', #1
+            '/init/2/',#2
+            '/set/1/', #3
+            'init/1/'  #4
+           ]
+            
+            
 LOGGER = polyinterface.LOGGER
 logging.getLogger('urllib3').setLevel(logging.ERROR)
 
@@ -321,7 +328,8 @@ class VirtualTempC(polyinterface.Node):
             pass
         
         if self.action2 == 1:
-            self.pushTheValue(self.action2id, self.action2type)
+            _type = TYPELIST[self.action2type]
+            self.pushTheValue(_type, self.action2id)
         else:
             pass
      
@@ -361,9 +369,10 @@ class VirtualTempC(polyinterface.Node):
         
 
         
-    def pushTheValue(self):
-        pass
-            #if self.pushToIDcommand == 1: requests.get('http://' + self.parent.isy + '/rest/vars/set/2/' + str(self.StateID) + '/' + str(self.tempVal), auth=(self.parent.user, self.parent.password))
+    def pushTheValue(self, command1, command2):
+        _type = command1
+        _id = command2
+        requests.get('http://' + self.parent.isy + '/rest/vars' + _type + _id + '/' + str(self.tempVal), auth=(self.parent.user, self.parent.password))
             #if self.pushToIDcommand == 2: requests.get('http://' + self.parent.isy + '/rest/vars/init/2/' + str(self.StateID) + '/' + str(self.tempVal), auth=(self.parent.user, self.parent.password))
             #if self.pushToIDcommand == 3: requests.get('http://' + self.parent.isy + '/rest/vars/set/1/' + str(self.IntegerID) + '/' + str(self.tempVal), auth=(self.parent.user, self.parent.password))
             #if self.pushToIDcommand == 4: requests.get('http://' + self.parent.isy + '/rest/vars/init/1/' + str(self.IntegerID) + '/' + str(self.tempVal), auth=(self.parent.user, self.parent.password))
