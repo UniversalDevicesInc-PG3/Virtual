@@ -317,7 +317,7 @@ class VirtualTempC(polyinterface.Node):
         _name = _name.replace(" ","_")
         _key = 'key' + str(self.address)
         LOGGER.debug(_name)
-        s = shelve.open(_name)
+        s = shelve.open(_name, writeback=True)
         s[_key] = { 'created': 'yes'}
         time.sleep(2)
         s.close()
@@ -329,7 +329,7 @@ class VirtualTempC(polyinterface.Node):
         _key = 'key' + str(self.address)
         LOGGER.debug(_name)
         LOGGER.debug(_key)
-        s = shelve.open(_name)
+        s = shelve.open(_name, writeback=True)
         try:
             s[_key] = { 'created': 'yes', 'action1': str(self.action1), 'action1type': str(self.action1type), 'action1id': str(self.action1id) }
         finally:
