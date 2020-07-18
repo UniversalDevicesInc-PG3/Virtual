@@ -368,8 +368,12 @@ class VirtualTempC(polyinterface.Node):
         
     def pushTheValue(self, command1, command2):
         _type = command1
+        LOGGER.debug(_type)
         _id = command2
+        LOGGER.debug(_id)
         requests.get('http://' + self.parent.isy + '/rest/vars' + _type + _id + '/' + str(self.tempVal), auth=(self.parent.user, self.parent.password))
+        LOGGER.debug('Pushed to %s %s', _type, _id)
+        
             #if self.pushToIDcommand == 2: requests.get('http://' + self.parent.isy + '/rest/vars/init/2/' + str(self.StateID) + '/' + str(self.tempVal), auth=(self.parent.user, self.parent.password))
             #if self.pushToIDcommand == 3: requests.get('http://' + self.parent.isy + '/rest/vars/set/1/' + str(self.IntegerID) + '/' + str(self.tempVal), auth=(self.parent.user, self.parent.password))
             #if self.pushToIDcommand == 4: requests.get('http://' + self.parent.isy + '/rest/vars/init/1/' + str(self.IntegerID) + '/' + str(self.tempVal), auth=(self.parent.user, self.parent.password))
