@@ -332,27 +332,22 @@ class VirtualTempC(polyinterface.Node):
      
     
     def setAction1(self, command):
-        pass
+        self.action1 = int(command.get('value'))
              
     def setAction1id(self, command):
-        pass
         self.action1id = int(command.get('value'))
-        LOGGER.debug('Action 1 ID %s ', self.action1id)
     
     def setAction1type(self, command):
-        pass
+        self.action1type = int(command.get('value'))
     
     def setAction2(self, command):
         self.action2 = int(command.get('value'))
-        LOGGER.debug('Action 2 %s', self.action2)
-        pass
     
     def setAction2id(self, command):
         self.action2id = int(command.get('value'))
-        LOGGER.debug('Action 2 ID %s ', self.action2id)
-    
+
     def setAction2type(self, command):
-        pass
+        self.action2type = int(command.get('value'))
     
     def setFtoC(self, command):
         self.FtoC = int(command.get('value'))
@@ -372,22 +367,16 @@ class VirtualTempC(polyinterface.Node):
         requests.get('http://' + self.parent.isy + '/rest/vars' + _type + _id + '/' + str(self.tempVal), auth=(self.parent.user, self.parent.password))
             
 # Pull
-    def pullFromID(self, command): # this pulls but does not set temp yet
-        _command = int(command.get('value'))
-        if _command == 0: pass
-        else:
-            if _command == 1 or _command == 2:
-                r = requests.get('http://' + self.parent.isy + '/rest/vars/get/2/' + str(self.StateID))
-                _content = str(r.content)
-                _value =  re.split('.*<init>(\d+).*<prec>(\d).*<val>(\d+)',_content)
-                LOGGER.info(_value)
-                LOGGER.info('Init = %s Prec = %s Value = %s',_value[1], _value[2], _value[3])
-            if _command == 3 or _command == 4:
-                r = requests.get('http://' + self.parent.isy + '/rest/vars/get/1/' + str(self.IntegerID))
-                _content = str(r.content)
-                _value =  re.split('.*<init>(\d+).*<prec>(\d).*<val>(\d+)',_content)
-                LOGGER.info(_value)
-                LOGGER.info('Init = %s Prec = %s Value = %s',_value[1], _value[2], _value[3])
+    def pullFromID(self, command1, command2): # this pulls but does not set temp yet
+        _type = str(command1)
+        _id = str(command2)
+
+        r = requests.get('http://' + self.parent.isy + '/rest/vars/get/2/' + str(self.StateID))
+        _content = str(r.content)
+        _value =  re.split('.*<init>(\d+).*<prec>(\d).*<val>(\d+)',_content)
+        LOGGER.info(_value)
+        LOGGER.info('Init = %s Prec = %s Value = %s',_value[1], _value[2], _value[3])
+
            
     def convertTempFromRaw(self):
         if self.RtoPrec == 1:
