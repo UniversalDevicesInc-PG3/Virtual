@@ -314,8 +314,10 @@ class VirtualTempC(polyinterface.Node):
         self.setDriver('GV2', 0.0)
         self.resetStats(1)
         _name = str(self.name) + '.db'
+        _key = 'key' + str(self.address)
         LOGGER.debug(_name)
         s = shelve.open(_name)
+        s[_key] = { 'created': 'yes'}
         time.sleep(2)
         s.close
         self.retrieveValues()
@@ -324,10 +326,10 @@ class VirtualTempC(polyinterface.Node):
         _name = str(self.name) + '.db'
         LOGGER.debug(_name)
         s = shelve.open(_name)
-        _key = 'key' + str(self.address)
+        
         LOGGER.debug(_key)
         try:
-            s[_key] = { 'action1': str(self.action1), 'action1type': str(self.action1type), 'action1id': str(self.action1id) }
+            s[_key] = { 'created': 'yes', 'action1': str(self.action1), 'action1type': str(self.action1type), 'action1id': str(self.action1id) }
         finally:
             s.close
         LOGGER.info('Storing Values')
