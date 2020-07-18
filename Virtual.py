@@ -398,7 +398,7 @@ class VirtualTempC(polyinterface.Node):
         _type = str(command1)
         _id = str(command2)
         LOGGER.debug('http://%s/rest/vars/get%s%s/', self.parent.isy, _type, _id)
-        r = requests.get('http://' + self.parent.isy + '/rest/vars/get/2/97/')
+        r = requests.get('http://' + self.parent.isy + '/rest/vars/get/2/97/', auth=(self.parent.user, self.parent.password))
         _content = str(r.content)
         LOGGER.debug(_content)
         _value =  re.split('.*<init>(\d+).*<prec>(\d).*<val>(\d+)',_content)
