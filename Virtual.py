@@ -313,7 +313,8 @@ class VirtualTempC(polyinterface.Node):
         self.lastUpdateTime = time.time()
         self.setDriver('GV2', 0.0)
         self.resetStats(1)
-        _name = str(self.name) + '.db'
+        _name = str(self.name)
+        _name = _name.replace(" ","_")
         _key = 'key' + str(self.address)
         LOGGER.debug(_name)
         s = shelve.open(_name)
@@ -323,7 +324,8 @@ class VirtualTempC(polyinterface.Node):
         self.retrieveValues()
        
     def storeValues(self):
-        _name = str(self.name) + '.db'
+        _name = str(self.name)
+        _name = _name.replace(" ","_")
         _key = 'key' + str(self.address)
         LOGGER.debug(_name)
         LOGGER.debug(_key)
@@ -336,7 +338,8 @@ class VirtualTempC(polyinterface.Node):
         pass
     
     def retrieveValues(self):
-        _name = str(self.name) + '.db'
+        _name = str(self.name)
+        _name = _name.replace(" ","_")
         _key = 'key' + str(self.address)
         LOGGER.debug(_name)
         LOGGER.debug(_key)
