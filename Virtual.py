@@ -295,6 +295,7 @@ class VirtualTempC(polyinterface.Node):
         self.currentTime = time.time()
         self.lastUpdateTime = time.time()
         self.setDriver('GV2', 0.0)
+        self.resetStats(1)
         self.retrieveValues()
        
     def storeValues(self):
