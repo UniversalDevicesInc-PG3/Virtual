@@ -335,14 +335,14 @@ class VirtualTempC(polyinterface.Node):
         self.convertFtoC()
         
         if self.action1 == 1:
-            _type = TYPELIST[self.action1type]
+            _type = TYPELIST[(self.action1type - 1)]
             self.pushTheValue(_type, self.action1id)
             LOGGER.debug('Action 1 Pushing')
         else:
             pass
         
         if self.action2 == 1:
-            _type = TYPELIST[self.action2type]
+            _type = TYPELIST[(self.action2type - 1)]
             self.pushTheValue(_type, self.action2id)
             LOGGER.debug('Action 2 Pushing')
         else:
