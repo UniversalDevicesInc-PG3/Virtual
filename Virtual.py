@@ -50,7 +50,7 @@ class Controller(polyinterface.Controller):
             self.nodes[node].update()
 
     def longPoll(self):
-        for nodes in self.nodes:
+        for node in self.nodes:
             self.nodes[node].getDataFromID()
             
     def query(self):
