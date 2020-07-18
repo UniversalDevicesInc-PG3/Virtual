@@ -427,6 +427,7 @@ class VirtualTempC(polyinterface.Node):
             
     def checkHighLow(self, command):
         if self.firstPass:
+            self.firstPass = False
             pass
         else:
             self.previousHigh = self.highTemp
