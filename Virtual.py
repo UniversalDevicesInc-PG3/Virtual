@@ -357,7 +357,7 @@ class VirtualTempC(polyinterface.Node):
             
     def setAction2type(self, command):
         self.action2type = int(command.get('value'))
-        LOGGER.debug('Action  type %s', self.action1type)
+        LOGGER.debug('Action 2 type %s', self.action1type)
             
     def setFtoC(self, command):
         self.FtoC = int(command.get('value'))
