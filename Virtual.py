@@ -450,6 +450,7 @@ class VirtualTempC(polyinterface.Node):
         
     def resetStats(self, command):
         LOGGER.debug('Resetting Stats')
+        self.firstPass = True
         self.lowTemp = 129
         self.highTemp = -60
         self.currentAvgTemp = 0
