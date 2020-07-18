@@ -405,8 +405,23 @@ class VirtualTempC(polyinterface.Node):
         _value =  re.split('.*<init>(\d+).*<prec>(\d).*<val>(\d+)',_content)
         LOGGER.info(_value)
         LOGGER.info('Init = %s Prec = %s Value = %s',_value[1], _value[2], _value[3])
+        if _type == 0 or _type == 2: _newTemp = _value[3]
+        if _type == 1 or _type == 3: _newTemp = _value[1]
+        self.setTempFromData(_newTemp)
 
-           
+    def setTempFromData(self, command):
+        self.checkHighLow(self.tempVal)
+        self.storeValues()
+        self.setDriver('GV2', 0.0)
+        self.lastUpdateTime = time.time()        
+        self.prevVal = self.tempVal
+        self.setDriver('GV1', self.prevVal) # set prev from current
+        self.setDriver('ST', command)
+        self.tempVal = command
+        self.convertTempFromRaw()
+        self.convertFtoC()                
+                        
+                        
     def convertTempFromRaw(self):
         if self.RtoPrec == 1:
             LOGGER.info('Converting from raw')
