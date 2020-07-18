@@ -13,6 +13,7 @@ import time
 import requests
 import logging
 import re
+import shelve
 
 TYPELIST = ['/set/2/', #1
             '/init/2/',#2
@@ -315,11 +316,28 @@ class VirtualTempC(polyinterface.Node):
         self.retrieveValues()
        
     def storeValues(self):
+        _name = str(self.name) + '.db'
+        LOGGER.debug(_name)
+        s = shelve.open(_name)
+        _key = 'key' + str(self.address)
+        LOGGER.debug(_key)
+        try:
+            s[_key] = { 'action1': str(self.action1), 'action1type': str(self.action1type), 'action1id': str(self.action1id) }
+        finally:
+            s.close
         LOGGER.info('Storing Values')
         pass
     
     def retrieveValues(self):
+        _name = str(self.name) + '.db'
+        _key = 'key' + str(self.address)
+        s = shelve.open(_name)            
+        try:
+            existing = s[_key]
+        finally:
+            close
         LOGGER.info('Retrieving Values')
+        LOGGER.info(existing)
         pass
     
     def setTemp(self, command):
