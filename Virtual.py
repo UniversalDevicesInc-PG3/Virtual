@@ -388,7 +388,7 @@ class VirtualTempC(polyinterface.Node):
             
     def getDataFromID(self):
         if self.action1 == 2:
-            _type = GETLIST[self.action1type]
+            _type = GETLIST[(self.action1type - 1)]
             self.pullFromID(_type, self.action1id)                
         if self.action2 == 2:
             _type = GETLIST[self.action2type]
