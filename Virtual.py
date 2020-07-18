@@ -48,11 +48,11 @@ class Controller(polyinterface.Controller):
     def shortPoll(self):
         for node in self.nodes:
             self.nodes[node].update()
-            self.nodes[node].getDataFromID()
 
     def longPoll(self):
-        pass
-
+        for nodes in self.nodes:
+            self.nodes[node].getDataFromID()
+            
     def query(self):
         #self.check_params()
         for node in self.nodes:
