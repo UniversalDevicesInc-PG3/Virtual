@@ -313,16 +313,24 @@ class VirtualTempC(polyinterface.Node):
         self.lastUpdateTime = time.time()
         self.setDriver('GV2', 0.0)
         self.resetStats(1)
-        #_name = str(self.name)
-        #_name = _name.replace(" ","_")
-        #_key = 'key' + str(self.address)
-        #LOGGER.debug(_name)
-        #s = shelve.open(_name, writeback=True)
-        #s[_key] = { 'created': 'yes'}
-        #time.sleep(2)
-        #s.close()
+        self.createDBfile()
         self.retrieveValues()
-       
+
+    def createDBfile(self):
+        _name = str(self.name)
+        _name = _name.replace(" ","_")
+        _key = 'key' + str(self.address)
+        _check = _name + '.db'
+        LOGGER.debug('Checking to see if %s exists', _check)            
+        if _check.exists():
+            LOGGER.debug('The file does exists')            
+            pass
+        else:
+            s = shelve.open(_name, writeback=True)
+            s[_key] = { 'created': 'yes'}
+            time.sleep(2)
+            s.close()
+            
     def storeValues(self):
         _name = str(self.name)
         _name = _name.replace(" ","_")
