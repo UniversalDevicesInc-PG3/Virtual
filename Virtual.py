@@ -260,7 +260,7 @@ class VirtualTemp(polyinterface.Node):
     commands = {
                     'setTemp': setTemp, 'setCtoF': setCtoF, 'setRaw': setTempRaw
                 }
-    
+##############################################################################    
 class VirtualTempC(polyinterface.Node):
     def __init__(self, controller, primary, address, name):
         super(VirtualTempC, self).__init__(controller, primary, address, name)
@@ -371,12 +371,19 @@ class VirtualTempC(polyinterface.Node):
         _id = str(command2)
         requests.get('http://' + self.parent.isy + '/rest/vars' + _type + _id + '/' + str(self.tempVal), auth=(self.parent.user, self.parent.password))
             
-# Pull
+    def getDatafromID(self)
+        if self.action1 == 2:
+            _type = TYPELIST[self.action1type]
+            self.pullFromID(_type, self.action1id)                
+        if self.action2 == 2:
+            _type = TYPELIST[self.action2type]
+            self.pullFromID(_type, self.action2id)
+            
     def pullFromID(self, command1, command2): # this pulls but does not set temp yet
         _type = str(command1)
         _id = str(command2)
 
-        r = requests.get('http://' + self.parent.isy + '/rest/vars/get/2/' + str(self.StateID))
+        r = requests.get('http://' + self.parent.isy + '/rest/vars/get' + _type + _id)
         _content = str(r.content)
         _value =  re.split('.*<init>(\d+).*<prec>(\d).*<val>(\d+)',_content)
         LOGGER.info(_value)
