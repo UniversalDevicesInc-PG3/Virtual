@@ -270,9 +270,6 @@ class VirtualTempC(polyinterface.Node):
         self.prevVal = 0.0
         self.tempVal = 0.0
         
-        self.Rconvert = False
-        self.FtoCconvert = False
-        
         self.currentTime = 0.0
         self.lastUpdateTime = 0.0
         
@@ -294,8 +291,6 @@ class VirtualTempC(polyinterface.Node):
         self.RtoPrec = 0
         self.FtoC = 0
         
-
-
     def start(self):
         self.currentTime = time.time()
         self.lastUpdateTime = time.time()
@@ -317,8 +312,6 @@ class VirtualTempC(polyinterface.Node):
         self.lastUpdateTime = time.time()        
         self.prevVal = self.tempVal
         self.setDriver('GV1', self.prevVal) # set prev from current
-        self.FtoCconvert = False
-        self.Rconvert = False
         _temp = float(command.get('value'))
         self.setDriver('ST', _temp)
         self.tempVal = _temp
@@ -411,6 +404,7 @@ class VirtualTempC(polyinterface.Node):
         if self.FtoC == 1:
             LOGGER.info('converting F to C')
             _FtoCtemp = round(((self.tempVal - 32) / 1.80), 1)
+            LOGGER.debug(_FtoCtemp)
             self.setDriver('ST', _FtoCtemp)
             self.tempVal = _FtoCtemp
             self.FtoCconvert = True
