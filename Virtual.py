@@ -343,7 +343,7 @@ class VirtualTempC(polyinterface.Node):
         _key = 'key' + str(self.address)
         LOGGER.debug(_name)
         LOGGER.debug(_key)
-        s = shelve.open(_name)            
+        s = shelve.open(_name, writeback=True)            
         try:
             existing = s[_key]
         finally:
