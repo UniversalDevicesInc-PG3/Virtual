@@ -330,16 +330,7 @@ class VirtualTempC(polyinterface.Node):
             s = shelve.open(_name, writeback=True)
             s[_key] = { 'created': 'yes'}
             time.sleep(2)
-            s.close()
-            
-    def loadValues(self):
-        _name = str(self.name)
-        _name = _name.replace(" ","_")
-        _key = 'key' + str(self.address)
-        _check = _name + '.db'
-            
-            
-            
+            s.close()             
             
     def storeValues(self):
         _name = str(self.name)
@@ -372,8 +363,8 @@ class VirtualTempC(polyinterface.Node):
             s.close()
         LOGGER.info('Retrieving Values')
         LOGGER.info(existing)
-        LOGGER.debug(existing[1])
-        LOGGER.debug(existing[2])
+        LOGGER.debug(existing['action1'])
+        LOGGER.debug(existing['action2'])
         #self.prevVal = 0.0
         #self.tempVal = 0.0    
         #self.highTemp = -60.0
