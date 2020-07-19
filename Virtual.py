@@ -315,7 +315,7 @@ class VirtualTemp(polyinterface.Node):
         self.RtoPrec = existing['RtoPrec']
         self.setDriver('GV12', self.RtoPrec)
             
-        self.FtoC = existing['CtoF']
+        self.CtoF = existing['CtoF']
         self.setDriver('GV13', self.CtoF)
             
         self.firstPass = existing['firstPass']
