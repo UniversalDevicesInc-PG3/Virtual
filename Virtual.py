@@ -607,6 +607,8 @@ class VirtualTempC(polyinterface.Node):
         self.setDriver('GV4', 0)
         time.sleep(.5)
         self.setDriver('ST', self.tempVal)
+        self.firstPass = True
+        self.storeValues()
             
     def update(self):
         self.checkLastUpdate()
