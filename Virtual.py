@@ -563,14 +563,14 @@ class VirtualTempC(polyinterface.Node):
                {'driver': 'GV3', 'value': 0, 'uom': 4}, #high
                {'driver': 'GV4', 'value': 0, 'uom': 4}, #low
                {'driver': 'GV5', 'value': 0, 'uom': 4}, #avg high - low
-               {'driver': 'GV6', 'value': 0, 'uom': 4}, #action1 type
-               {'driver': 'GV7', 'value': 0, 'uom': 4}, #variable type
-               {'driver': 'GV8', 'value': 0, 'uom': 45},#variable id
-               {'driver': 'GV9', 'value': 0, 'uom': 4}, #action 2
-               {'driver': 'GV10', 'value': 0, 'uom': 4},#variable type
-               {'driver': 'GV11', 'value': 0, 'uom': 4},#variable id
-               {'driver': 'GV12', 'value': 0, 'uom': 4},#r to p
-               {'driver': 'GV13', 'value': 0, 'uom': 4},#f to c
+               {'driver': 'GV6', 'value': 0, 'uom': 25}, #action1 type
+               {'driver': 'GV7', 'value': 0, 'uom': 25}, #variable type
+               {'driver': 'GV8', 'value': 0, 'uom': 56},#variable id
+               {'driver': 'GV9', 'value': 0, 'uom': 25}, #action 2
+               {'driver': 'GV10', 'value': 0, 'uom': 25},#variable type
+               {'driver': 'GV11', 'value': 0, 'uom': 56},#variable id
+               {'driver': 'GV12', 'value': 0, 'uom': 25},#r to p
+               {'driver': 'GV13', 'value': 0, 'uom': 25},#f to c
               ]
 
     id = 'virtualtempc'
