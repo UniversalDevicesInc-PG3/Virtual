@@ -344,7 +344,7 @@ class VirtualTempC(polyinterface.Node):
                         'action2': self.action2, 'action2type': self.action2type, 'action2id': self.action2id,
                         'RtoPrec': self.RtoPrec, 'FtoC': self.FtoC, 'prevVal': self.prevVal, 'tempVal': self.tempVal,
                         'highTemp': self.highTemp, 'lowTemp': self.lowTemp, 'previousHigh': self.previousHigh, 'previousLow': self.previousLow,
-                        'prevAvgTemp': self.prevAvgTemp, 'currentAvgTemp': self.currentAvgTemp }
+                        'prevAvgTemp': self.prevAvgTemp, 'currentAvgTemp': self.currentAvgTemp, 'firstPass': self.firstPass }
         finally:
             s.close()
         LOGGER.info('Storing Values')
@@ -420,6 +420,7 @@ class VirtualTempC(polyinterface.Node):
         self.FtoC = existing['FtoC']
         self.setDriver('GV13', self.FtoC)
             
+        self.firstPass = existing['firstPass']    
         #{'action1': 1, 'action1type': 1, 'action1id': 96, 'action2': 2, 'action2type': 1, 'action2id': 97,
         #'RtoPrec': 0, 'FtoC': 1, 'prevTemp': 0, 'tempVal': 26.0, 'highTemp': 26.2, 'lowTemp': 26.0, 
         #'previousHigh': 26.2, 'previousLow': 26.0, 'prevAvgTemp': 26.1, 'currentAvgTemp': 26.1}
