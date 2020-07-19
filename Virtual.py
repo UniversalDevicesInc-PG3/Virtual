@@ -376,14 +376,16 @@ class VirtualTempC(polyinterface.Node):
         LOGGER.info(existing)
             
         self.prevVal = existing['prevVal']
-        self.setDriver('GV1', existing['prevVal'])
+        self.setDriver('GV1', self.preVal)
             
         self.tempVal = existing['tempVal']
-        self.setDriver('ST', existing['tempVal'])
+        self.setDriver('ST', self.tempVal)
             
         self.highTemp = existing['highTemp']
+        self.setDriver('GV3', self.highTemp)
 
         self.lowTemp = existing['lowTemp']
+        self.setDriver('GV4', self.lowTemp)
             
         self.previousHigh = existing['previousHigh']
 
@@ -392,19 +394,32 @@ class VirtualTempC(polyinterface.Node):
         self.prevAvgTemp = existing['prevAvgTemp']
 
         self.currentAvgTemp = existing['currentAvgTemp']
-            
+        self.setDriver('GV5', self.currentAvgTemp)
+
         self.action1 = existing['action1']# none, push, pull
-        self.setDriver('GV6', existing['action1'])
+        self.setDriver('GV6', self.action1)
                        
         self.action1id = existing['action1id'] # 0 - 400
-
+        self.setDriver('GV8', self.action1id) 
                        
         self.action1type = existing['action1type'] # State var, State init, Int var, Int init
-        self.action2 = existing['action2']  
+        self.setDriver('GV7', self.action1type)
+            
+        self.action2 = existing['action2'] 
+        self.setDriver('GV9', self.action2)
+            
         self.action2id = existing['action2id']
+        self.setDriver('Gv11', self.action2id)
+            
         self.action2type = existing['action2type']
+        self.setDriver('GV10', self.action2type)
+            
         self.RtoPrec = existing['RtoPrec']
+        self.setDriver('GV12', self.RtoPrec)
+            
         self.FtoC = existing['FtoC']
+        self.setDriver('GV13', self.FtoC)
+            
         #{'action1': 1, 'action1type': 1, 'action1id': 96, 'action2': 2, 'action2type': 1, 'action2id': 97,
         #'RtoPrec': 0, 'FtoC': 1, 'prevTemp': 0, 'tempVal': 26.0, 'highTemp': 26.2, 'lowTemp': 26.0, 
         #'previousHigh': 26.2, 'previousLow': 26.0, 'prevAvgTemp': 26.1, 'currentAvgTemp': 26.1}
