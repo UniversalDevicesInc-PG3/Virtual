@@ -512,12 +512,12 @@ class VirtualTemp(polyinterface.Node):
     #"Hints See: https://github.com/UniversalDevicesInc/hints"
     #hint = [1,2,3,4]
     drivers = [
-               {'driver': 'ST', 'value': 0, 'uom': 4},  #current
-               {'driver': 'GV1', 'value': 0, 'uom': 4}, #previous
+               {'driver': 'ST', 'value': 0, 'uom': 17},  #current
+               {'driver': 'GV1', 'value': 0, 'uom': 17}, #previous
                {'driver': 'GV2', 'value': 0, 'uom': 45},#update time
-               {'driver': 'GV3', 'value': 0, 'uom': 4}, #high
-               {'driver': 'GV4', 'value': 0, 'uom': 4}, #low
-               {'driver': 'GV5', 'value': 0, 'uom': 4}, #avg high - low
+               {'driver': 'GV3', 'value': 0, 'uom': 17}, #high
+               {'driver': 'GV4', 'value': 0, 'uom': 17}, #low
+               {'driver': 'GV5', 'value': 0, 'uom': 17}, #avg high - low
                {'driver': 'GV6', 'value': 0, 'uom': 25}, #action1 type
                {'driver': 'GV7', 'value': 0, 'uom': 25}, #variable type
                {'driver': 'GV8', 'value': 0, 'uom': 56},#variable id
