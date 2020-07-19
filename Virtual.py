@@ -348,8 +348,19 @@ class VirtualTempC(polyinterface.Node):
         finally:
             s.close()
         LOGGER.info('Storing Values')
-        pass
-    
+        self.listValues()
+
+    def listValues(self):
+        _name = str(self.name)
+        _name = _name.replace(" ","_")
+        _key = 'key' + str(self.address)    
+        s = shelve.open(_name, writeback=True)            
+        try:
+            existing = s[_key]
+        finally:
+            s.close()
+        LOGGER.info(existing)
+
     def retrieveValues(self):
         _name = str(self.name)
         _name = _name.replace(" ","_")
