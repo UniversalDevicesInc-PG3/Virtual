@@ -363,25 +363,26 @@ class VirtualTempC(polyinterface.Node):
             s.close()
         LOGGER.info('Retrieving Values')
         LOGGER.info(existing)
-        LOGGER.debug(existing['action1'])
-        LOGGER.debug(existing['action2'])
-        #self.prevVal = 0.0
-        #self.tempVal = 0.0    
-        #self.highTemp = -60.0
-        #self.lowTemp = 129.0
-        #self.previousHigh = 0
-        #self.previousLow = 0
-        #self.prevAvgTemp = 0
-        #self.currentAvgTemp = 0
-        #self.action1 = 0  # none, push, pull
-        #self.action1id = 0 # 0 - 400
-        #self.action1type = 0 # State var, State init, Int var, Int init
-        #self.action2 = 0  
-        #self.action2id = 0
-        #self.action2type = 0
-        #self.RtoPrec = 0
-        #self.FtoC = 0
-    
+        self.prevVal = existing['prevTemp']
+        self.tempVal = existing['tempVal']    
+        self.highTemp = existing['highTemp']
+        self.lowTemp = existing['lowTemp']
+        self.previousHigh = existing['previousHigh']
+        self.previousLow = existing['previousLow']
+        self.prevAvgTemp = existing['prevAvgTemp']
+        self.currentAvgTemp = existing['currentAvgTemp']
+        self.action1 = existing['action1']  # none, push, pull
+        self.action1id = existing['action1id'] # 0 - 400
+        self.action1type = existing['action1type'] # State var, State init, Int var, Int init
+        self.action2 = existing['action2']  
+        self.action2id = existing['action2id']
+        self.action2type = existing['action2type']
+        self.RtoPrec = existing['RtoPrec']
+        self.FtoC = existing['FtoC']
+        #{'action1': 1, 'action1type': 1, 'action1id': 96, 'action2': 2, 'action2type': 1, 'action2id': 97,
+        #'RtoPrec': 0, 'FtoC': 1, 'prevTemp': 0, 'tempVal': 26.0, 'highTemp': 26.2, 'lowTemp': 26.0, 
+        #'previousHigh': 26.2, 'previousLow': 26.0, 'prevAvgTemp': 26.1, 'currentAvgTemp': 26.1}
+
     def setTemp(self, command):
         self.checkHighLow(self.tempVal)
         self.storeValues()
