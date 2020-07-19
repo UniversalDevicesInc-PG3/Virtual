@@ -496,7 +496,7 @@ class VirtualTempC(polyinterface.Node):
         self.tempVal = command
         self.convertTempFromRaw()
         self.convertFtoC()
-        self.retrieveValues()
+        #self.retrieveValues()
 
         if self.action1 == 1:
             _type = TYPELIST[(self.action1type - 1)]
