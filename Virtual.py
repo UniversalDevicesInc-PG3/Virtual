@@ -315,7 +315,6 @@ class VirtualTempC(polyinterface.Node):
         self.setDriver('GV2', 0.0)
         self.resetStats(1)
         self.createDBfile()
-        self.retrieveValues()
 
     def createDBfile(self):
         _name = str(self.name)
@@ -324,13 +323,23 @@ class VirtualTempC(polyinterface.Node):
         _check = _name + '.db'
         LOGGER.debug('Checking to see if %s exists', _check)           
         if os.path.exists(_check):
-            LOGGER.debug('The file does exists')            
+            LOGGER.debug('The file does exists')
+            self.retrieveValues()
             pass
         else:
             s = shelve.open(_name, writeback=True)
             s[_key] = { 'created': 'yes'}
             time.sleep(2)
             s.close()
+            
+    def loadValues(self):
+        _name = str(self.name)
+        _name = _name.replace(" ","_")
+        _key = 'key' + str(self.address)
+        _check = _name + '.db'
+            
+            
+            
             
     def storeValues(self):
         _name = str(self.name)
@@ -363,7 +372,24 @@ class VirtualTempC(polyinterface.Node):
             s.close()
         LOGGER.info('Retrieving Values')
         LOGGER.info(existing)
-        pass
+        LOGGER.debug(existing[1])
+        LOGGER.debug(existing[2])
+        #self.prevVal = 0.0
+        #self.tempVal = 0.0    
+        #self.highTemp = -60.0
+        #self.lowTemp = 129.0
+        #self.previousHigh = 0
+        #self.previousLow = 0
+        #self.prevAvgTemp = 0
+        #self.currentAvgTemp = 0
+        #self.action1 = 0  # none, push, pull
+        #self.action1id = 0 # 0 - 400
+        #self.action1type = 0 # State var, State init, Int var, Int init
+        #self.action2 = 0  
+        #self.action2id = 0
+        #self.action2type = 0
+        #self.RtoPrec = 0
+        #self.FtoC = 0
     
     def setTemp(self, command):
         self.checkHighLow(self.tempVal)
