@@ -342,7 +342,7 @@ class VirtualTempC(polyinterface.Node):
         try:
             s[_key] = { 'action1': self.action1, 'action1type': self.action1type, 'action1id': self.action1id,
                         'action2': self.action2, 'action2type': self.action2type, 'action2id': self.action2id,
-                        'RtoPrec': self.RtoPrec, 'FtoC': self.FtoC, 'prevTemp': self.prevTemp, 'tempVal': self.tempVal,
+                        'RtoPrec': self.RtoPrec, 'FtoC': self.FtoC, 'prevVal': self.prevVal, 'tempVal': self.tempVal,
                         'highTemp': self.highTemp, 'lowTemp': self.lowTemp, 'previousHigh': self.previousHigh, 'previousLow': self.previousLow,
                         'prevAvgTemp': self.prevAvgTemp, 'currentAvgTemp': self.currentAvgTemp }
         finally:
@@ -363,16 +363,31 @@ class VirtualTempC(polyinterface.Node):
             s.close()
         LOGGER.info('Retrieving Values')
         LOGGER.info(existing)
-        self.prevVal = existing['prevTemp']
-        self.tempVal = existing['tempVal']    
+            
+        #self.prevVal = existing['prevVal']
+        self.setDriver('ST', existing['prevVal'])
+            
+        self.tempVal = existing['tempVal']
+        #self.setDriver('ST', existing['tempVal'])
+            
         self.highTemp = existing['highTemp']
+
         self.lowTemp = existing['lowTemp']
+            
         self.previousHigh = existing['previousHigh']
+
         self.previousLow = existing['previousLow']
+            
         self.prevAvgTemp = existing['prevAvgTemp']
+
         self.currentAvgTemp = existing['currentAvgTemp']
-        self.action1 = existing['action1']  # none, push, pull
+            
+        #self.action1 = existing['action1']# none, push, pull
+        self.setDriver('GV6', existing['action1']
+                       
         self.action1id = existing['action1id'] # 0 - 400
+
+                       
         self.action1type = existing['action1type'] # State var, State init, Int var, Int init
         self.action2 = existing['action2']  
         self.action2id = existing['action2id']
