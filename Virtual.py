@@ -313,9 +313,9 @@ class VirtualTempC(polyinterface.Node):
         self.currentTime = time.time()
         self.lastUpdateTime = time.time()
         self.setDriver('GV2', 0.0)
-        if self.firstPass: self.resetStats(1)
         self.createDBfile()
-
+        if self.firstPass: self.resetStats(1)
+            
     def createDBfile(self):
         _name = str(self.name)
         _name = _name.replace(" ","_")
