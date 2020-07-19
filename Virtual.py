@@ -383,7 +383,7 @@ class VirtualTempC(polyinterface.Node):
         self.currentAvgTemp = existing['currentAvgTemp']
             
         #self.action1 = existing['action1']# none, push, pull
-        self.setDriver('GV6', existing['action1']
+        self.setDriver('GV6', existing['action1'])
                        
         self.action1id = existing['action1id'] # 0 - 400
 
