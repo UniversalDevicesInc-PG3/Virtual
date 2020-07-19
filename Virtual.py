@@ -340,7 +340,9 @@ class VirtualTempC(polyinterface.Node):
         LOGGER.debug(_key)
         s = shelve.open(_name, writeback=True)
         try:
-            s[_key] = { 'created': 'yes', 'action1': str(self.action1), 'action1type': str(self.action1type), 'action1id': str(self.action1id) }
+            s[_key] = { 'created': 'yes', 'action1': str(self.action1), 'action1type': str(self.action1type), 'action1id': str(self.action1id),
+                                          'action2': str(self.action2), 'action2type': str(self.action2type), 'action2id': str(self.action2id),
+                                          'RtoPrec': self.RtoPrec, 'FtoC': self.FtoC }
         finally:
             s.close()
         LOGGER.info('Storing Values')
