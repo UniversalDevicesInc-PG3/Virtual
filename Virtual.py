@@ -183,7 +183,7 @@ class VirtualTemp(polyinterface.Node):
         self.currentTime = 0.0
         self.lastUpdateTime = 0.0
         
-        self.highTemp = -60.0
+        self.highTemp = -30.0
         self.lowTemp = 129.0
         self.previousHigh = 0
         self.previousLow = 0
@@ -635,6 +635,7 @@ class VirtualTempC(polyinterface.Node):
             
         self.prevVal = existing['prevVal']
         self.setDriver('GV1', self.prevVal)
+            
             
         self.tempVal = existing['tempVal']
         self.setDriver('ST', self.tempVal)
