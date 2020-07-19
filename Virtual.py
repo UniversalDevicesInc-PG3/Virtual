@@ -199,7 +199,7 @@ class VirtualTemp(polyinterface.Node):
         self.action2type = 0
         
         self.RtoPrec = 0
-        self.FtoC = 0
+        self.CtoF = 0
         
     def start(self):
         self.currentTime = time.time()
