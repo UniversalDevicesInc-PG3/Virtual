@@ -15,6 +15,8 @@ Farenheit can be converted and displayed as Celsius and vice versa.
 
 ### Updates
 
+1.0.9 Major re-working of the Temperature C node. The node will pull data from any variable, state or integer, value or init and push the same. Programs are no longer needed for input. All data and settings in the node are saved on a regular basis for retrieval if the nodeserver is restarted. This is a test update to check for bugs before migrating the methods into other nodes.
+
 1.0.8 Updated the Temp node, added Highest, Lowest, Since Last Update and Convert Raw to Prec to mirror the TempC node. Update Profile and restart AC to see changes. Changed code for TempC node so a restart does not effect Highest and Lowest values.
 
 1.0.7 Updated the Temp C node with added Highest and Lowest temps and a Since Last Update tracker.
