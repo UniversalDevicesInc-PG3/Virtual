@@ -29,9 +29,18 @@ ST-vtemp-GV1-NAME = Previous
 ST-vtemp-GV2-NAME = Since Last Update
 ST-vtemp-GV3-NAME = Highest
 ST-vtemp-GV4-NAME = Lowest
+ST-vtempc-GV5-NAME = Average
+CMD-vtemp-resetStats-NAME = Reset Statistics
+CMD-vtemp-setTemp-NAME = Set Current
+CMD-vtemp-setAction1-NAME = Action 1
+CMD-vtemp-setAction1id-NAME = Action 1 Var ID
+CMD-vtemp-setAction1type-NAME = Action 1 Var Type
+CMD-vtemp-setAction2-NAME = Action 2
+CMD-vtemp-setAction2id-NAME = Action 2 Var ID
+CMD-vtemp-setAction2type-NAME = Action 2 Var Type
+CMD-vtemp-setRawToPrec-NAME = Convert Raw to Prec
 CMD-vtemp-setCtoF-NAME = Convert C to F
 CMD-vtemp-setRaw-NAME = Convert Raw to Prec
-CMD-vtemp-setTemp-NAME = Set Temperature
 
 # virtualtempc
 ND-virtualtempc-NAME = Virtual Temperature C
