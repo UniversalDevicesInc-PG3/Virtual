@@ -364,11 +364,11 @@ class VirtualTempC(polyinterface.Node):
         LOGGER.info('Retrieving Values')
         LOGGER.info(existing)
             
-        #self.prevVal = existing['prevVal']
-        self.setDriver('ST', existing['prevVal'])
+        self.prevVal = existing['prevVal']
+        self.setDriver('GV1', existing['prevVal'])
             
         self.tempVal = existing['tempVal']
-        #self.setDriver('ST', existing['tempVal'])
+        self.setDriver('ST', existing['tempVal'])
             
         self.highTemp = existing['highTemp']
 
@@ -382,7 +382,7 @@ class VirtualTempC(polyinterface.Node):
 
         self.currentAvgTemp = existing['currentAvgTemp']
             
-        #self.action1 = existing['action1']# none, push, pull
+        self.action1 = existing['action1']# none, push, pull
         self.setDriver('GV6', existing['action1'])
                        
         self.action1id = existing['action1id'] # 0 - 400
