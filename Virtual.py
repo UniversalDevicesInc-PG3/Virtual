@@ -322,8 +322,8 @@ class VirtualTempC(polyinterface.Node):
         _name = _name.replace(" ","_")
         _key = 'key' + str(self.address)
         _check = _name + '.db'
-        LOGGER.debug('Checking to see if %s exists', _check)            
-        if _check.exists():
+        LOGGER.debug('Checking to see if %s exists', _check)           
+        if os.path.exists(_check):
             LOGGER.debug('The file does exists')            
             pass
         else:
