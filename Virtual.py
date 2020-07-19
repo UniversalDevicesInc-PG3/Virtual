@@ -12,7 +12,23 @@ import sys
 import time
 import requests
 import logging
+import re
+import shelve
+import os.path
 
+TYPELIST = ['/set/2/', #1
+            '/init/2/',#2
+            '/set/1/', #3
+            'init/1/'  #4
+           ]
+
+GETLIST = [' ',
+           '/2/',
+           '/2/',
+           '/1/',
+           '/1/'
+          ]
+            
 LOGGER = polyinterface.LOGGER
 logging.getLogger('urllib3').setLevel(logging.ERROR)
 
@@ -36,8 +52,9 @@ class Controller(polyinterface.Controller):
             self.nodes[node].update()
 
     def longPoll(self):
-        pass
-
+        for node in self.nodes:
+            self.nodes[node].getDataFromID()
+            
     def query(self):
         #self.check_params()
         for node in self.nodes:
@@ -105,7 +122,10 @@ class Controller(polyinterface.Controller):
     
     def update(self):
         pass
-    
+
+    def getDataFromID(self):
+        pass
+
         id = 'controller'
     commands = {
         'QUERY': query,
@@ -134,6 +154,9 @@ class VirtualSwitch(polyinterface.Node):
         requests.get('http://' + self.parent.isy + '/rest/vars/init/2/' + self.address + '/0', auth=(self.parent.user, self.parent.password))
         
     def update(self):
+        pass
+
+    def getDataFromID(self):
         pass
         
     def query(self):
@@ -208,6 +231,7 @@ class VirtualTemp(polyinterface.Node):
             self.CtoFconvert = True
         else:
             pass
+        
     def checkLastUpdate(self):
         _currentTime = time.time()
         _sinceLastUpdate = round(((_currentTime - self.lastUpdateTime) / 60), 1)
@@ -232,6 +256,9 @@ class VirtualTemp(polyinterface.Node):
 
     def update(self):
         self.checkLastUpdate()
+
+    def getDataFromID(self):
+        pass
     
     def query(self):
         self.reportDrivers()
@@ -251,47 +278,270 @@ class VirtualTemp(polyinterface.Node):
     commands = {
                     'setTemp': setTemp, 'setCtoF': setCtoF, 'setRaw': setTempRaw
                 }
-    
+################################################################################################################################    
 class VirtualTempC(polyinterface.Node):
     def __init__(self, controller, primary, address, name):
         super(VirtualTempC, self).__init__(controller, primary, address, name)
+        
+        self.firstPass = True
+            
         self.prevVal = 0.0
         self.tempVal = 0.0
-        self.Rconvert = False
-        self.FtoCconvert = False
-        self.firstRun = True
         
         self.currentTime = 0.0
         self.lastUpdateTime = 0.0
         
         self.highTemp = -60.0
         self.lowTemp = 129.0
+        self.previousHigh = 0
+        self.previousLow = 0
+        self.prevAvgTemp = 0
+        self.currentAvgTemp = 0
+        
+        self.action1 = 0  # none, push, pull
+        self.action1id = 0 # 0 - 400
+        self.action1type = 0 # State var, State init, Int var, Int init
+        
+        self.action2 = 0  
+        self.action2id = 0
+        self.action2type = 0
+        
+        self.RtoPrec = 0
+        self.FtoC = 0
         
     def start(self):
         self.currentTime = time.time()
         self.lastUpdateTime = time.time()
         self.setDriver('GV2', 0.0)
-        #self.setDriver('GV3', self.highTemp)
-        #self.setDriver('GV4', self.lowTemp)
+        self.createDBfile()
+        if self.firstPass: self.resetStats(1)
+            
+    def createDBfile(self):
+        _name = str(self.name)
+        _name = _name.replace(" ","_")
+        _key = 'key' + str(self.address)
+        _check = _name + '.db'
+        LOGGER.debug('Checking to see if %s exists', _check)           
+        if os.path.exists(_check):
+            LOGGER.debug('The file does exists')
+            self.retrieveValues()
+            pass
+        else:
+            s = shelve.open(_name, writeback=True)
+            s[_key] = { 'created': 'yes'}
+            time.sleep(2)
+            s.close()             
+            
+    def storeValues(self):
+        _name = str(self.name)
+        _name = _name.replace(" ","_")
+        _key = 'key' + str(self.address)
+        LOGGER.debug(_name)
+        LOGGER.debug(_key)
+        s = shelve.open(_name, writeback=True)
+        try:
+            s[_key] = { 'action1': self.action1, 'action1type': self.action1type, 'action1id': self.action1id,
+                        'action2': self.action2, 'action2type': self.action2type, 'action2id': self.action2id,
+                        'RtoPrec': self.RtoPrec, 'FtoC': self.FtoC, 'prevVal': self.prevVal, 'tempVal': self.tempVal,
+                        'highTemp': self.highTemp, 'lowTemp': self.lowTemp, 'previousHigh': self.previousHigh, 'previousLow': self.previousLow,
+                        'prevAvgTemp': self.prevAvgTemp, 'currentAvgTemp': self.currentAvgTemp, 'firstPass': self.firstPass }
+        finally:
+            s.close()
+        LOGGER.info('Storing Values')
+        self.listValues()
+
+    def listValues(self):
+        _name = str(self.name)
+        _name = _name.replace(" ","_")
+        _key = 'key' + str(self.address)    
+        s = shelve.open(_name, writeback=True)            
+        try:
+            existing = s[_key]
+        finally:
+            s.close()
+        LOGGER.info(existing)
+
+    def retrieveValues(self):
+        _name = str(self.name)
+        _name = _name.replace(" ","_")
+        _key = 'key' + str(self.address)
+        LOGGER.debug(_name)
+        LOGGER.debug(_key)
+        s = shelve.open(_name, writeback=True)            
+        try:
+            existing = s[_key]
+        finally:
+            s.close()
+        LOGGER.info('Retrieving Values')
+        LOGGER.info(existing)
+            
+        self.prevVal = existing['prevVal']
+        self.setDriver('GV1', self.prevVal)
+            
+        self.tempVal = existing['tempVal']
+        self.setDriver('ST', self.tempVal)
+            
+        self.highTemp = existing['highTemp']
+        self.setDriver('GV3', self.highTemp)
+
+        self.lowTemp = existing['lowTemp']
+        self.setDriver('GV4', self.lowTemp)
+            
+        self.previousHigh = existing['previousHigh']
+
+        self.previousLow = existing['previousLow']
+            
+        self.prevAvgTemp = existing['prevAvgTemp']
+
+        self.currentAvgTemp = existing['currentAvgTemp']
+        self.setDriver('GV5', self.currentAvgTemp)
+
+        self.action1 = existing['action1']# none, push, pull
+        self.setDriver('GV6', self.action1)
+                       
+        self.action1id = existing['action1id'] # 0 - 400
+        self.setDriver('GV8', self.action1id) 
+                       
+        self.action1type = existing['action1type'] # State var, State init, Int var, Int init
+        self.setDriver('GV7', self.action1type)
+            
+        self.action2 = existing['action2'] 
+        self.setDriver('GV9', self.action2)
+            
+        self.action2id = existing['action2id']
+        self.setDriver('Gv11', self.action2id)
+            
+        self.action2type = existing['action2type']
+        self.setDriver('GV10', self.action2type)
+            
+        self.RtoPrec = existing['RtoPrec']
+        self.setDriver('GV12', self.RtoPrec)
+            
+        self.FtoC = existing['FtoC']
+        self.setDriver('GV13', self.FtoC)
+            
+        self.firstPass = existing['firstPass']    
+        #{'action1': 1, 'action1type': 1, 'action1id': 96, 'action2': 2, 'action2type': 1, 'action2id': 97,
+        #'RtoPrec': 0, 'FtoC': 1, 'prevTemp': 0, 'tempVal': 26.0, 'highTemp': 26.2, 'lowTemp': 26.0, 
+        #'previousHigh': 26.2, 'previousLow': 26.0, 'prevAvgTemp': 26.1, 'currentAvgTemp': 26.1}
 
     def setTemp(self, command):
         self.checkHighLow(self.tempVal)
+        self.storeValues()
         self.setDriver('GV2', 0.0)
         self.lastUpdateTime = time.time()        
         self.prevVal = self.tempVal
         self.setDriver('GV1', self.prevVal) # set prev from current
-        self.FtoCconvert = False
-        self.Rconvert = False
         _temp = float(command.get('value'))
         self.setDriver('ST', _temp)
-        requests.get('http://' + self.parent.isy + '/rest/vars/set/2/' + self.address + '/' + str(_temp), auth=(self.parent.user, self.parent.password))
-        requests.get('http://' + self.parent.isy + '/rest/vars/init/2/' + self.address + '/' + str(_temp), auth=(self.parent.user, self.parent.password))
         self.tempVal = _temp
+        self.convertTempFromRaw()
+        self.convertFtoC()
+        self.retrieveValues()
+            
+        if self.action1 == 1:
+            _type = TYPELIST[(self.action1type - 1)]
+            self.pushTheValue(_type, self.action1id)
+            LOGGER.debug('Action 1 Pushing')
+        
+        if self.action2 == 1:
+            _type = TYPELIST[(self.action2type - 1)]
+            self.pushTheValue(_type, self.action2id)
+            LOGGER.debug('Action 2 Pushing')
+ 
+    def setAction1(self, command):
+        self.action1 = int(command.get('value'))
+        LOGGER.debug('Action 1 %s', self.action1)
+            
+    def setAction1id(self, command):
+        self.action1id = int(command.get('value'))
+        LOGGER.debug('Action 1 ID %s', self.action1id)
+    
+    def setAction1type(self, command):
+        self.action1type = int(command.get('value'))
+        LOGGER.debug('Action 1 type %s', self.action1type)
+            
+    def setAction2(self, command):
+        self.action2 = int(command.get('value'))
+        LOGGER.debug('Action 2 %s', self.action2)
+            
+    def setAction2id(self, command):
+        self.action2id = int(command.get('value'))
+        LOGGER.debug('Action 2 ID %s', self.action2id)
+            
+    def setAction2type(self, command):
+        self.action2type = int(command.get('value'))
+        LOGGER.debug('Action 2 type %s', self.action1type)
+            
+    def setFtoC(self, command):
+        self.FtoC = int(command.get('value'))
+        LOGGER.debug('F to C conversion %s', self.FtoC)
+    
+    def setRawToPrec(self, command):
+        self.RtoPrec = int(command.get('value'))
+        LOGGER.debug('Raw to Prec %s',self.RtoPrec)
+        
+    def pushTheValue(self, command1, command2):
+        _type = str(command1)
+        _id = str(command2)
+        LOGGER.debug('Pushing to http://%s/rest/vars%s%s/%s', self.parent.isy, _type, _id, self.tempVal)
+        requests.get('http://' + self.parent.isy + '/rest/vars' + _type + _id + '/' + str(self.tempVal), auth=(self.parent.user, self.parent.password))
+            
+    def getDataFromID(self):
+        if self.action1 == 2:
+            _type = GETLIST[self.action1type]
+            self.pullFromID(_type, self.action1id)                
+        if self.action2 == 2:
+            _type = GETLIST[self.action2type]
+            self.pullFromID(_type, self.action2id)
+            
+    def pullFromID(self, command1, command2): # this pulls but does not set temp yet
+        _type = str(command1)
+        _id = str(command2)
+        LOGGER.debug('Pulling from http://%s/rest/vars/get%s%s/', self.parent.isy, _type, _id)
+        r = requests.get('http://' + self.parent.isy + '/rest/vars/get' + _type + _id, auth=(self.parent.user, self.parent.password))
+        _content = str(r.content)
+        LOGGER.debug(_content)
+        _value =  re.split('.*<init>(\d+).*<prec>(\d).*<val>(\d+)',_content)
+        LOGGER.info(_value)
+        LOGGER.info('Init = %s Prec = %s Value = %s',_value[1], _value[2], _value[3])
+        LOGGER.debug(_type)
+        _newTemp = 0    
+        if command1 == '/2/' : _newTemp = int(_value[3])
+        if command1 == '/1/' : _newTemp = int(_value[1])
+        if _value[2] == '1': _newTemp = (_newTemp / 10)
+        self.setTempFromData(_newTemp)
 
+    def setTempFromData(self, command):
+        self.checkHighLow(self.tempVal)
+        self.storeValues()
+        self.setDriver('GV2', 0.0)
+        self.lastUpdateTime = time.time()        
+        self.prevVal = self.tempVal
+        self.setDriver('GV1', self.prevVal) # set prev from current
+        self.setDriver('ST', command)
+        self.tempVal = command
+        self.convertTempFromRaw()
+        self.convertFtoC()
+        #self.retrieveValues()
 
-    def setTempRaw(self, command):
-        if not self.Rconvert and not self.FtoCconvert:
-            LOGGER.info('converting from raw')
+        if self.action1 == 1:
+            _type = TYPELIST[(self.action1type - 1)]
+            self.pushTheValue(_type, self.action1id)
+            LOGGER.debug('Action 1 Pushing')
+        else:
+            pass
+        
+        if self.action2 == 1:
+            _type = TYPELIST[(self.action2type - 1)]
+            self.pushTheValue(_type, self.action2id)
+            LOGGER.debug('Action 2 Pushing')
+        else:
+            pass                        
+                        
+    def convertTempFromRaw(self):
+        if self.RtoPrec == 1:
+            LOGGER.info('Converting from raw')
             _command = self.tempVal / 10
             self.setDriver('ST', _command)
             self.tempVal = _command
@@ -299,17 +549,18 @@ class VirtualTempC(polyinterface.Node):
         else:
             pass
 
-    def FtoC(self, command):
-        if not self.FtoCconvert:
+    def convertFtoC(self):
+        if self.FtoC == 1:
             LOGGER.info('converting F to C')
             _FtoCtemp = round(((self.tempVal - 32) / 1.80), 1)
-            self.setDriver('ST', _FtoCtemp)
+            LOGGER.debug(_FtoCtemp)
             self.tempVal = _FtoCtemp
-            self.FtoCconvert = True
+            time.sleep(1)
+            self.setDriver('ST', self.tempVal)
         else:
             pass
 
-    def checkLastUpdate(self):
+    def checkLastUpdate(self): # happens on the short poll
         _currentTime = time.time()
         _sinceLastUpdate = round(((_currentTime - self.lastUpdateTime) / 60), 1)
         if _sinceLastUpdate < 1440:
@@ -318,9 +569,13 @@ class VirtualTempC(polyinterface.Node):
             self.setDriver('GV2', 1440)
             
     def checkHighLow(self, command):
-        if self.firstRun:
+        if self.firstPass:
+            self.firstPass = False
+            LOGGER.debug('First pass skip')
             pass
         else:
+            self.previousHigh = self.highTemp
+            self.previousLow = self.lowTemp
             if command > self.highTemp:
                 LOGGER.debug('check high')
                 self.setDriver('GV3', command)
@@ -329,29 +584,64 @@ class VirtualTempC(polyinterface.Node):
                 LOGGER.debug('check low')
                 self.setDriver('GV4', command)
                 self.lowTemp = command
-        self.firstRun = False
-
+            self.avgHighLow()
+    
+    def avgHighLow(self):
+        if self.highTemp != -60 and self.lowTemp != 129: # make sure values have been set from startup
+            LOGGER.debug('Updating the average temperatue')
+            self.prevAvgTemp = self.currentAvgTemp
+            self.currentAvgTemp = round(((self.highTemp + self.lowTemp) / 2), 1)
+            self.setDriver('GV5', self.currentAvgTemp)
+        
+    def resetStats(self, command):
+        LOGGER.debug('Resetting Stats')
+        self.firstPass = True
+        self.lowTemp = 129
+        self.highTemp = -60
+        self.currentAvgTemp = 0
+        self.prevTemp = 0
+        self.tempVal = 0
+        self.setDriver('GV1', self.prevTemp)
+        self.setDriver('GV5', self.currentAvgTemp)
+        self.setDriver('GV3', 0)
+        self.setDriver('GV4', 0)
+        time.sleep(.5)
+        self.setDriver('ST', self.tempVal)
+        self.firstPass = True
+        self.storeValues()
+            
     def update(self):
         self.checkLastUpdate()
-    
-    
+
     def query(self):
         self.reportDrivers()
 
     #"Hints See: https://github.com/UniversalDevicesInc/hints"
     #hint = [1,2,3,4]
     drivers = [
-               {'driver': 'ST', 'value': 0, 'uom': 4},
-               {'driver': 'GV1', 'value': 0, 'uom': 4},
-               {'driver': 'GV2', 'value': 0, 'uom': 45},
-               {'driver': 'GV3', 'value': 0, 'uom': 4},
-               {'driver': 'GV4', 'value': 0, 'uom': 4}        
+               {'driver': 'ST', 'value': 0, 'uom': 4},  #current
+               {'driver': 'GV1', 'value': 0, 'uom': 4}, #previous
+               {'driver': 'GV2', 'value': 0, 'uom': 45},#update time
+               {'driver': 'GV3', 'value': 0, 'uom': 4}, #high
+               {'driver': 'GV4', 'value': 0, 'uom': 4}, #low
+               {'driver': 'GV5', 'value': 0, 'uom': 4}, #avg high - low
+               {'driver': 'GV6', 'value': 0, 'uom': 25}, #action1 type
+               {'driver': 'GV7', 'value': 0, 'uom': 25}, #variable type
+               {'driver': 'GV8', 'value': 0, 'uom': 56},#variable id
+               {'driver': 'GV9', 'value': 0, 'uom': 25}, #action 2
+               {'driver': 'GV10', 'value': 0, 'uom': 25},#variable type
+               {'driver': 'GV11', 'value': 0, 'uom': 56},#variable id
+               {'driver': 'GV12', 'value': 0, 'uom': 25},#r to p
+               {'driver': 'GV13', 'value': 0, 'uom': 25},#f to c
               ]
 
     id = 'virtualtempc'
 
     commands = {
-                    'setTemp': setTemp, 'setRaw': setTempRaw, 'setFtoC': FtoC
+                    'setTemp': setTemp, 'setAction1': setAction1, 'setAction1id': setAction1id, 'setAction1type': setAction1type,
+                                        'setAction2': setAction2, 'setAction2id': setAction2id, 'setAction2type': setAction2type,
+                                        'setFtoC': setFtoC, 'setRawToPrec': setRawToPrec,
+                    'resetStats': resetStats #bottom   
                 }
     
 class VirtualGeneric(polyinterface.Node):
@@ -375,9 +665,13 @@ class VirtualGeneric(polyinterface.Node):
         _level = int(command.get('value'))
         self.setDriver('ST', _level)
         requests.get('http://' + self.parent.isy + '/rest/vars/set/2/' + self.address + '/' + str(_level), auth=(self.parent.user, self.parent.password))
-        requests.get('http://' + self.parent.isy + '/rest/vars/init/2/' + self.address + '/' + str(_level), auth=(self.parent.user, self.parent.password))
+        r = requests.get('http://' + self.parent.isy + '/rest/vars/get/2/' + self.address, auth=(self.parent.user, self.parent.password))
+        LOGGER.info(r.headers)
         
     def update(self):
+        pass
+
+    def getDataFromID(self):
         pass
     
     def query(self):
