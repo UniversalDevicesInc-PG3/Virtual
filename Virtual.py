@@ -246,6 +246,24 @@ class VirtualTemp(polyinterface.Node):
             time.sleep(2)
             s.close() 
             
+    def storeValues(self):
+        _name = str(self.name)
+        _name = _name.replace(" ","_")
+        _key = 'key' + str(self.address)
+        LOGGER.debug(_name)
+        LOGGER.debug(_key)
+        s = shelve.open(_name, writeback=True)
+        try:
+            s[_key] = { 'action1': self.action1, 'action1type': self.action1type, 'action1id': self.action1id,
+                        'action2': self.action2, 'action2type': self.action2type, 'action2id': self.action2id,
+                        'RtoPrec': self.RtoPrec, 'FtoC': self.FtoC, 'prevVal': self.prevVal, 'tempVal': self.tempVal,
+                        'highTemp': self.highTemp, 'lowTemp': self.lowTemp, 'previousHigh': self.previousHigh, 'previousLow': self.previousLow,
+                        'prevAvgTemp': self.prevAvgTemp, 'currentAvgTemp': self.currentAvgTemp, 'firstPass': self.firstPass }
+        finally:
+            s.close()
+        LOGGER.info('Storing Values')
+        self.listValues()
+            
     def listValues(self):
         _name = str(self.name)
         _name = _name.replace(" ","_")
