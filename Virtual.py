@@ -376,7 +376,7 @@ class VirtualTempC(polyinterface.Node):
         LOGGER.info(existing)
             
         self.prevVal = existing['prevVal']
-        self.setDriver('GV1', self.preVal)
+        self.setDriver('GV1', self.prevVal)
             
         self.tempVal = existing['tempVal']
         self.setDriver('ST', self.tempVal)
