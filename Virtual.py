@@ -230,22 +230,6 @@ class VirtualTemp(polyinterface.Node):
             time.sleep(2)
             s.close() 
             
-    def createDBfile(self):
-        _name = str(self.name)
-        _name = _name.replace(" ","_")
-        _key = 'key' + str(self.address)
-        _check = _name + '.db'
-        LOGGER.debug('Checking to see if %s exists', _check)           
-        if os.path.exists(_check):
-            LOGGER.debug('The file does exists')
-            self.retrieveValues()
-            pass
-        else:
-            s = shelve.open(_name, writeback=True)
-            s[_key] = { 'created': 'yes'}
-            time.sleep(2)
-            s.close() 
-            
     def storeValues(self):
         _name = str(self.name)
         _name = _name.replace(" ","_")
@@ -468,6 +452,14 @@ class VirtualTemp(polyinterface.Node):
             self.setDriver('ST', self.tempVal)
         else:
             pass
+
+    def checkLastUpdate(self): # happens on the short poll
+        _currentTime = time.time()
+        _sinceLastUpdate = round(((_currentTime - self.lastUpdateTime) / 60), 1)
+        if _sinceLastUpdate < 1440:
+            self.setDriver('GV2', _sinceLastUpdate)
+        else:
+            self.setDriver('GV2', 1440)
         
     def checkHighLow(self, command):
         if self.firstPass:
