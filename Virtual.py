@@ -4,7 +4,7 @@
 """
 This is a NodeServer created for Polyglot v2 from a template by Einstein.42 (James Miline)
 This NodeServer was created by markv58 (Mark Vittes) markv58git@gmail.com
-v1.0.11
+v1.0.12
 """
 
 import polyinterface
@@ -78,13 +78,13 @@ class Controller(polyinterface.Controller):
         for key,val in self.polyConfig['customParams'].items():
             a = key
             if a == "isy":
-                LOGGER.debug('ISY ip address is %s ', val)
+                #LOGGER.debug('ISY ip address is %s ', val)
                 self.isy = str(val)
             elif a == "user":
-                LOGGER.debug('ISY user is %s', val)
+                #LOGGER.debug('ISY user is %s', val)
                 self.user = str(val)
             elif a == "password":
-                LOGGER.debug('ISY password is %s', val)
+                #LOGGER.debug('ISY password is %s', val)
                 self.password = str(val)
             elif a.isdigit(): 
                 if val == 'switch':
@@ -299,7 +299,7 @@ class VirtualTemp(polyinterface.Node):
                        
         self.action1id = existing['action1id'] # 0 - 400
         self.setDriver('GV8', self.action1id) 
-                       
+
         self.action1type = existing['action1type'] # State var, State init, Int var, Int init
         self.setDriver('GV7', self.action1type)
             
@@ -443,7 +443,7 @@ class VirtualTemp(polyinterface.Node):
             pass
         
     def convertCtoF(self):
-        if self.FtoC == 1:
+        if self.CtoF == 1:
             LOGGER.info('converting C to F')
             _CtoFtemp = round(((self.tempVal * 1.8) + 32), 1)
             LOGGER.debug(_CtoFtemp)
