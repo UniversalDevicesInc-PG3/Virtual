@@ -41,6 +41,7 @@
             <st id="GV2" editor="minutes" />
             <st id="GV3" editor="temp" />
             <st id="GV4" editor="temp" />  
+            <st id="GV5" editor="temp" />
             <st id="GV6" editor="action_type" />
             <st id="GV7" editor="variable_type" />
             <st id="GV8" editor="variableID" />
