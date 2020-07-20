@@ -307,7 +307,7 @@ class VirtualTemp(polyinterface.Node):
         self.setDriver('GV9', self.action2)
             
         self.action2id = existing['action2id']
-        self.setDriver('Gv11', self.action2id)
+        self.setDriver('GV11', self.action2id)
             
         self.action2type = existing['action2type']
         self.setDriver('GV10', self.action2type)
@@ -349,30 +349,37 @@ class VirtualTemp(polyinterface.Node):
             
     def setAction1id(self, command):
         self.action1id = int(command.get('value'))
+        self.setDriver('GV8', self.action1id)
         LOGGER.debug('Action 1 ID %s', self.action1id)
     
     def setAction1type(self, command):
         self.action1type = int(command.get('value'))
+        self.setDriver('GV7', self.action1type)
         LOGGER.debug('Action 1 type %s', self.action1type)
             
     def setAction2(self, command):
         self.action2 = int(command.get('value'))
+        self.setDriver('GV9', self.action2)
         LOGGER.debug('Action 2 %s', self.action2)
             
     def setAction2id(self, command):
         self.action2id = int(command.get('value'))
+        self.setDriver('GV11', self.action2id)
         LOGGER.debug('Action 2 ID %s', self.action2id)
             
     def setAction2type(self, command):
         self.action2type = int(command.get('value'))
+        self.setDriver('GV10', self.action2type)
         LOGGER.debug('Action 2 type %s', self.action1type)
             
     def setCtoF(self, command):
         self.CtoF = int(command.get('value'))
+        self.setDriver('GV13', self.CtoF)
         LOGGER.debug('C to F conversion %s', self.CtoF)
     
     def setRawToPrec(self, command):
         self.RtoPrec = int(command.get('value'))
+        self.setDriver('GV12', self.RtoPrec)
         LOGGER.debug('Raw to Prec %s',self.RtoPrec)
         
     def pushTheValue(self, command1, command2):
@@ -668,7 +675,7 @@ class VirtualTempC(polyinterface.Node):
         self.setDriver('GV9', self.action2)
             
         self.action2id = existing['action2id']
-        self.setDriver('Gv11', self.action2id)
+        self.setDriver('GV11', self.action2id)
             
         self.action2type = existing['action2type']
         self.setDriver('GV10', self.action2type)
@@ -707,34 +714,42 @@ class VirtualTempC(polyinterface.Node):
  
     def setAction1(self, command):
         self.action1 = int(command.get('value'))
+        self.setDriver('GV6', self.action1)
         LOGGER.debug('Action 1 %s', self.action1)
             
     def setAction1id(self, command):
         self.action1id = int(command.get('value'))
+        self.setDriver('GV8', self.action1id)
         LOGGER.debug('Action 1 ID %s', self.action1id)
     
     def setAction1type(self, command):
         self.action1type = int(command.get('value'))
+        self.setDriver('GV7', self.action1type)
         LOGGER.debug('Action 1 type %s', self.action1type)
             
     def setAction2(self, command):
         self.action2 = int(command.get('value'))
+        self.setDriver('GV9', self.action2)
         LOGGER.debug('Action 2 %s', self.action2)
             
     def setAction2id(self, command):
         self.action2id = int(command.get('value'))
-        LOGGER.debug('Action 2 ID %s', self.action2id)
+        self.setDriver('GV11', self.action2id)
+        LOGGER.debug('Action type2 ID %s', self.action2id)
             
     def setAction2type(self, command):
         self.action2type = int(command.get('value'))
-        LOGGER.debug('Action 2 type %s', self.action1type)
+        self.setDriver('GV10', self.action2type)
+        LOGGER.debug('Action 2 type %s', self.action2type)
             
     def setFtoC(self, command):
         self.FtoC = int(command.get('value'))
+        self.setDriver('GV13', self.FtoC)
         LOGGER.debug('F to C conversion %s', self.FtoC)
     
     def setRawToPrec(self, command):
         self.RtoPrec = int(command.get('value'))
+        self.setDriver('GV12', self.RtoPrec)
         LOGGER.debug('Raw to Prec %s',self.RtoPrec)
         
     def pushTheValue(self, command1, command2):
