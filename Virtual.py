@@ -307,7 +307,7 @@ class VirtualTemp(polyinterface.Node):
         self.setDriver('GV9', self.action2)
             
         self.action2id = existing['action2id']
-        self.setDriver('Gv11', self.action2id)
+        self.setDriver('GV11', self.action2id)
             
         self.action2type = existing['action2type']
         self.setDriver('GV10', self.action2type)
@@ -345,35 +345,35 @@ class VirtualTemp(polyinterface.Node):
             
     def setAction1(self, command):
         self.action1 = int(command.get('value'))
-        LOGGER.debug('Action 1 %s', self.action1)
+        self.setDriver('GV6', self.action1)
             
     def setAction1id(self, command):
         self.action1id = int(command.get('value'))
-        LOGGER.debug('Action 1 ID %s', self.action1id)
+        self.setDriver('GV8', self.action1id)
     
     def setAction1type(self, command):
         self.action1type = int(command.get('value'))
-        LOGGER.debug('Action 1 type %s', self.action1type)
+        self.setDriver('GV7', self.action1type)
             
     def setAction2(self, command):
         self.action2 = int(command.get('value'))
-        LOGGER.debug('Action 2 %s', self.action2)
+        self.setDriver('GV9', self.action2)
             
     def setAction2id(self, command):
         self.action2id = int(command.get('value'))
-        LOGGER.debug('Action 2 ID %s', self.action2id)
+        self.setDriver('GV11', self.action2id)
             
     def setAction2type(self, command):
         self.action2type = int(command.get('value'))
-        LOGGER.debug('Action 2 type %s', self.action1type)
+        self.setDriver('GV10', self.action2type)
             
     def setCtoF(self, command):
         self.CtoF = int(command.get('value'))
-        LOGGER.debug('C to F conversion %s', self.CtoF)
+        self.setDriver('GV13', self.CtoF)
     
     def setRawToPrec(self, command):
         self.RtoPrec = int(command.get('value'))
-        LOGGER.debug('Raw to Prec %s',self.RtoPrec)
+        self.setDriver('GV12', self.RtoPrec)
         
     def pushTheValue(self, command1, command2):
         _type = str(command1)
@@ -668,7 +668,7 @@ class VirtualTempC(polyinterface.Node):
         self.setDriver('GV9', self.action2)
             
         self.action2id = existing['action2id']
-        self.setDriver('Gv11', self.action2id)
+        self.setDriver('GV11', self.action2id)
             
         self.action2type = existing['action2type']
         self.setDriver('GV10', self.action2type)
@@ -680,9 +680,6 @@ class VirtualTempC(polyinterface.Node):
         self.setDriver('GV13', self.FtoC)
             
         self.firstPass = existing['firstPass']    
-        #{'action1': 1, 'action1type': 1, 'action1id': 96, 'action2': 2, 'action2type': 1, 'action2id': 97,
-        #'RtoPrec': 0, 'FtoC': 1, 'prevTemp': 0, 'tempVal': 26.0, 'highTemp': 26.2, 'lowTemp': 26.0, 
-        #'previousHigh': 26.2, 'previousLow': 26.0, 'prevAvgTemp': 26.1, 'currentAvgTemp': 26.1}
 
     def setTemp(self, command):
         self.checkHighLow(self.tempVal)
@@ -710,35 +707,35 @@ class VirtualTempC(polyinterface.Node):
  
     def setAction1(self, command):
         self.action1 = int(command.get('value'))
-        LOGGER.debug('Action 1 %s', self.action1)
+        self.setDriver('GV6', self.action1)
             
     def setAction1id(self, command):
         self.action1id = int(command.get('value'))
-        LOGGER.debug('Action 1 ID %s', self.action1id)
+        self.setDriver('GV8', self.action1id)
     
     def setAction1type(self, command):
         self.action1type = int(command.get('value'))
-        LOGGER.debug('Action 1 type %s', self.action1type)
+        self.setDriver('GV7', self.action1type)
             
     def setAction2(self, command):
         self.action2 = int(command.get('value'))
-        LOGGER.debug('Action 2 %s', self.action2)
+        self.setDriver('GV9', self.action2)
             
     def setAction2id(self, command):
         self.action2id = int(command.get('value'))
-        LOGGER.debug('Action 2 ID %s', self.action2id)
+        self.setDriver('GV11', self.action2id)
             
     def setAction2type(self, command):
         self.action2type = int(command.get('value'))
-        LOGGER.debug('Action 2 type %s', self.action1type)
+        self.setDriver('GV10', self.action2type)
             
     def setFtoC(self, command):
         self.FtoC = int(command.get('value'))
-        LOGGER.debug('F to C conversion %s', self.FtoC)
+        self.setDriver('GV13', self.FtoC)
     
     def setRawToPrec(self, command):
         self.RtoPrec = int(command.get('value'))
-        LOGGER.debug('Raw to Prec %s',self.RtoPrec)
+        self.setDriver('GV12', self.RtoPrec)
         
     def pushTheValue(self, command1, command2):
         _type = str(command1)
