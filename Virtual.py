@@ -353,7 +353,7 @@ class VirtualTemp(polyinterface.Node):
     
     def setAction1type(self, command):
         self.action1type = int(command.get('value'))
-        self.setDriver('GV7', self.action1type))
+        self.setDriver('GV7', self.action1type)
             
     def setAction2(self, command):
         self.action2 = int(command.get('value'))
