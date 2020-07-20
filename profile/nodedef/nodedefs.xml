@@ -40,8 +40,7 @@
             <st id="GV1" editor="temp" />
             <st id="GV2" editor="minutes" />
             <st id="GV3" editor="temp" />
-            <st id="GV4" editor="temp" />  
-            <st id="GV5" editor="temp" />
+            <st id="GV4" editor="temp" />            
         </sts>
         <cmds>
             <sends />
@@ -51,28 +50,28 @@
                   <p id="" editor="temp" init="ST" />
                 </cmd>
                 <cmd id="setAction1">
-                  <p id="" editor="action_type" />
+                  <p id="" editor="action_type" init="GV6" />
                 </cmd>
                 <cmd id="setAction1type">
-                  <p id="" editor="variable_type" />
+                  <p id="" editor="variable_type" init="GV7" />
                 </cmd>
                 <cmd id="setAction1id">
-                  <p id="" editor="variableID" />
+                  <p id="" editor="variableID" init="GV8" />
                 </cmd> 
                 <cmd id="setAction2">
-                  <p id="" editor="action_type" />
+                  <p id="" editor="action_type" init="GV9" />
                 </cmd>
                 <cmd id="setAction2type">
-                  <p id="" editor="variable_type" />
+                  <p id="" editor="variable_type" init="GV10" />
                 </cmd>
                 <cmd id="setAction2id">
-                  <p id="" editor="variableID" />
+                  <p id="" editor="variableID" init="GV11" />
                 </cmd>
                 <cmd id="setRawToPrec">
-                  <p id="" editor="on_off" />
+                  <p id="" editor="on_off" init="GV12"/>
                 </cmd>                
                 <cmd id="setCtoF">
-                  <p id="" editor="on_off" />
+                  <p id="" editor="on_off" init="GV13"/>
                 </cmd>                
             </accepts>
         </cmds>
@@ -96,28 +95,28 @@
                   <p id="" editor="tempc" init="ST" />
                 </cmd>
                 <cmd id="setAction1">
-                  <p id="" editor="action_type" />
+                  <p id="" editor="action_type" init="GV6" />
                 </cmd>
                 <cmd id="setAction1type">
-                  <p id="" editor="variable_type" />
+                  <p id="" editor="variable_type" init="GV7" />
                 </cmd>
                 <cmd id="setAction1id">
-                  <p id="" editor="variableID" />
+                  <p id="" editor="variableID" init="GV8" />
                 </cmd> 
                 <cmd id="setAction2">
-                  <p id="" editor="action_type" />
+                  <p id="" editor="action_type" init="GV9" />
                 </cmd>
                 <cmd id="setAction2type">
-                  <p id="" editor="variable_type" />
+                  <p id="" editor="variable_type" init="GV10" />
                 </cmd>
                 <cmd id="setAction2id">
-                  <p id="" editor="variableID" />
+                  <p id="" editor="variableID" init="GV11" />
                 </cmd>
                 <cmd id="setRawToPrec">
-                  <p id="" editor="on_off" />
+                  <p id="" editor="on_off" init="GV12"/>
                 </cmd>                
                 <cmd id="setFtoC">
-                  <p id="" editor="on_off" />
+                  <p id="" editor="on_off" init="GV13"/>
                 </cmd>                
             </accepts>
         </cmds>
