@@ -15,7 +15,7 @@ Farenheit can be converted and displayed as Celsius and vice versa.
 
 ### Updates
 
-1.0.12 Bug fixes
+1.0.12 Bug fixes. Update Profile and restart the AC for Temperature node changes.
 
 1.0.11 Updated Temerature node to mirror options in the Temperature C node. Update Profile and restart the Admin Console after the update and restart.
 
