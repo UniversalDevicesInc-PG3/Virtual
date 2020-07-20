@@ -296,15 +296,12 @@ class VirtualTemp(polyinterface.Node):
 
         self.action1 = existing['action1']# none, push, pull
         self.setDriver('GV6', self.action1)
-        self.setAction1(self.action1)
                        
         self.action1id = existing['action1id'] # 0 - 400
         self.setDriver('GV8', self.action1id) 
-        self.setAction1id(self.action1id)
 
         self.action1type = existing['action1type'] # State var, State init, Int var, Int init
         self.setDriver('GV7', self.action1type)
-        self.setAction1type(self.action1type)
             
         self.action2 = existing['action2'] 
         self.setDriver('GV9', self.action2)
