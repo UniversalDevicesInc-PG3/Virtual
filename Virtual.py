@@ -295,28 +295,28 @@ class VirtualTemp(polyinterface.Node):
         self.setDriver('GV5', self.currentAvgTemp)
 
         self.action1 = existing['action1']# none, push, pull
-        #self.setDriver('GV6', self.action1)
+        self.setDriver('GV6', self.action1)
                        
         self.action1id = existing['action1id'] # 0 - 400
-        #self.setDriver('GV8', self.action1id) 
+        self.setDriver('GV8', self.action1id) 
 
         self.action1type = existing['action1type'] # State var, State init, Int var, Int init
-        #self.setDriver('GV7', self.action1type)
+        self.setDriver('GV7', self.action1type)
             
         self.action2 = existing['action2'] 
-        #self.setDriver('GV9', self.action2)
+        self.setDriver('GV9', self.action2)
             
         self.action2id = existing['action2id']
-        #self.setDriver('Gv11', self.action2id)
+        self.setDriver('Gv11', self.action2id)
             
         self.action2type = existing['action2type']
-        #self.setDriver('GV10', self.action2type)
+        self.setDriver('GV10', self.action2type)
             
         self.RtoPrec = existing['RtoPrec']
-        #self.setDriver('GV12', self.RtoPrec)
+        self.setDriver('GV12', self.RtoPrec)
             
         self.CtoF = existing['CtoF']
-        #self.setDriver('GV13', self.CtoF)
+        self.setDriver('GV13', self.CtoF)
             
         self.firstPass = existing['firstPass']
 
@@ -518,14 +518,14 @@ class VirtualTemp(polyinterface.Node):
                {'driver': 'GV3', 'value': 0, 'uom': 17}, #high
                {'driver': 'GV4', 'value': 0, 'uom': 17}, #low
                {'driver': 'GV5', 'value': 0, 'uom': 17}, #avg high - low
-               #{'driver': 'GV6', 'value': 0, 'uom': 25}, #action1 type
-               #{'driver': 'GV7', 'value': 0, 'uom': 25}, #variable type
-               #{'driver': 'GV8', 'value': 0, 'uom': 56},#variable id
-               #{'driver': 'GV9', 'value': 0, 'uom': 25}, #action 2
-               #{'driver': 'GV10', 'value': 0, 'uom': 25},#variable type
-               #{'driver': 'GV11', 'value': 0, 'uom': 56},#variable id
-               #{'driver': 'GV12', 'value': 0, 'uom': 25},#r to p
-               #{'driver': 'GV13', 'value': 0, 'uom': 25},#f to c
+               {'driver': 'GV6', 'value': 0, 'uom': 25}, #action1 type
+               {'driver': 'GV7', 'value': 0, 'uom': 25}, #variable type
+               {'driver': 'GV8', 'value': 0, 'uom': 56},#variable id
+               {'driver': 'GV9', 'value': 0, 'uom': 25}, #action 2
+               {'driver': 'GV10', 'value': 0, 'uom': 25},#variable type
+               {'driver': 'GV11', 'value': 0, 'uom': 56},#variable id
+               {'driver': 'GV12', 'value': 0, 'uom': 25},#r to p
+               {'driver': 'GV13', 'value': 0, 'uom': 25},#f to c
               ]
 
     id = 'virtualtemp'
@@ -656,28 +656,28 @@ class VirtualTempC(polyinterface.Node):
         self.setDriver('GV5', self.currentAvgTemp)
 
         self.action1 = existing['action1']# none, push, pull
-        #self.setDriver('GV6', self.action1)
+        self.setDriver('GV6', self.action1)
                        
         self.action1id = existing['action1id'] # 0 - 400
-        #self.setDriver('GV8', self.action1id) 
+        self.setDriver('GV8', self.action1id) 
                        
         self.action1type = existing['action1type'] # State var, State init, Int var, Int init
-        #self.setDriver('GV7', self.action1type)
+        self.setDriver('GV7', self.action1type)
             
         self.action2 = existing['action2'] 
-        #self.setDriver('GV9', self.action2)
+        self.setDriver('GV9', self.action2)
             
         self.action2id = existing['action2id']
-        #self.setDriver('Gv11', self.action2id)
+        self.setDriver('Gv11', self.action2id)
             
         self.action2type = existing['action2type']
-        #self.setDriver('GV10', self.action2type)
+        self.setDriver('GV10', self.action2type)
             
         self.RtoPrec = existing['RtoPrec']
-        #self.setDriver('GV12', self.RtoPrec)
+        self.setDriver('GV12', self.RtoPrec)
             
         self.FtoC = existing['FtoC']
-        #self.setDriver('GV13', self.FtoC)
+        self.setDriver('GV13', self.FtoC)
             
         self.firstPass = existing['firstPass']    
 
@@ -881,14 +881,14 @@ class VirtualTempC(polyinterface.Node):
                {'driver': 'GV3', 'value': 0, 'uom': 4}, #high
                {'driver': 'GV4', 'value': 0, 'uom': 4}, #low
                {'driver': 'GV5', 'value': 0, 'uom': 4}, #avg high - low
-               #{'driver': 'GV6', 'value': 0, 'uom': 25}, #action1 type
-               #{'driver': 'GV7', 'value': 0, 'uom': 25}, #variable type
-               #{'driver': 'GV8', 'value': 0, 'uom': 56},#variable id
-               #{'driver': 'GV9', 'value': 0, 'uom': 25}, #action 2
-               #{'driver': 'GV10', 'value': 0, 'uom': 25},#variable type
-               #{'driver': 'GV11', 'value': 0, 'uom': 56},#variable id
-               #{'driver': 'GV12', 'value': 0, 'uom': 25},#r to p
-               #{'driver': 'GV13', 'value': 0, 'uom': 25},#f to c
+               {'driver': 'GV6', 'value': 0, 'uom': 25}, #action1 type
+               {'driver': 'GV7', 'value': 0, 'uom': 25}, #variable type
+               {'driver': 'GV8', 'value': 0, 'uom': 56},#variable id
+               {'driver': 'GV9', 'value': 0, 'uom': 25}, #action 2
+               {'driver': 'GV10', 'value': 0, 'uom': 25},#variable type
+               {'driver': 'GV11', 'value': 0, 'uom': 56},#variable id
+               {'driver': 'GV12', 'value': 0, 'uom': 25},#r to p
+               {'driver': 'GV13', 'value': 0, 'uom': 25},#f to c
               ]
 
     id = 'virtualtempc'
