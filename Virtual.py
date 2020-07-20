@@ -443,7 +443,7 @@ class VirtualTemp(polyinterface.Node):
             pass
         
     def convertCtoF(self):
-        if self.FtoC == 1:
+        if self.CtoF == 1:
             LOGGER.info('converting C to F')
             _CtoFtemp = round(((self.tempVal * 1.8) + 32), 1)
             LOGGER.debug(_CtoFtemp)
