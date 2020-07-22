@@ -591,7 +591,7 @@ class VirtualTempC(polyinterface.Node):
             time.sleep(2)
             s.close()
             
-    def deleteDB(self):
+    def deleteDB(self, command):
         _name = str(self.name)
         _name = _name.replace(" ","_")
         _key = 'key' + str(self.address)        
