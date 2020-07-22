@@ -806,7 +806,7 @@ class VirtualTempC(polyinterface.Node):
             command = self.tempVal / 10
         if self.FtoC == 1:
             LOGGER.info('converting F to C')
-            command = round(((self.tempVal - 32) / 1.80), 1           
+            command = round(((self.tempVal - 32) / 1.80), 1)          
         #self.convertFtoC()            
         self.setDriver('ST', command)
         self.tempVal = command
