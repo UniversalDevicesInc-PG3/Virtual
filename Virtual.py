@@ -15,6 +15,7 @@ import logging
 import re
 import shelve
 import os.path
+import subprocess
 
 TYPELIST = ['/set/2/', #1
             '/init/2/',#2
@@ -588,8 +589,18 @@ class VirtualTempC(polyinterface.Node):
             s = shelve.open(_name, writeback=True)
             s[_key] = { 'created': 'yes'}
             time.sleep(2)
-            s.close()             
+            s.close()
             
+    def deleteDB(self):
+        _name = str(self.name)
+        _name = _name.replace(" ","_")
+        _key = 'key' + str(self.address)        
+        _check = _name + '.db'
+        if os.path.exists(_check):
+            subprocess.run("rm", _check)
+        time.sleep(1)    
+        self.start()
+
     def storeValues(self):
         _name = str(self.name)
         _name = _name.replace(" ","_")
@@ -635,8 +646,7 @@ class VirtualTempC(polyinterface.Node):
             
         self.prevVal = existing['prevVal']
         self.setDriver('GV1', self.prevVal)
-            
-            
+                  
         self.tempVal = existing['tempVal']
         self.setDriver('ST', self.tempVal)
             
@@ -708,35 +718,43 @@ class VirtualTempC(polyinterface.Node):
     def setAction1(self, command):
         self.action1 = int(command.get('value'))
         self.setDriver('GV6', self.action1)
+        self.storeValues()
             
     def setAction1id(self, command):
         self.action1id = int(command.get('value'))
         self.setDriver('GV8', self.action1id)
-    
+        self.storeValues()
+
     def setAction1type(self, command):
         self.action1type = int(command.get('value'))
         self.setDriver('GV7', self.action1type)
+        self.storeValues()
             
     def setAction2(self, command):
         self.action2 = int(command.get('value'))
         self.setDriver('GV9', self.action2)
-            
+        self.storeValues()
+
     def setAction2id(self, command):
         self.action2id = int(command.get('value'))
         self.setDriver('GV11', self.action2id)
-            
+        self.storeValues()
+
     def setAction2type(self, command):
         self.action2type = int(command.get('value'))
         self.setDriver('GV10', self.action2type)
-            
+        self.storeValues()
+
     def setFtoC(self, command):
         self.FtoC = int(command.get('value'))
         self.setDriver('GV13', self.FtoC)
-    
+        self.storeValues()
+
     def setRawToPrec(self, command):
         self.RtoPrec = int(command.get('value'))
         self.setDriver('GV12', self.RtoPrec)
-        
+        self.storeValues()
+
     def pushTheValue(self, command1, command2):
         _type = str(command1)
         _id = str(command2)
@@ -760,12 +778,12 @@ class VirtualTempC(polyinterface.Node):
         LOGGER.debug(_content)
         _value =  re.split('.*<init>(\d+).*<prec>(\d).*<val>(\d+)',_content)
         LOGGER.info(_value)
-        LOGGER.info('Init = %s Prec = %s Value = %s',_value[1], _value[2], _value[3])
+        #LOGGER.info('Init = %s Prec = %s Value = %s',_value[1], _value[2], _value[3])
         LOGGER.debug(_type)
         _newTemp = 0    
         if command1 == '/2/' : _newTemp = int(_value[3])
         if command1 == '/1/' : _newTemp = int(_value[1])
-        if _value[2] == '1': _newTemp = (_newTemp / 10)
+        #if _value[2] == '1': _newTemp = (_newTemp / 10)
         self.setTempFromData(_newTemp)
 
     def setTempFromData(self, command):
@@ -897,7 +915,7 @@ class VirtualTempC(polyinterface.Node):
                     'setTemp': setTemp, 'setAction1': setAction1, 'setAction1id': setAction1id, 'setAction1type': setAction1type,
                                         'setAction2': setAction2, 'setAction2id': setAction2id, 'setAction2type': setAction2type,
                                         'setFtoC': setFtoC, 'setRawToPrec': setRawToPrec,
-                    'resetStats': resetStats #bottom   
+                    'resetStats': resetStats, 'deleteDB': deleteDB #bottom   
                 }
     
 class VirtualGeneric(polyinterface.Node):
