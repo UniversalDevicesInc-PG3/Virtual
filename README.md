@@ -19,6 +19,8 @@ Pending: Unlink Switch from variable, add Push / Pull capability, data and param
 
 Pending: Update Generic node.
 
+1.0.14 Cleaned up some code, fixed a bug that could corrupt the data, added Delete Node db to clear bad data, similar to Reset Statistics but more thourogh. Any parameter changes are saved immediately. This should be the last major update to the Temperature Nodes pending the discovry of any other bugs. Update Profile and restart AC.
+
 1.0.13 Corrected some problems with data storage and parameter display. Added drivers to present current settings. Requires Update Profile.
 
 1.0.12 Bug fixes. Update Profile and restart the AC for Temperature node changes.
