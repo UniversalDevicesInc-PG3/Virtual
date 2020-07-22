@@ -241,7 +241,7 @@ class VirtualTemp(polyinterface.Node):
             subprocess.run(["rm", _check])
         time.sleep(1)
         self.firstPass = True
-        self.start(        
+        self.start()        
             
     def storeValues(self):
         _name = str(self.name)
