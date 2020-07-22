@@ -109,6 +109,7 @@
             <sends />
             <accepts>
                 <cmd id="resetStats" />
+                <cmd id="deleteDB" />
                 <cmd id="setTemp">
                   <p id="" editor="tempc" init="ST" />
                 </cmd>
