@@ -68,6 +68,7 @@ ST-vtempc-GV11-NAME = Variable ID
 ST-vtempc-GV12-NAME = Convert Raw to Prec
 ST-vtempc-GV13-NAME = Convert F to C
 CMD-vtempc-resetStats-NAME = Reset Statistics
+CMD-vtenpc-deleteDB-NAME = Delete node db
 CMD-vtempc-setTemp-NAME = Set Current
 CMD-vtempc-setAction1-NAME = Action 1
 CMD-vtempc-setAction1id-NAME = Action 1 Var ID
