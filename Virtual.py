@@ -803,7 +803,7 @@ class VirtualTempC(polyinterface.Node):
         #self.convertTempFromRaw()
         if self.RtoPrec == 1:
             LOGGER.info('Converting from raw')
-            self.tempVal = self.tempVal / 10
+            self.tempVal = (self.tempVal / 10)
         if self.FtoC == 1:
             LOGGER.info('converting F to C')
             self.tempVal = round(((self.tempVal - 32) / 1.80), 1)          
