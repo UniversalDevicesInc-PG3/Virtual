@@ -597,7 +597,7 @@ class VirtualTempC(polyinterface.Node):
         _key = 'key' + str(self.address)        
         _check = _name + '.db'
         if os.path.exists(_check):
-            subprocess.run("rm", _check)
+            subprocess.run(["rm", _check])
         time.sleep(1)    
         self.start()
 
