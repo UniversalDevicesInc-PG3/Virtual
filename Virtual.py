@@ -881,11 +881,14 @@ class VirtualTempC(polyinterface.Node):
         self.currentAvgTemp = 0
         self.prevTemp = 0
         self.tempVal = 0
-        self.setDriver('GV1', self.prevTemp)
-        self.setDriver('GV5', self.currentAvgTemp)
+        self.setDriver('GV1', 0)
+        time.sleep(.1)   
+        self.setDriver('GV5', 0)
+        time.sleep(.1)    
         self.setDriver('GV3', 0)
+        time.sleep(.1)        
         self.setDriver('GV4', 0)
-        time.sleep(.5)
+        time.sleep(.1)
         self.setDriver('ST', self.tempVal)
         self.firstPass = True
         self.storeValues()
