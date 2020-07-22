@@ -586,6 +586,7 @@ class VirtualTempC(polyinterface.Node):
             self.retrieveValues()
             pass
         else:
+            LOGGER.info('Creating %s', _check)
             s = shelve.open(_name, writeback=True)
             s[_key] = { 'created': 'yes'}
             time.sleep(2)
@@ -598,7 +599,8 @@ class VirtualTempC(polyinterface.Node):
         _check = _name + '.db'
         if os.path.exists(_check):
             subprocess.run(["rm", _check])
-        time.sleep(1)    
+        time.sleep(1)
+        self.firstPass = True
         self.start()
 
     def storeValues(self):
