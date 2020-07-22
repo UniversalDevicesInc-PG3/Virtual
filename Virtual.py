@@ -770,21 +770,24 @@ class VirtualTempC(polyinterface.Node):
             self.pullFromID(_type, self.action2id)
             
     def pullFromID(self, command1, command2): # this pulls but does not set temp yet
-        _type = str(command1)
-        _id = str(command2)
-        LOGGER.debug('Pulling from http://%s/rest/vars/get%s%s/', self.parent.isy, _type, _id)
-        r = requests.get('http://' + self.parent.isy + '/rest/vars/get' + _type + _id, auth=(self.parent.user, self.parent.password))
-        _content = str(r.content)
-        LOGGER.debug(_content)
-        _value =  re.split('.*<init>(\d+).*<prec>(\d).*<val>(\d+)',_content)
-        LOGGER.info(_value)
-        #LOGGER.info('Init = %s Prec = %s Value = %s',_value[1], _value[2], _value[3])
-        LOGGER.debug(_type)
-        _newTemp = 0    
-        if command1 == '/2/' : _newTemp = int(_value[3])
-        if command1 == '/1/' : _newTemp = int(_value[1])
-        #if _value[2] == '1': _newTemp = (_newTemp / 10)
-        self.setTempFromData(_newTemp)
+        if command2 == 0:
+            pass
+        else:
+            _type = str(command1)
+            _id = str(command2)
+            LOGGER.debug('Pulling from http://%s/rest/vars/get%s%s/', self.parent.isy, _type, _id)
+            r = requests.get('http://' + self.parent.isy + '/rest/vars/get' + _type + _id, auth=(self.parent.user, self.parent.password))
+            _content = str(r.content)
+            LOGGER.debug(_content)
+            _value =  re.split('.*<init>(\d+).*<prec>(\d).*<val>(\d+)',_content)
+            LOGGER.info(_value)
+            LOGGER.info('Init = %s Prec = %s Value = %s',_value[1], _value[2], _value[3])
+            LOGGER.debug(_type)
+            _newTemp = 0    
+            if command1 == '/2/' : _newTemp = int(_value[3])
+            if command1 == '/1/' : _newTemp = int(_value[1])
+            #if _value[2] == '1': _newTemp = (_newTemp / 10)
+            self.setTempFromData(_newTemp)
 
     def setTempFromData(self, command):
         self.checkHighLow(self.tempVal)
