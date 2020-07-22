@@ -231,6 +231,18 @@ class VirtualTemp(polyinterface.Node):
             time.sleep(2)
             s.close() 
             
+    def deleteDB(self, command):
+        _name = str(self.name)
+        _name = _name.replace(" ","_")
+        _key = 'key' + str(self.address)        
+        _check = _name + '.db'
+        if os.path.exists(_check):
+            LOGGER.debug('Deleting db')
+            subprocess.run(["rm", _check])
+        time.sleep(1)
+        self.firstPass = True
+        self.start(        
+            
     def storeValues(self):
         _name = str(self.name)
         _name = _name.replace(" ","_")
@@ -347,35 +359,43 @@ class VirtualTemp(polyinterface.Node):
     def setAction1(self, command):
         self.action1 = int(command.get('value'))
         self.setDriver('GV6', self.action1)
-            
+        self.storeValues()
+                    
     def setAction1id(self, command):
         self.action1id = int(command.get('value'))
         self.setDriver('GV8', self.action1id)
-    
+        self.storeValues()
+                    
     def setAction1type(self, command):
         self.action1type = int(command.get('value'))
         self.setDriver('GV7', self.action1type)
-            
+        self.storeValues()
+                    
     def setAction2(self, command):
         self.action2 = int(command.get('value'))
         self.setDriver('GV9', self.action2)
-            
+        self.storeValues()
+                    
     def setAction2id(self, command):
         self.action2id = int(command.get('value'))
         self.setDriver('GV11', self.action2id)
-            
+        self.storeValues()
+                    
     def setAction2type(self, command):
         self.action2type = int(command.get('value'))
         self.setDriver('GV10', self.action2type)
-            
+        self.storeValues()
+                    
     def setCtoF(self, command):
         self.CtoF = int(command.get('value'))
         self.setDriver('GV13', self.CtoF)
-    
+        self.storeValues()
+                    
     def setRawToPrec(self, command):
         self.RtoPrec = int(command.get('value'))
         self.setDriver('GV12', self.RtoPrec)
-        
+        self.storeValues()
+                    
     def pushTheValue(self, command1, command2):
         _type = str(command1)
         _id = str(command2)
@@ -391,21 +411,24 @@ class VirtualTemp(polyinterface.Node):
             self.pullFromID(_type, self.action2id)            
             
     def pullFromID(self, command1, command2): # this pulls but does not set temp yet
-        _type = str(command1)
-        _id = str(command2)
-        LOGGER.debug('Pulling from http://%s/rest/vars/get%s%s/', self.parent.isy, _type, _id)
-        r = requests.get('http://' + self.parent.isy + '/rest/vars/get' + _type + _id, auth=(self.parent.user, self.parent.password))
-        _content = str(r.content)
-        LOGGER.debug(_content)
-        _value =  re.split('.*<init>(\d+).*<prec>(\d).*<val>(\d+)',_content)
-        LOGGER.info(_value)
-        LOGGER.info('Init = %s Prec = %s Value = %s',_value[1], _value[2], _value[3])
-        LOGGER.debug(_type)
-        _newTemp = 0    
-        if command1 == '/2/' : _newTemp = int(_value[3])
-        if command1 == '/1/' : _newTemp = int(_value[1])
-        if _value[2] == '1': _newTemp = (_newTemp / 10)
-        self.setTempFromData(_newTemp)         
+        if command2 == 0:
+            pass
+        else:
+            _type = str(command1)
+            _id = str(command2)
+            LOGGER.debug('Pulling from http://%s/rest/vars/get%s%s/', self.parent.isy, _type, _id)
+            r = requests.get('http://' + self.parent.isy + '/rest/vars/get' + _type + _id, auth=(self.parent.user, self.parent.password))
+            _content = str(r.content)
+            LOGGER.debug(_content)
+            _value =  re.split('.*<init>(\d+).*<prec>(\d).*<val>(\d+)',_content)
+            LOGGER.info(_value)
+            LOGGER.info('Init = %s Prec = %s Value = %s',_value[1], _value[2], _value[3])
+            LOGGER.debug(_type)
+            _newTemp = 0    
+            if command1 == '/2/' : _newTemp = int(_value[3])
+            if command1 == '/1/' : _newTemp = int(_value[1])
+            #if _value[2] == '1': _newTemp = (_newTemp / 10)
+            self.setTempFromData(_newTemp)         
             
     def setTempFromData(self, command):
         self.checkHighLow(self.tempVal)
@@ -414,10 +437,19 @@ class VirtualTemp(polyinterface.Node):
         self.lastUpdateTime = time.time()        
         self.prevVal = self.tempVal
         self.setDriver('GV1', self.prevVal) # set prev from current
-        self.setDriver('ST', command)
         self.tempVal = command
-        self.convertTempFromRaw()
-        self.convertCtoF()            
+        #self.convertTempFromRaw()
+        if self.RtoPrec == 1:
+            LOGGER.info('Converting from raw')
+            self.tempVal = (self.tempVal / 10)
+        if self.FtoC == 1:
+            LOGGER.info('converting F to C')
+            self.tempVal = round(((self.tempVal - 32) / 1.80), 1)          
+        #self.convertFtoC()            
+        self.setDriver('ST', self.tempVal)
+        #self.tempVal = command
+        #self.convertTempFromRaw()
+        #self.convertFtoC()            
             
         if self.action1 == 1:
             _type = TYPELIST[(self.action1type - 1)]
@@ -495,12 +527,15 @@ class VirtualTemp(polyinterface.Node):
         self.currentAvgTemp = 0
         self.prevTemp = 0
         self.tempVal = 0
-        self.setDriver('GV1', self.prevTemp)
-        self.setDriver('GV5', self.currentAvgTemp)
+        self.setDriver('GV1', 0)
+        time.sleep(.1)
+        self.setDriver('GV5', 0)
+        time.sleep(.1)                    
         self.setDriver('GV3', 0)
+        time.sleep(.1)
         self.setDriver('GV4', 0)
-        time.sleep(.5)
-        self.setDriver('ST', self.tempVal)
+        time.sleep(.1)
+        self.setDriver('ST', 0)
         self.firstPass = True
         self.storeValues()
 
@@ -535,7 +570,7 @@ class VirtualTemp(polyinterface.Node):
                     'setTemp': setTemp, 'setAction1': setAction1, 'setAction1id': setAction1id, 'setAction1type': setAction1type,
                                         'setAction2': setAction2, 'setAction2id': setAction2id, 'setAction2type': setAction2type,
                                         'setCtoF': setCtoF, 'setRawToPrec': setRawToPrec,
-                    'resetStats': resetStats #bottom   
+                    'resetStats': resetStats, 'deleteDB': deleteDB #bottom   
                 }
 ################################################################################################################################    
 class VirtualTempC(polyinterface.Node):
