@@ -799,7 +799,7 @@ class VirtualTempC(polyinterface.Node):
         self.lastUpdateTime = time.time()        
         self.prevVal = self.tempVal
         self.setDriver('GV1', self.prevVal) # set prev from current
-        #self.tempVal = command
+        self.tempVal = command
         #self.convertTempFromRaw()
         if self.RtoPrec == 1:
             LOGGER.info('Converting from raw')
