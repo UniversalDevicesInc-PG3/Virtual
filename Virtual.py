@@ -422,7 +422,7 @@ class VirtualTemp(polyinterface.Node):
             LOGGER.debug(_content)
             _value =  re.split('.*<init>(\d+).*<prec>(\d).*<val>(\d+)',_content)
             LOGGER.info(_value)
-            LOGGER.info('Init = %s Prec = %s Value = %s',_value[1], _value[2], _value[3])
+            #LOGGER.info('Init = %s Prec = %s Value = %s',_value[1], _value[2], _value[3])
             LOGGER.debug(_type)
             _newTemp = 0    
             if command1 == '/2/' : _newTemp = int(_value[3])
@@ -819,7 +819,7 @@ class VirtualTempC(polyinterface.Node):
             LOGGER.debug(_content)
             _value =  re.split('.*<init>(\d+).*<prec>(\d).*<val>(\d+)',_content)
             LOGGER.info(_value)
-            LOGGER.info('Init = %s Prec = %s Value = %s',_value[1], _value[2], _value[3])
+            #LOGGER.info('Init = %s Prec = %s Value = %s',_value[1], _value[2], _value[3])
             LOGGER.debug(_type)
             _newTemp = 0    
             if command1 == '/2/' : _newTemp = int(_value[3])
