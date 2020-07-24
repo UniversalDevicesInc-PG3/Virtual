@@ -42,12 +42,13 @@ class Controller(polyinterface.Controller):
         self.password = 'none'
         self.isy = 'none'
         self.parseDelay = 0.0
+        self.version = '1.0.16a'
 
     def start(self):
-        LOGGER.info('Started Virtual Device NodeServer')
+        LOGGER.info('Started Virtual Device NodeServer v%s', self.version)
         self.check_params()
         self.discover()
-        self.poly.add_custom_config_docs("<b>And this is some custom config data</b>")
+        #self.poly.add_custom_config_docs("<b>And this is some custom config data</b>")
 
     def shortPoll(self):
         for node in self.nodes:
@@ -262,7 +263,7 @@ class VirtualTemp(polyinterface.Node):
         finally:
             s.close()
         LOGGER.info('Storing Values')
-        self.listValues()
+        #self.listValues()
             
     def listValues(self):
         _name = str(self.name)
@@ -279,8 +280,6 @@ class VirtualTemp(polyinterface.Node):
         _name = str(self.name)
         _name = _name.replace(" ","_")
         _key = 'key' + str(self.address)
-        #LOGGER.debug(_name)
-        #LOGGER.debug(_key)
         s = shelve.open(_name, writeback=True)            
         try:
             existing = s[_key]
@@ -344,20 +343,26 @@ class VirtualTemp(polyinterface.Node):
         self.prevVal = self.tempVal
         self.setDriver('GV1', self.prevVal) # set prev from current
         _temp = float(command.get('value'))
+
+        self.tempVal = _temp
+        if self.RtoPrec == 1:
+            LOGGER.info('Converting from raw')
+            self.tempVal = round((self.tempVal / 10), 1)
+        if self.CtoF == 1:
+            LOGGER.info('converting C to F')
+            self.tempVal = round(((self.tempVal * 1.8) + 32), 1) 
         self.setDriver('ST', _temp)
         self.tempVal = _temp
-        self.convertTempFromRaw()
-        self.convertCtoF()
 
         if self.action1 == 1:
             _type = TYPELIST[(self.action1type - 1)]
             self.pushTheValue(_type, self.action1id)
-        #    LOGGER.debug('Action 1 Pushing')
+            LOGGER.info('Action 1 Pushing')
         
         if self.action2 == 1:
             _type = TYPELIST[(self.action2type - 1)]
             self.pushTheValue(_type, self.action2id)
-        #    LOGGER.debug('Action 2 Pushing')
+            LOGGER.info('Action 2 Pushing')
             
     def setAction1(self, command):
         self.action1 = int(command.get('value'))
@@ -402,7 +407,7 @@ class VirtualTemp(polyinterface.Node):
     def pushTheValue(self, command1, command2):
         _type = str(command1)
         _id = str(command2)
-        LOGGER.debug('Pushing to http://%s/rest/vars%s%s/%s', self.parent.isy, _type, _id, self.tempVal)
+        LOGGER.info('Pushing to http://%s/rest/vars%s%s/%s', self.parent.isy, _type, _id, self.tempVal)
         requests.get('http://' + self.parent.isy + '/rest/vars' + _type + _id + '/' + str(self.tempVal), auth=(self.parent.user, self.parent.password))
             
     def getDataFromID(self):
@@ -420,13 +425,11 @@ class VirtualTemp(polyinterface.Node):
             _type = str(command1)
             _id = str(command2)
             try:
-                #LOGGER.debug('Pulling from http://%s/rest/vars/get%s%s/', self.parent.isy, _type, _id)
                 r = requests.get('http://' + self.parent.isy + '/rest/vars/get' + _type + _id, auth=(self.parent.user, self.parent.password))
                 _content = str(r.content)
-                #LOGGER.debug(_content)
+                LOGGER.info('Content: %s', _content)
                 _value =  re.split('.*<init>(\d+).*<prec>(\d).*<val>(\d+)',_content)
-                LOGGER.info(_value)
-                #LOGGER.debug(_type)
+                LOGGER.info('Parsed: %s',_value)
                 _newTemp = 0
                 time.sleep(int(self.parent.parseDelay))
                 LOGGER.debug('Parse delay: %s', self.parent.parseDelay)
@@ -447,30 +450,25 @@ class VirtualTemp(polyinterface.Node):
         self.prevVal = self.tempVal
         self.setDriver('GV1', self.prevVal) # set prev from current
         self.tempVal = command
-        #self.convertTempFromRaw()
         if self.RtoPrec == 1:
             LOGGER.info('Converting from raw')
-            self.tempVal = (self.tempVal / 10)
+            self.tempVal = round((self.tempVal / 10), 1)
         if self.CtoF == 1:
             LOGGER.info('converting C to F')
-            self.tempVal = round(((self.tempVal * 1.8) + 32), 1)         
-        #self.convertFtoC()            
-        self.setDriver('ST', self.tempVal)
-        #self.tempVal = command
-        #self.convertTempFromRaw()
-        #self.convertFtoC()            
+            self.tempVal = round(((self.tempVal * 1.8) + 32), 1)                     
+        self.setDriver('ST', self.tempVal)            
             
         if self.action1 == 1:
             _type = TYPELIST[(self.action1type - 1)]
             self.pushTheValue(_type, self.action1id)
-            LOGGER.debug('Action 1 Pushing')
+            LOGGER.info('Action 1 Pushing')
         else:
             pass
         
         if self.action2 == 1:
             _type = TYPELIST[(self.action2type - 1)]
             self.pushTheValue(_type, self.action2id)
-            LOGGER.debug('Action 2 Pushing')
+            LOGGER.info('Action 2 Pushing')
         else:
             pass             
             
@@ -488,7 +486,7 @@ class VirtualTemp(polyinterface.Node):
         if self.CtoF == 1:
             LOGGER.info('converting C to F')
             _CtoFtemp = round(((self.tempVal * 1.8) + 32), 1)
-            LOGGER.debug(_CtoFtemp)
+            #LOGGER.debug(_CtoFtemp)
             self.tempVal = _CtoFtemp
             time.sleep(1)
             self.setDriver('ST', self.tempVal)
@@ -664,7 +662,7 @@ class VirtualTempC(polyinterface.Node):
         finally:
             s.close()
         #LOGGER.info('Storing Values')
-        self.listValues()
+        #self.listValues()
 
     def listValues(self):
         _name = str(self.name)
@@ -681,8 +679,6 @@ class VirtualTempC(polyinterface.Node):
         _name = str(self.name)
         _name = _name.replace(" ","_")
         _key = 'key' + str(self.address)
-        #LOGGER.debug(_name)
-        #LOGGER.debug(_key)
         s = shelve.open(_name, writeback=True)            
         try:
             existing = s[_key]
@@ -747,9 +743,16 @@ class VirtualTempC(polyinterface.Node):
         self.setDriver('GV1', self.prevVal) # set prev from current
         _temp = float(command.get('value'))
         self.setDriver('ST', _temp)
+
         self.tempVal = _temp
-        self.convertTempFromRaw()
-        self.convertFtoC()
+        if self.RtoPrec == 1:
+            LOGGER.info('Converting from raw')
+            self.tempVal = round((self.tempVal / 10), 1)
+        if self.FtoC == 1:
+            LOGGER.info('converting F to C')
+            self.tempVal = round(((self.tempVal - 32) / 1.80), 1) 
+        self.setDriver('ST', _temp)
+        self.tempVal = _temp
 
             
         if self.action1 == 1:
@@ -805,7 +808,7 @@ class VirtualTempC(polyinterface.Node):
     def pushTheValue(self, command1, command2):
         _type = str(command1)
         _id = str(command2)
-        LOGGER.debug('Pushing to http://%s/rest/vars%s%s/%s', self.parent.isy, _type, _id, self.tempVal)
+        LOGGER.info('Pushing to http://%s/rest/vars%s%s/%s', self.parent.isy, _type, _id, self.tempVal)
         requests.get('http://' + self.parent.isy + '/rest/vars' + _type + _id + '/' + str(self.tempVal), auth=(self.parent.user, self.parent.password))
             
     def getDataFromID(self):
@@ -826,10 +829,9 @@ class VirtualTempC(polyinterface.Node):
                 #LOGGER.debug('Pulling from http://%s/rest/vars/get%s%s/', self.parent.isy, _type, _id)
                 r = requests.get('http://' + self.parent.isy + '/rest/vars/get' + _type + _id, auth=(self.parent.user, self.parent.password))
                 _content = str(r.content)
-                #LOGGER.debug(_content)
+                LOGGER.info(_content)
                 _value =  re.split('.*<init>(\d+).*<prec>(\d).*<val>(\d+)',_content)
                 LOGGER.info(_value)
-                #LOGGER.debug(_type)
                 _newTemp = 0
                 time.sleep(int(self.parent.parseDelay))
                 LOGGER.debug('Parse delay: %s', self.parent.parseDelay)
@@ -856,14 +858,9 @@ class VirtualTempC(polyinterface.Node):
             self.tempVal = (self.tempVal / 10)
         if self.FtoC == 1:
             LOGGER.info('converting F to C')
-            self.tempVal = round(((self.tempVal - 32) / 1.80), 1)          
-        #self.convertFtoC()            
+            self.tempVal = round(((self.tempVal - 32) / 1.80), 1)                    
         self.setDriver('ST', self.tempVal)
-        #self.tempVal = command
-        #self.convertTempFromRaw()
-        #self.convertFtoC()
  
-
         if self.action1 == 1:
             _type = TYPELIST[(self.action1type - 1)]
             self.pushTheValue(_type, self.action1id)
@@ -876,28 +873,7 @@ class VirtualTempC(polyinterface.Node):
             self.pushTheValue(_type, self.action2id)
             LOGGER.debug('Action 2 Pushing')
         else:
-            pass                        
-                        
-    def convertTempFromRaw(self):
-        if self.RtoPrec == 1:
-            LOGGER.info('Converting from raw')
-            _command = self.tempVal / 10
-            self.setDriver('ST', _command)
-            self.tempVal = _command
-            self.Rconvert = True
-        else:
-            pass
-
-    def convertFtoC(self):
-        if self.FtoC == 1:
-            LOGGER.info('converting F to C')
-            _FtoCtemp = round(((self.tempVal - 32) / 1.80), 1)
-            LOGGER.debug(_FtoCtemp)
-            self.tempVal = _FtoCtemp
-            time.sleep(1)
-            self.setDriver('ST', self.tempVal)
-        else:
-            pass
+            pass                              
 
     def checkLastUpdate(self): # happens on the short poll
         _currentTime = time.time()
@@ -916,11 +892,11 @@ class VirtualTempC(polyinterface.Node):
             self.previousHigh = self.highTemp
             self.previousLow = self.lowTemp
             if command > self.highTemp:
-                LOGGER.debug('check high')
+                #LOGGER.debug('check high')
                 self.setDriver('GV3', command)
                 self.highTemp = command            
             if command < self.lowTemp:
-                LOGGER.debug('check low')
+                #LOGGER.debug('check low')
                 self.setDriver('GV4', command)
                 self.lowTemp = command
             self.avgHighLow()
