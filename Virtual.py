@@ -429,6 +429,7 @@ class VirtualTemp(polyinterface.Node):
                 LOGGER.debug(_type)
                 _newTemp = 0
                 time.sleep(int(self.parent.parseDelay))
+                LOGGER.debug('Parse delay: %s', self.parent.parseDelay)
             except Exception as e:
                 LOGGER.error('There was an error with the value pull: ' + str(e))
             try:                 
@@ -831,6 +832,7 @@ class VirtualTempC(polyinterface.Node):
                 LOGGER.debug(_type)
                 _newTemp = 0
                 time.sleep(int(self.parent.parseDelay))
+                LOGGER.debug('Parse delay: %s', self.parent.parseDelay)
             except Exception as e:
                 LOGGER.error('There was an error with the value pull: ' + str(e))
             try:                 
