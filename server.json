@@ -13,7 +13,7 @@
         {
             "title": "Virtual Device NodeServer",
             "author": "Mark Vittes (markv58)",
-            "version": "1.0.15",
+            "version": "1.0.16",
             "date": "July 4, 2020",
             "source": "https://github.com/markv58/Virtual.git",
             "license": "https://raw.githubusercontent.com/markv58/Virtual/master/LICENSE"
