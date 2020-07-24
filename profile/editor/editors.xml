@@ -22,7 +22,7 @@
     </editor>
 
     <editor id="variableID">
-        <range uom="56" min="0" max="400" prec="0" step="1"/>
+        <range uom="56" min="0" max="1000" prec="0" step="1"/>
     </editor>
     
     <editor id="minutes">
