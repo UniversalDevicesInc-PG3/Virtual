@@ -425,6 +425,7 @@ class VirtualTemp(polyinterface.Node):
             _type = str(command1)
             _id = str(command2)
             try:
+                LOGGER.debug('Pulling from http://%s/rest/vars/get%s%s/', self.parent.isy, _type, _id)        
                 r = requests.get('http://' + self.parent.isy + '/rest/vars/get' + _type + _id, auth=(self.parent.user, self.parent.password))
                 _content = str(r.content)
                 LOGGER.info('Content: %s', _content)
@@ -826,12 +827,12 @@ class VirtualTempC(polyinterface.Node):
             _type = str(command1)
             _id = str(command2)
             try:
-                #LOGGER.debug('Pulling from http://%s/rest/vars/get%s%s/', self.parent.isy, _type, _id)
+                LOGGER.debug('Pulling from http://%s/rest/vars/get%s%s/', self.parent.isy, _type, _id)
                 r = requests.get('http://' + self.parent.isy + '/rest/vars/get' + _type + _id, auth=(self.parent.user, self.parent.password))
                 _content = str(r.content)
-                LOGGER.info(_content)
+                LOGGER.info('Content %s:', _content)
                 _value =  re.split('.*<init>(\d+).*<prec>(\d).*<val>(\d+)',_content)
-                LOGGER.info(_value)
+                LOGGER.info('Parsed %s:', _value)
                 _newTemp = 0
                 time.sleep(int(self.parent.parseDelay))
                 LOGGER.debug('Parse delay: %s', self.parent.parseDelay)
