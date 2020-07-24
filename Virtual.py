@@ -427,7 +427,7 @@ class VirtualTemp(polyinterface.Node):
                 _newTemp = 0
                 time.sleep(.1)
             except:
-                LOGGER.error('There was an error with the value pull)
+                LOGGER.error('There was an error with the value pull')
             try:                 
                 if command1 == '/2/' : _newTemp = int(_value[3])
                 if command1 == '/1/' : _newTemp = int(_value[1])
@@ -829,7 +829,7 @@ class VirtualTempC(polyinterface.Node):
                 _newTemp = 0
                 time.sleep(.1)
             except:
-                LOGGER.error('There was an error with the value pull)
+                LOGGER.error('There was an error with the value pull')
             try:                 
                 if command1 == '/2/' : _newTemp = int(_value[3])
                 if command1 == '/1/' : _newTemp = int(_value[1])
