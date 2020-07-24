@@ -429,7 +429,7 @@ class VirtualTemp(polyinterface.Node):
                 r = requests.get('http://' + self.parent.isy + '/rest/vars/get' + _type + _id, auth=(self.parent.user, self.parent.password))
                 _content = str(r.content)
                 LOGGER.info('Content: %s', _content)
-                _value = re.split('.*<init>(.\d+)</init><prec>(\d)</prec><val>(.\d+)</val>', _content)
+                _value = re.split('.*<init>(\d+)</init><prec>(\d)</prec><val>(.\d+)</val>', _content)
                 LOGGER.info('Parsed: %s',_value)
                 _newTemp = 0
                 time.sleep(int(self.parent.parseDelay))
@@ -831,7 +831,7 @@ class VirtualTempC(polyinterface.Node):
                 r = requests.get('http://' + self.parent.isy + '/rest/vars/get' + _type + _id, auth=(self.parent.user, self.parent.password))
                 _content = str(r.content)
                 LOGGER.info('Content: %s:', _content)
-                _value = re.split('.*<init>(.\d+)</init><prec>(\d)</prec><val>(.\d+)</val>', _content)
+                _value = re.split('.*<init>(\d+)</init><prec>(\d)</prec><val>(.\d+)</val>', _content)
                 LOGGER.info('Parsed: %s:', _value)
                 _newTemp = 0
                 time.sleep(int(self.parent.parseDelay))
