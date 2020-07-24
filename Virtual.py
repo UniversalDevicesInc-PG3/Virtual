@@ -250,8 +250,8 @@ class VirtualTemp(polyinterface.Node):
         _name = str(self.name)
         _name = _name.replace(" ","_")
         _key = 'key' + str(self.address)
-        LOGGER.debug(_name)
-        LOGGER.debug(_key)
+        #LOGGER.debug(_name)
+        #LOGGER.debug(_key)
         s = shelve.open(_name, writeback=True)
         try:
             s[_key] = { 'action1': self.action1, 'action1type': self.action1type, 'action1id': self.action1id,
@@ -279,8 +279,8 @@ class VirtualTemp(polyinterface.Node):
         _name = str(self.name)
         _name = _name.replace(" ","_")
         _key = 'key' + str(self.address)
-        LOGGER.debug(_name)
-        LOGGER.debug(_key)
+        #LOGGER.debug(_name)
+        #LOGGER.debug(_key)
         s = shelve.open(_name, writeback=True)            
         try:
             existing = s[_key]
@@ -352,12 +352,12 @@ class VirtualTemp(polyinterface.Node):
         if self.action1 == 1:
             _type = TYPELIST[(self.action1type - 1)]
             self.pushTheValue(_type, self.action1id)
-            LOGGER.debug('Action 1 Pushing')
+        #    LOGGER.debug('Action 1 Pushing')
         
         if self.action2 == 1:
             _type = TYPELIST[(self.action2type - 1)]
             self.pushTheValue(_type, self.action2id)
-            LOGGER.debug('Action 2 Pushing')
+        #    LOGGER.debug('Action 2 Pushing')
             
     def setAction1(self, command):
         self.action1 = int(command.get('value'))
@@ -420,13 +420,13 @@ class VirtualTemp(polyinterface.Node):
             _type = str(command1)
             _id = str(command2)
             try:
-                LOGGER.debug('Pulling from http://%s/rest/vars/get%s%s/', self.parent.isy, _type, _id)
+                #LOGGER.debug('Pulling from http://%s/rest/vars/get%s%s/', self.parent.isy, _type, _id)
                 r = requests.get('http://' + self.parent.isy + '/rest/vars/get' + _type + _id, auth=(self.parent.user, self.parent.password))
                 _content = str(r.content)
-                LOGGER.debug(_content)
+                #LOGGER.debug(_content)
                 _value =  re.split('.*<init>(\d+).*<prec>(\d).*<val>(\d+)',_content)
                 LOGGER.info(_value)
-                LOGGER.debug(_type)
+                #LOGGER.debug(_type)
                 _newTemp = 0
                 time.sleep(int(self.parent.parseDelay))
                 LOGGER.debug('Parse delay: %s', self.parent.parseDelay)
@@ -512,18 +512,18 @@ class VirtualTemp(polyinterface.Node):
             self.previousHigh = self.highTemp
             self.previousLow = self.lowTemp
             if command > self.highTemp:
-                LOGGER.debug('check high')
+            #    LOGGER.debug('check high')
                 self.setDriver('GV3', command)
                 self.highTemp = command            
             if command < self.lowTemp:
-                LOGGER.debug('check low')
+            #    LOGGER.debug('check low')
                 self.setDriver('GV4', command)
                 self.lowTemp = command
             self.avgHighLow()
             
     def avgHighLow(self):
         if self.highTemp != -60 and self.lowTemp != 129: # make sure values have been set from startup
-            LOGGER.debug('Updating the average temperatue')
+            #LOGGER.debug('Updating the average temperatue')
             self.prevAvgTemp = self.currentAvgTemp
             self.currentAvgTemp = round(((self.highTemp + self.lowTemp) / 2), 1)
             self.setDriver('GV5', self.currentAvgTemp)            
@@ -652,8 +652,8 @@ class VirtualTempC(polyinterface.Node):
         _name = str(self.name)
         _name = _name.replace(" ","_")
         _key = 'key' + str(self.address)
-        LOGGER.debug(_name)
-        LOGGER.debug(_key)
+        #LOGGER.debug(_name)
+        #LOGGER.debug(_key)
         s = shelve.open(_name, writeback=True)
         try:
             s[_key] = { 'action1': self.action1, 'action1type': self.action1type, 'action1id': self.action1id,
@@ -663,7 +663,7 @@ class VirtualTempC(polyinterface.Node):
                         'prevAvgTemp': self.prevAvgTemp, 'currentAvgTemp': self.currentAvgTemp, 'firstPass': self.firstPass }
         finally:
             s.close()
-        LOGGER.info('Storing Values')
+        #LOGGER.info('Storing Values')
         self.listValues()
 
     def listValues(self):
@@ -681,8 +681,8 @@ class VirtualTempC(polyinterface.Node):
         _name = str(self.name)
         _name = _name.replace(" ","_")
         _key = 'key' + str(self.address)
-        LOGGER.debug(_name)
-        LOGGER.debug(_key)
+        #LOGGER.debug(_name)
+        #LOGGER.debug(_key)
         s = shelve.open(_name, writeback=True)            
         try:
             existing = s[_key]
@@ -823,13 +823,13 @@ class VirtualTempC(polyinterface.Node):
             _type = str(command1)
             _id = str(command2)
             try:
-                LOGGER.debug('Pulling from http://%s/rest/vars/get%s%s/', self.parent.isy, _type, _id)
+                #LOGGER.debug('Pulling from http://%s/rest/vars/get%s%s/', self.parent.isy, _type, _id)
                 r = requests.get('http://' + self.parent.isy + '/rest/vars/get' + _type + _id, auth=(self.parent.user, self.parent.password))
                 _content = str(r.content)
-                LOGGER.debug(_content)
+                #LOGGER.debug(_content)
                 _value =  re.split('.*<init>(\d+).*<prec>(\d).*<val>(\d+)',_content)
                 LOGGER.info(_value)
-                LOGGER.debug(_type)
+                #LOGGER.debug(_type)
                 _newTemp = 0
                 time.sleep(int(self.parent.parseDelay))
                 LOGGER.debug('Parse delay: %s', self.parent.parseDelay)
