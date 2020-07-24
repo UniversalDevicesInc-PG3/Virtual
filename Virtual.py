@@ -41,6 +41,7 @@ class Controller(polyinterface.Controller):
         self.user = 'none'
         self.password = 'none'
         self.isy = 'none'
+        self.parseDelay = 0.0
 
     def start(self):
         LOGGER.info('Started Virtual Device NodeServer')
@@ -87,6 +88,8 @@ class Controller(polyinterface.Controller):
             elif a == "password":
                 #LOGGER.debug('ISY password is %s', val)
                 self.password = str(val)
+            elif a == "parseDelay"
+                self.parseDelay = int(val)
             elif a.isdigit(): 
                 if val == 'switch':
                     _name = str(val) + ' ' + str(key)
@@ -425,7 +428,7 @@ class VirtualTemp(polyinterface.Node):
                 LOGGER.info(_value)
                 LOGGER.debug(_type)
                 _newTemp = 0
-                time.sleep(.1)
+                time.sleep(int(self.parent.parseDelay))
             except Exception as e:
                 LOGGER.error('There was an error with the value pull: ' + str(e))
             try:                 
@@ -827,7 +830,7 @@ class VirtualTempC(polyinterface.Node):
                 LOGGER.info(_value)
                 LOGGER.debug(_type)
                 _newTemp = 0
-                time.sleep(.1)
+                time.sleep(int(self.parent.parseDelay))
             except Exception as e:
                 LOGGER.error('There was an error with the value pull: ' + str(e))
             try:                 
