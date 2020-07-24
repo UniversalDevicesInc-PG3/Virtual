@@ -19,6 +19,8 @@ Pending: Unlink Switch from variable, add Push / Pull capability, data and param
 
 Pending: Update Generic node.
 
+1.0.18 Fix the regex to parse negative numbers.
+
 1.0.17 Logger info for debugging added.
 
 1.0.16 Bug fix, error handling added
