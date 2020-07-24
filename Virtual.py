@@ -426,13 +426,13 @@ class VirtualTemp(polyinterface.Node):
                 LOGGER.debug(_type)
                 _newTemp = 0
                 time.sleep(.1)
-            except:
-                LOGGER.error('There was an error with the value pull')
+            except Exception as e:
+                LOGGER.error('There was an error with the value pull: ' + str(e))
             try:                 
                 if command1 == '/2/' : _newTemp = int(_value[3])
                 if command1 == '/1/' : _newTemp = int(_value[1])
-            except:
-                LOGGER.error('An error occured during the content parse')             
+            except Exception as e:
+                LOGGER.error('An error occured during the content parse: ' + str(e))             
             self.setTempFromData(_newTemp)         
             
     def setTempFromData(self, command):
@@ -828,13 +828,13 @@ class VirtualTempC(polyinterface.Node):
                 LOGGER.debug(_type)
                 _newTemp = 0
                 time.sleep(.1)
-            except:
-                LOGGER.error('There was an error with the value pull')
+            except Exception as e:
+                LOGGER.error('There was an error with the value pull: ' + str(e))
             try:                 
                 if command1 == '/2/' : _newTemp = int(_value[3])
                 if command1 == '/1/' : _newTemp = int(_value[1])
-            except:
-                LOGGER.error('An error occured during the content parse')             
+            except Exception as e:
+                LOGGER.error('An error occured during the content parse: ' + str(e))             
             self.setTempFromData(_newTemp)
 
     def setTempFromData(self, command):
