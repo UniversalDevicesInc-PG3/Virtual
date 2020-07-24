@@ -26,7 +26,7 @@
     </editor>
     
     <editor id="minutes">
-        <range uom="45" min="0" max="1440" prec="1" step="1"/>
+        <range uom="45" min="0" max="1440" prec="2" step="1"/>
     </editor>
     
     <editor id="level">
