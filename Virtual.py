@@ -207,6 +207,8 @@ class VirtualTemp(polyinterface.Node):
         self.RtoPrec = 0
         self.CtoF = 0
         
+        self.pullError = False    
+            
     def start(self):
         self.currentTime = time.time()
         self.lastUpdateTime = time.time()
@@ -611,6 +613,8 @@ class VirtualTempC(polyinterface.Node):
         
         self.RtoPrec = 0
         self.FtoC = 0
+
+        self.pullError = False
         
     def start(self):
         self.currentTime = time.time()
