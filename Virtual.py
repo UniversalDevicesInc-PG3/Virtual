@@ -4,7 +4,7 @@
 """
 This is a NodeServer created for Polyglot v2 from a template by Einstein.42 (James Miline)
 This NodeServer was created by markv58 (Mark Vittes) markv58git@gmail.com
-v1.0.19
+v1.0.20
 """
 
 import polyinterface
@@ -42,7 +42,7 @@ class Controller(polyinterface.Controller):
         self.password = 'none'
         self.isy = 'none'
         self.parseDelay = 0.1
-        self.version = '1.0.18'
+        self.version = '1.0.20'
         self.pullError = False
         self.pullDelay = 0.1
 
