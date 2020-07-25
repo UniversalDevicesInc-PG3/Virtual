@@ -41,7 +41,7 @@ class Controller(polyinterface.Controller):
         self.user = 'none'
         self.password = 'none'
         self.isy = 'none'
-        self.parseDelay = 0.0
+        self.parseDelay = 0.1
         self.version = '1.0.18'
 
     def start(self):
