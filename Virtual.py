@@ -90,7 +90,7 @@ class Controller(polyinterface.Controller):
                 #LOGGER.debug('ISY password is %s', val)
                 self.password = str(val)
             elif a == "parseDelay":
-                self.parseDelay = int(val)
+                self.parseDelay = float(val)
             elif a.isdigit(): 
                 if val == 'switch':
                     _name = str(val) + ' ' + str(key)
