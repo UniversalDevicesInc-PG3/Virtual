@@ -19,6 +19,8 @@ Pending: Unlink Switch from variable, add Push / Pull capability, data and param
 
 Pending: Update Generic node.
 
+1.0.20 Replaced parsing regex to more reliably and consistently pull in negative numbers
+
 1.0.19 Fixed possible error with parseDelay setting when setting float, set default parseDelay to .1
 
 1.0.18 Fix the regex to parse negative numbers.
