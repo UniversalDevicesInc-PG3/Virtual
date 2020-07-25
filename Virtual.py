@@ -44,11 +44,13 @@ class Controller(polyinterface.Controller):
         self.parseDelay = 0.1
         self.version = '1.0.18'
         self.pullError = False
+        self.pullDelay = 0.1
 
     def start(self):
         LOGGER.info('Started Virtual Device NodeServer v%s', self.version)
         self.check_params()
         self.discover()
+        LOGGER.info('Pull Delay set to %s seconds, Parse Delay set to %s seconds', self.pullDelay, self.parseDelay)
         #self.poly.add_custom_config_docs("<b>And this is some custom config data</b>")
 
     def shortPoll(self):
@@ -58,7 +60,7 @@ class Controller(polyinterface.Controller):
     def longPoll(self):
         for node in self.nodes:
             self.nodes[node].getDataFromID()
-            time.sleep(.1)
+            time.sleep(float(self.pullDelay))
             
     def query(self):
         #self.check_params()
@@ -93,6 +95,8 @@ class Controller(polyinterface.Controller):
                 self.password = str(val)
             elif a == "parseDelay":
                 self.parseDelay = float(val)
+            elif a == "pullDelay":
+                self.pullDelay = float(val)
             elif a.isdigit(): 
                 if val == 'switch':
                     _name = str(val) + ' ' + str(key)
@@ -433,10 +437,10 @@ class VirtualTemp(polyinterface.Node):
                 r = requests.get('http://' + self.parent.isy + '/rest/vars/get' + _type + _id, auth=(self.parent.user, self.parent.password))
                 _content = str(r.content)
                 LOGGER.info('Content: %s', _content)
+                time.sleep(float(self.parent.parseDelay))    
                 _value = re.split('.*<init>(\d+)</init><prec>(\d)</prec><val>(.\d+)</val>', _content)
                 LOGGER.info('Parsed: %s',_value)
                 _newTemp = 0
-                time.sleep(int(self.parent.parseDelay))
                 LOGGER.debug('Parse delay: %s', self.parent.parseDelay)
             except Exception as e:
                 LOGGER.error('There was an error with the value pull: ' + str(e))
@@ -837,10 +841,10 @@ class VirtualTempC(polyinterface.Node):
                 r = requests.get('http://' + self.parent.isy + '/rest/vars/get' + _type + _id, auth=(self.parent.user, self.parent.password))
                 _content = str(r.content)
                 LOGGER.info('Content: %s:', _content)
+                time.sleep(float(self.parent.parseDelay))                       
                 _value = re.split('.*<init>(\d+)</init><prec>(\d)</prec><val>(.\d+)</val>', _content)
                 LOGGER.info('Parsed: %s:', _value)
                 _newTemp = 0
-                time.sleep(int(self.parent.parseDelay))
                 LOGGER.debug('Parse delay: %s', self.parent.parseDelay)
             except Exception as e:
                 LOGGER.error('There was an error with the value pull: ' + str(e))
