@@ -438,15 +438,15 @@ class VirtualTemp(polyinterface.Node):
                 _content = str(r.content)
                 LOGGER.info('Content: %s', _content)
                 time.sleep(float(self.parent.parseDelay))    
-                _value = re.split('.*<init>(\d+)</init><prec>(\d)</prec><val>(.\d+)</val>', _content)
+                _value = re.findall(r'(\d+|\-\d+)', _content)
                 LOGGER.info('Parsed: %s',_value)
                 _newTemp = 0
                 LOGGER.debug('Parse delay: %s', self.parent.parseDelay)
             except Exception as e:
                 LOGGER.error('There was an error with the value pull: ' + str(e))
             try:                 
-                if command1 == '/2/' : _newTemp = int(_value[3])
-                if command1 == '/1/' : _newTemp = int(_value[1])
+                if command1 == '/2/' : _newTemp = int(_value[7])
+                if command1 == '/1/' : _newTemp = int(_value[5])
             except Exception as e:
                 LOGGER.error('An error occured during the content parse: ' + str(e))             
             self.setTempFromData(_newTemp)         
@@ -842,7 +842,7 @@ class VirtualTempC(polyinterface.Node):
                 _content = str(r.content)
                 LOGGER.info('Content: %s:', _content)
                 time.sleep(float(self.parent.parseDelay))                       
-                _value = re.split('.*<init>(\d+)</init><prec>(\d)</prec><val>(.\d+)</val>', _content)
+                _value = re.findall(r'(\d+|\-\d+)', _content)
                 LOGGER.info('Parsed: %s:', _value)
                 _newTemp = 0
                 LOGGER.debug('Parse delay: %s', self.parent.parseDelay)
@@ -850,8 +850,8 @@ class VirtualTempC(polyinterface.Node):
                 LOGGER.error('There was an error with the value pull: ' + str(e))
                 self.pullError = True
             try:                 
-                if command1 == '/2/' : _newTemp = int(_value[3])
-                if command1 == '/1/' : _newTemp = int(_value[1])
+                if command1 == '/2/' : _newTemp = int(_value[7])
+                if command1 == '/1/' : _newTemp = int(_value[5])
             except Exception as e:
                 LOGGER.error('An error occured during the content parse: ' + str(e))
                 self.pullError = True
