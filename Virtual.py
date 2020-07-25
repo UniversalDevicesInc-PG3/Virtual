@@ -58,6 +58,7 @@ class Controller(polyinterface.Controller):
     def longPoll(self):
         for node in self.nodes:
             self.nodes[node].getDataFromID()
+            time.sleep(.1)
             
     def query(self):
         #self.check_params()
