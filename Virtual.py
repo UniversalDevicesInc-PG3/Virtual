@@ -43,6 +43,7 @@ class Controller(polyinterface.Controller):
         self.isy = 'none'
         self.parseDelay = 0.1
         self.version = '1.0.18'
+        self.pullError = False
 
     def start(self):
         LOGGER.info('Started Virtual Device NodeServer v%s', self.version)
@@ -838,13 +839,19 @@ class VirtualTempC(polyinterface.Node):
                 LOGGER.debug('Parse delay: %s', self.parent.parseDelay)
             except Exception as e:
                 LOGGER.error('There was an error with the value pull: ' + str(e))
+                self.pullError = True
             try:                 
                 if command1 == '/2/' : _newTemp = int(_value[3])
                 if command1 == '/1/' : _newTemp = int(_value[1])
             except Exception as e:
-                LOGGER.error('An error occured during the content parse: ' + str(e))             
-            self.setTempFromData(_newTemp)
-
+                LOGGER.error('An error occured during the content parse: ' + str(e))
+                self.pullError = True
+            if self.pullError:
+                pass
+            else:
+                self.setTempFromData(_newTemp)
+            self.pullError = False
+            
     def setTempFromData(self, command):
         self.checkHighLow(self.tempVal)
         self.storeValues()
