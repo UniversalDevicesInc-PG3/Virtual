@@ -4,7 +4,7 @@
 """
 This is a NodeServer created for Polyglot v2 from a template by Einstein.42 (James Miline)
 This NodeServer was created by markv58 (Mark Vittes) markv58git@gmail.com
-v1.2.0
+v1.2.1
 """
 
 import polyinterface
@@ -43,7 +43,7 @@ class Controller(polyinterface.Controller):
         self.password = 'none'
         self.isy = 'none'
         self.parseDelay = 0.1
-        self.version = '1.2.0'
+        self.version = '1.2.1'
         self.pullError = False
         self.pullDelay = 0.1
 
@@ -381,11 +381,13 @@ class VirtualTemp(polyinterface.Node):          ################################
     def setCtoF(self, command):
         self.CtoF = int(command.get('value'))
         self.setDriver('GV13', self.CtoF)
+        self.resetStats(1)
         self.storeValues()
 
     def setRawToPrec(self, command):
         self.RtoPrec = int(command.get('value'))
         self.setDriver('GV12', self.RtoPrec)
+        self.resetStats(1)
         self.storeValues()
 
     def pushTheValue(self, command1, command2):
@@ -429,9 +431,10 @@ class VirtualTemp(polyinterface.Node):          ################################
             if self.pullError:
                 pass
             else:
-                if self.RtoPrec == 1 and ((_newTemp / 10) == self.tempVal):
-                    pass
-                elif _newTemp == self.tempVal:
+                _testValRtoP = (_newTemp / 10)
+                _testValRtoPandCtoF = round(((_testValRtoP * 1.8) + 32), 1)
+                _testValCtoF = round(((_newTemp * 1.8) + 32), 1)
+                if self.tempVal == _testValRtoP or self.tempVal == _testValCtoF or self.tempVal == _testValRtoPandCtoF or self.tempVal == _newTemp:
                     pass
                 else:
                     _lastUpdate = (str(_value[8])+'-'+str(_value[9])+':'+str(_value[10])+':'+str(_value[11]))
@@ -749,11 +752,13 @@ class VirtualTempC(polyinterface.Node):     ####################################
     def setFtoC(self, command):
         self.FtoC = int(command.get('value'))
         self.setDriver('GV13', self.FtoC)
+        self.resetStats(1)
         self.storeValues()
 
     def setRawToPrec(self, command):
         self.RtoPrec = int(command.get('value'))
         self.setDriver('GV12', self.RtoPrec)
+        self.resetStats(1)
         self.storeValues()
 
     def pushTheValue(self, command1, command2):
@@ -797,9 +802,10 @@ class VirtualTempC(polyinterface.Node):     ####################################
             if self.pullError:
                 pass
             else:
-                if self.RtoPrec == 1 and ((_newTemp / 10) == self.tempVal):
-                    pass
-                elif _newTemp == self.tempVal:
+                _testValRtoP = (_newTemp / 10)
+                _testValRtoPandFtoC = round(((_testValRtoP - 32) / 1.80) , 1)
+                _testValFtoC = round(((_newTemp - 32) / 1.80) , 1)
+                if self.tempVal == _testValRtoP or self.tempVal == _testValFtoC or self.tempVal == _testValRtoPandFtoC or self.tempVal == _newTemp:
                     pass
                 else:
                     _lastUpdate = (str(_value[8])+'-'+str(_value[9])+':'+str(_value[10])+':'+str(_value[11]))
