@@ -7,7 +7,7 @@ The virtual switch devices store their data in their variables for now, both val
 
 The virtual temperature device allows you to extract temperature information from a variable then display that as a device that can be put into a folder for other devices or apps.
 
-![Virtual Node](https://github.com/markv58/github.io/blob/master/VtempC1.2.0.png)
+![Virtual Node] https://github.com/markv58/github.io/blob/master/VTempC1.2.0.png
 A simple program captures current temperature data from the ecobee nodeserver and displays that information as an individual device. By ungrouping the devices you could have a folder with only temperature information rather than searching through variables or multiple tabs.
 
 Farenheit can be converted and displayed as Celsius and vice versa. 
