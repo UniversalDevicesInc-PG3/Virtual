@@ -19,6 +19,8 @@ Pending: Unlink Switch from variable, add Push / Pull capability, data and param
 
 Pending: Update Generic node.
 
+1.2.1 Fixed bug that allowed value updates where the value had not changed. When changing F to C, C to F or R to P the statistics are automatically reset.
+
 1.2.0 Temperature Nodes - Cleaned up the code and removed logger details that were no longer needed. Added a time stamp in the log that indicates when a variable was last updated. The values are now only updated if there was a change since the last check, the Since Last Update counter will continue to increase until an actual change occurs. 
 
 1.0.20 Replaced parsing regex to more reliably and consistently pull in negative numbers
