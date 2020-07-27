@@ -7,7 +7,7 @@ The virtual switch devices store their data in their variables for now, both val
 
 The virtual temperature device allows you to extract temperature information from a variable then display that as a device that can be put into a folder for other devices or apps.
 
-![Virtual Node](https://github.com/markv58/github.io/blob/master/VTempC1.2.1.png)
+![Virtual Node](https://github.com/markv58/github.io/blob/master/VTempC1.2.0.png)
 Pulling a temperature value from a variable.
 
 Raw data can be converted to prec 1.
