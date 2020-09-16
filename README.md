@@ -3,7 +3,7 @@
 
 With this nodeserver you can create virtual switches or temperature devices to be used in various applications.
 
-The virtual switch devices store their data in their variables for now, both value and init. You can add a virtual switch to a scene and that switch can be polled to determine if the scene is on or off.
+Devices store their status in a .db for retrieval on a restart. You can add a virtual switch to a scene and that switch can be polled to determine if the scene is on or off.
 
 The virtual temperature device allows you to extract temperature information from a variable then display that as a device that can be put into a folder for other devices or apps.
 
@@ -19,9 +19,8 @@ Data can be Pushed to another variable.
 
 ### Updates
 
-Pending: Unlink Switch from variable, add Push / Pull capability, data and parameter storage to .db for retrieval on restart.
-
-Pending: Update Generic node.
+1.2.2 Unlinked Switch and Generic/Dimmer from variable, data and parameter storage to .db for retrieval on restart. Hints for Switch, Generic/Dimmer added.
+Please Update Profile and restart the Admin Console.
 
 1.2.1 Fixed bug that allowed value updates where the value had not changed. When changing F to C, C to F or R to P the statistics are automatically reset.
 
