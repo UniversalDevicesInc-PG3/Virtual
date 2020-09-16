@@ -151,6 +151,8 @@
             <accepts>
                 <cmd id="DON" />
                 <cmd id="DOF" />
+                <cmd id="BRT" />
+                <cmd id="DIM" />
                 <cmd id="setDim">
                   <p id="" editor="value" init="ST" />
                     </cmd>
