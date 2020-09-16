@@ -4,7 +4,7 @@
 """
 This is a NodeServer created for Polyglot v2 from a template by Einstein.42 (James Miline)
 This NodeServer was created by markv58 (Mark Vittes) markv58git@gmail.com
-v1.2.1
+v1.2.2
 """
 
 import polyinterface
@@ -43,7 +43,7 @@ class Controller(polyinterface.Controller):
         self.password = 'none'
         self.isy = 'none'
         self.parseDelay = 0.1
-        self.version = '1.2.1'
+        self.version = '1.2.2'
         self.pullError = False
         self.pullDelay = 0.1
 
@@ -53,7 +53,8 @@ class Controller(polyinterface.Controller):
         self.discover()
         LOGGER.info('Pull Delay set to %s seconds, Parse Delay set to %s seconds', self.pullDelay, self.parseDelay)
         #self.poly.add_custom_config_docs("<b>And this is some custom config data</b>")
-
+        self.query()
+            
     def shortPoll(self):
         for node in self.nodes:
             self.nodes[node].update()
@@ -149,9 +150,74 @@ class Controller(polyinterface.Controller):
 class VirtualSwitch(polyinterface.Node):         ####################################    SWITCH      ####################################
     def __init__(self, controller, primary, address, name):
         super(VirtualSwitch, self).__init__(controller, primary, address, name)
+        self.switchStatus = 0
 
     def start(self):
-        pass
+        self.createDBfile()
+
+    def createDBfile(self):
+        _name = str(self.name)
+        _name = _name.replace(" ","_")
+        _key = 'key' + str(self.address)
+        _check = _name + '.db'
+        LOGGER.debug('Checking to see if %s exists', _check)
+        if os.path.exists(_check):
+            LOGGER.debug('The file does exists')
+            self.retrieveValues()
+            pass
+        else:
+            s = shelve.open(_name, writeback=True)
+            s[_key] = { 'switchStatus': self.switchStatus }
+            time.sleep(2)
+            s.close()
+
+    def deleteDB(self, command):
+        _name = str(self.name)
+        _name = _name.replace(" ","_")
+        _key = 'key' + str(self.address)
+        _check = _name + '.db'
+        if os.path.exists(_check):
+            LOGGER.debug('Deleting db')
+            subprocess.run(["rm", _check])
+        time.sleep(1)
+        self.firstPass = True
+        self.start()
+
+    def storeValues(self):
+        _name = str(self.name)
+        _name = _name.replace(" ","_")
+        _key = 'key' + str(self.address)
+        s = shelve.open(_name, writeback=True)
+        try:
+            s[_key] = { 'switchStatus': self.switchStatus}
+        finally:
+            s.close()
+        LOGGER.info('Storing Values')
+        self.listValues()
+            
+    def listValues(self):
+        _name = str(self.name)
+        _name = _name.replace(" ","_")
+        _key = 'key' + str(self.address)
+        s = shelve.open(_name, writeback=True)
+        try:
+            existing = s[_key]
+        finally:
+            s.close()
+        LOGGER.info(existing)
+
+    def retrieveValues(self):
+        _name = str(self.name)
+        _name = _name.replace(" ","_")
+        _key = 'key' + str(self.address)
+        s = shelve.open(_name, writeback=True)
+        try:
+            existing = s[_key]
+        finally:
+            s.close()
+        LOGGER.info('Retrieving Values %s', existing)
+        self.switchStatus = existing['switchStatus']
+        self.setDriver('ST', self.switchStatus)
 
     def setOn(self, command):
         self.setDriver('ST', 1)
@@ -173,7 +239,7 @@ class VirtualSwitch(polyinterface.Node):         ###############################
         self.reportDrivers()
 
     #"Hints See: https://github.com/UniversalDevicesInc/hints"
-    #hint = [1,2,3,4]
+    hint = '0x01020c00'
     drivers = [{'driver': 'ST', 'value': 0, 'uom': 25}]
 
     id = 'virtualswitch'
@@ -927,12 +993,77 @@ class VirtualTempC(polyinterface.Node):     ####################################
                     'resetStats': resetStats, 'deleteDB': deleteDB
                 }
 
-class VirtualGeneric(polyinterface.Node):
+class VirtualGeneric(polyinterface.Node):    ######################################### Generic ###################################
     def __init__(self, controller, primary, address, name):
         super(VirtualGeneric, self).__init__(controller, primary, address, name)
+        self.level = 0
 
     def start(self):
-        pass
+        self.createDBfile()
+
+    def createDBfile(self):
+        _name = str(self.name)
+        _name = _name.replace(" ","_")
+        _key = 'key' + str(self.address)
+        _check = _name + '.db'
+        LOGGER.debug('Checking to see if %s exists', _check)
+        if os.path.exists(_check):
+            LOGGER.debug('The file does exists')
+            self.retrieveValues()
+            pass
+        else:
+            s = shelve.open(_name, writeback=True)
+            s[_key] = { 'switchStatus': self.level }
+            time.sleep(2)
+            s.close()
+
+    def deleteDB(self, command):
+        _name = str(self.name)
+        _name = _name.replace(" ","_")
+        _key = 'key' + str(self.address)
+        _check = _name + '.db'
+        if os.path.exists(_check):
+            LOGGER.debug('Deleting db')
+            subprocess.run(["rm", _check])
+        time.sleep(1)
+        self.firstPass = True
+        self.start()
+
+    def storeValues(self):
+        _name = str(self.name)
+        _name = _name.replace(" ","_")
+        _key = 'key' + str(self.address)
+        s = shelve.open(_name, writeback=True)
+        try:
+            s[_key] = { 'switchStatus': self.level}
+        finally:
+            s.close()
+        LOGGER.info('Storing Values')
+        self.listValues()
+
+    def listValues(self):
+        _name = str(self.name)
+        _name = _name.replace(" ","_")
+        _key = 'key' + str(self.address)
+        s = shelve.open(_name, writeback=True)
+        try:
+            existing = s[_key]
+        finally:
+            s.close()
+        LOGGER.info(existing)
+
+    def retrieveValues(self):
+        _name = str(self.name)
+        _name = _name.replace(" ","_")
+        _key = 'key' + str(self.address)
+        s = shelve.open(_name, writeback=True)
+        try:
+            existing = s[_key]
+        finally:
+            s.close()
+        LOGGER.info('Retrieving Values %s', existing)
+        self.level = existing['switchStatus']
+        self.setDriver('ST', self.level)
 
     def setOn(self, command):
         self.setDriver('ST', 100)
@@ -961,7 +1092,7 @@ class VirtualGeneric(polyinterface.Node):
         self.reportDrivers()
 
     #"Hints See: https://github.com/UniversalDevicesInc/hints"
-    #hint = [1,2,3,4]
+    hint = '0x01020900'
     drivers = [{'driver': 'ST', 'value': 0, 'uom': 56}]
 
     id = 'virtualgeneric'
