@@ -19,6 +19,8 @@ ST-vswitch-ST-NAME = Switch Status
 ND-virtualgeneric-NAME = Virtual Generic
 ND-virtualgeneric-ICON = Switch
 ST-vgeneric-ST-NAME = Level
+CMD-vgeneric-BRT-NAME = Brighten
+CMD-vgeneric-DIM-NAME = Dim
 CMD-vgeneric-setDim-NAME = Set Level
 
 # virtualtemp
