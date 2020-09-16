@@ -221,13 +221,13 @@ class VirtualSwitch(polyinterface.Node):         ###############################
 
     def setOn(self, command):
         self.setDriver('ST', 1)
-        requests.get('http://' + self.parent.isy + '/rest/vars/set/2/' + self.address + '/1', auth=(self.parent.user, self.parent.password))
-        requests.get('http://' + self.parent.isy + '/rest/vars/init/2/' + self.address + '/1', auth=(self.parent.user, self.parent.password))
+        self.switchValue = 1
+        self.storeStatus()
 
     def setOff(self, command):
         self.setDriver('ST', 0)
-        requests.get('http://' + self.parent.isy + '/rest/vars/set/2/' + self.address + '/0', auth=(self.parent.user, self.parent.password))
-        requests.get('http://' + self.parent.isy + '/rest/vars/init/2/' + self.address + '/0', auth=(self.parent.user, self.parent.password))
+        self.switchValue = 0
+        self.storeStatus()
 
     def update(self):
         pass
@@ -1067,20 +1067,33 @@ class VirtualGeneric(polyinterface.Node):    ###################################
 
     def setOn(self, command):
         self.setDriver('ST', 100)
-        requests.get('http://' + self.parent.isy + '/rest/vars/set/2/' + self.address + '/100', auth=(self.parent.user, self.parent.password))
-        requests.get('http://' + self.parent.isy + '/rest/vars/init/2/' + self.address + '/100', auth=(self.parent.user, self.parent.password))
+        self.level = 100
+        self.storeValue()
 
     def setOff(self, command):
         self.setDriver('ST', 0)
-        requests.get('http://' + self.parent.isy + '/rest/vars/set/2/' + self.address + '/0', auth=(self.parent.user, self.parent.password))
-        requests.get('http://' + self.parent.isy + '/rest/vars/init/2/' + self.address + '/0', auth=(self.parent.user, self.parent.password))
+        self.level = 100
+        self.storeValue()
+
+    def setLevelUp(self, command):
+        _level = self.level + 3:
+        if _level > 100: _level = 100
+        self.setDriver('ST', _level)
+        self.level = _level
+        self.storeValue()
+
+    def setLevelDown(self, command):
+        _level = self.level - 3:
+        if _level < 0: _level = 0
+        self.setDriver('ST', _level)
+        self.level = _level
+        self.storeValue()
 
     def setDim(self, command):
         _level = int(command.get('value'))
         self.setDriver('ST', _level)
-        requests.get('http://' + self.parent.isy + '/rest/vars/set/2/' + self.address + '/' + str(_level), auth=(self.parent.user, self.parent.password))
-        r = requests.get('http://' + self.parent.isy + '/rest/vars/get/2/' + self.address, auth=(self.parent.user, self.parent.password))
-        LOGGER.info(r.headers)
+        self.level = _level
+        self.storeValue()
 
     def update(self):
         pass
@@ -1098,7 +1111,7 @@ class VirtualGeneric(polyinterface.Node):    ###################################
     id = 'virtualgeneric'
 
     commands = {
-                    'DON': setOn, 'DOF': setOff, 'setDim': setDim
+                    'DON': setOn, 'DOF': setOff, 'brighten': setLevelUp,'dim': setLevelDown, 'setDim': setDim
                 }
 
 if __name__ == "__main__":
