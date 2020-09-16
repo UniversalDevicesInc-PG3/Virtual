@@ -4,7 +4,7 @@
 """
 This is a NodeServer created for Polyglot v2 from a template by Einstein.42 (James Miline)
 This NodeServer was created by markv58 (Mark Vittes) markv58git@gmail.com
-v1.2.2
+v1.2.3
 """
 
 import polyinterface
@@ -43,7 +43,7 @@ class Controller(polyinterface.Controller):
         self.password = 'none'
         self.isy = 'none'
         self.parseDelay = 0.1
-        self.version = '1.2.2'
+        self.version = '1.2.3'
         self.pullError = False
         self.pullDelay = 0.1
 
@@ -221,12 +221,12 @@ class VirtualSwitch(polyinterface.Node):         ###############################
 
     def setOn(self, command):
         self.setDriver('ST', 1)
-        self.switchValue = 1
+        self.switchStatus = 1
         self.storeValues()
 
     def setOff(self, command):
         self.setDriver('ST', 0)
-        self.switchValue = 0
+        self.switchStatus = 0
         self.storeValues()
 
     def update(self):
