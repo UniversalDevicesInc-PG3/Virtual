@@ -1076,14 +1076,14 @@ class VirtualGeneric(polyinterface.Node):    ###################################
         self.storeValues()
 
     def setLevelUp(self, command):
-        _level = self.level += 3:
+        _level = int(self.level) + 3
         if _level > 100: _level = 100
         self.setDriver('ST', _level)
         self.level = _level
         self.storeValues()
 
     def setLevelDown(self, command):
-        _level = self.level -= 3:
+        _level = int(self.level) - 3
         if _level < 0: _level = 0
         self.setDriver('ST', _level)
         self.level = _level
