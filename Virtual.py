@@ -222,12 +222,12 @@ class VirtualSwitch(polyinterface.Node):         ###############################
     def setOn(self, command):
         self.setDriver('ST', 1)
         self.switchValue = 1
-        self.storeStatus()
+        self.storeValues()
 
     def setOff(self, command):
         self.setDriver('ST', 0)
         self.switchValue = 0
-        self.storeStatus()
+        self.storeValues()
 
     def update(self):
         pass
