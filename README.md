@@ -20,7 +20,7 @@ Data can be Pushed to another variable.
 ### Updates
 
 1.2.2 Unlinked Switch and Generic/Dimmer from variable, data and parameter storage to .db for retrieval on restart. Hints for Switch, Generic/Dimmer added.
-Please Update Profile and restart the Admin Console.
+Please Update Profile and restart the Admin Console. No changes to the Temperature nodes.
 
 1.2.1 Fixed bug that allowed value updates where the value had not changed. When changing F to C, C to F or R to P the statistics are automatically reset.
 
