@@ -19,6 +19,8 @@ Data can be Pushed to another variable.
 
 ### Updates
 
+1.2.3 Bug fix.
+
 1.2.2 Unlinked Switch and Generic/Dimmer from variable, data and parameter storage to .db for retrieval on restart. Hints for Switch, Generic/Dimmer added.
 Brighten and Dim commands added to the Generic/Dimmer node. Please Update Profile and restart the Admin Console. No changes to the Temperature nodes.
 
