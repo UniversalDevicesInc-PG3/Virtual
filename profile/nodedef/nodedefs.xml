@@ -12,10 +12,6 @@
             <sends />
             <accepts>
               <cmd id="QUERY" />
-              <cmd id="DISCOVER" />
-              <cmd id="REMOVE_NOTICES_ALL" />
-              <cmd id="REMOVE_NOTICE_TEST" />
-              <cmd id="UPDATE_PROFILE" />
             </accepts>
         </cmds>
     </nodeDef>

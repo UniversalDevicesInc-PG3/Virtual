@@ -2,12 +2,12 @@
 
 #!/usr/bin/env python
 """
-This is a NodeServer created for Polyglot v2 from a template by Einstein.42 (James Miline)
+This is a NodeServer created for Polyglot v3 from a template by Einstein.42 (James Miline)
 This NodeServer was created by markv58 (Mark Vittes) markv58git@gmail.com
 v1.2.3
 """
 
-import polyinterface
+import udi_interface
 import sys
 import time
 from datetime import datetime
@@ -31,47 +31,75 @@ GETLIST = [' ',
            '/1/'
           ]
 
-LOGGER = polyinterface.LOGGER
+LOGGER = udi_interface.LOGGER
+ISY = udi_interface.ISY
 logging.getLogger('urllib3').setLevel(logging.ERROR)
 
-class Controller(polyinterface.Controller):
-    def __init__(self, polyglot):
-        super(Controller, self).__init__(polyglot)
+class Controller(udi_interface.Node):
+    def __init__(self, polyglot, primary, address, name):
+        super(Controller, self).__init__(polyglot, primary, address, name)
+        self.poly = polyglot
         self.name = 'Virtual Device Controller'
-        self.poly.onConfig(self.process_config)
-        self.user = 'none'
-        self.password = 'none'
-        self.isy = 'none'
         self.parseDelay = 0.1
-        self.version = '1.2.3'
+        self.version = '2.0.0'
         self.pullError = False
         self.pullDelay = 0.1
+        
+        polyglot.subscribe(polyglot.START, self.start, address)
+        polyglot.subscribe(polyglot.CUSTOMPARAMS, self.parameterHandler)
+        polyglot.subscribe(polyglot.POLL, self.poll)
+
+        polyglot.ready()
+        polyglot.addNode(self)
+
+
+    def parameterHandler(self, params):
+        self.poly.Notices.clear()
+
+        for key,val in params.items():
+            a = key
+            if a == "parseDelay":
+                self.parseDelay = float(val)
+            elif a == "pullDelay":
+                self.pullDelay = float(val)
+            elif a.isdigit():
+                if val == 'switch':
+                    if not self.poly.getNode(key):
+                        _name = str(val) + ' ' + str(key)
+                        self.poly.addNode(VirtualSwitch(self.poly, self.address, key, _name))
+                elif val == 'temperature':
+                    _name = str(val) + ' ' + str(key)
+                    if not self.poly.getNode(key):
+                        self.poly.addNode(VirtualTemp(self.poly, self.address, key, _name))
+                elif val == 'temperaturec' or val == 'temperaturecr':
+                    if not self.poly.getNode(key):
+                        _name = str(val) + ' ' + str(key)
+                        self.poly.addNode(VirtualTempC(self.poly, self.address, key, _name))
+                elif val == 'generic' or val == 'dimmer':
+                    if not self.poly.getNode(key):
+                        _name = str(val) + ' ' + str(key)
+                        self.poly.addNode(VirtualGeneric(self.poly, self.address, key, _name))
+                else:
+                    pass
+            else:
+                pass
+        LOGGER.info('Check Params is complete')
+        LOGGER.info('Pull Delay set to %s seconds, Parse Delay set to %s seconds', self.pullDelay, self.parseDelay)
 
     def start(self):
         LOGGER.info('Started Virtual Device NodeServer v%s', self.version)
-        self.check_params()
-        self.discover()
-        LOGGER.info('Pull Delay set to %s seconds, Parse Delay set to %s seconds', self.pullDelay, self.parseDelay)
-        #self.poly.add_custom_config_docs("<b>And this is some custom config data</b>")
         self.query()
             
-    def shortPoll(self):
-        for node in self.nodes:
-            self.nodes[node].update()
-
-    def longPoll(self):
-        LOGGER.info('Long poll, checking variables')
-        for node in self.nodes:
-            self.nodes[node].getDataFromID()
-            time.sleep(float(self.pullDelay))
+    def poll(self, polltype):
+        if 'longPoll' in polltype:
+            LOGGER.info('Long poll, checking variables')
+            for node in self.poly.nodes():
+                node.getDataFromID()
+                time.sleep(float(self.pullDelay))
 
     def query(self):
-        #self.check_params()
-        for node in self.nodes:
-            self.nodes[node].reportDrivers()
-
-    def discover(self, *args, **kwargs):
-        pass
+        for node in self.poly.nodes():
+            node.reportDrivers()
 
     def delete(self):
         LOGGER.info('Deleting Virtual Device Nodeserver')
@@ -79,78 +107,21 @@ class Controller(polyinterface.Controller):
     def stop(self):
         LOGGER.debug('NodeServer stopped.')
 
-    def process_config(self, config):
-        #LOGGER.info("process_config: Enter config={}".format(config));
-        #LOGGER.info("process_config: Exit");
-        pass
-
-    def check_params(self):
-        for key,val in self.polyConfig['customParams'].items():
-            a = key
-            if a == "isy":
-                self.isy = str(val)
-            elif a == "user":
-                self.user = str(val)
-            elif a == "password":
-                self.password = str(val)
-            elif a == "parseDelay":
-                self.parseDelay = float(val)
-            elif a == "pullDelay":
-                self.pullDelay = float(val)
-            elif a.isdigit():
-                if val == 'switch':
-                    _name = str(val) + ' ' + str(key)
-                    self.addNode(VirtualSwitch(self, self.address, key, _name))
-                elif val == 'temperature':
-                    _name = str(val) + ' ' + str(key)
-                    self.addNode(VirtualTemp(self, self.address, key, _name))
-                elif val == 'temperaturec' or val == 'temperaturecr':
-                    _name = str(val) + ' ' + str(key)
-                    self.addNode(VirtualTempC(self, self.address, key, _name))
-                elif val == 'generic' or val == 'dimmer':
-                    _name = str(val) + ' ' + str(key)
-                    self.addNode(VirtualGeneric(self, self.address, key, _name))
-                else:
-                    pass
-            else:
-                pass
-        LOGGER.info('Check Params is complete')
-
-    def remove_notice_test(self,command):
-        LOGGER.info('remove_notice_test: notices={}'.format(self.poly.config['notices']))
-        # Remove all existing notices
-        self.removeNotice('test')
-
-    def remove_notices_all(self,command):
-        LOGGER.info('remove_notices_all: notices={}'.format(self.poly.config['notices']))
-        # Remove all existing notices
-        self.removeNoticesAll()
-
-    def update_profile(self,command):
-        LOGGER.info('update_profile:')
-        st = self.poly.installprofile()
-        return st
-
-    def update(self):
-        pass
 
     def getDataFromID(self):
         pass
 
-        id = 'controller'
+    id = 'controller'
     commands = {
         'QUERY': query,
-        'DISCOVER': discover,
-        'UPDATE_PROFILE': update_profile,
-        'REMOVE_NOTICES_ALL': remove_notices_all,
-        'REMOVE_NOTICE_TEST': remove_notice_test
     }
     drivers = [{'driver': 'ST', 'value': 1, 'uom': 2}]
 
-class VirtualSwitch(polyinterface.Node):         ####################################    SWITCH      ####################################
+class VirtualSwitch(udi_interface.Node):         ####################################    SWITCH      ####################################
     def __init__(self, controller, primary, address, name):
         super(VirtualSwitch, self).__init__(controller, primary, address, name)
         self.switchStatus = 0
+        controller.subscribe(controller.START, self.start, address)
 
     def start(self):
         self.createDBfile()
@@ -229,9 +200,6 @@ class VirtualSwitch(polyinterface.Node):         ###############################
         self.switchStatus = 0
         self.storeValues()
 
-    def update(self):
-        pass
-
     def getDataFromID(self):
         pass
 
@@ -247,9 +215,11 @@ class VirtualSwitch(polyinterface.Node):         ###############################
     commands = {
                     'DON': setOn, 'DOF': setOff
                 }
-class VirtualTemp(polyinterface.Node):          ##################################      TEMP     ########################################
+
+class VirtualTemp(udi_interface.Node):          ##################################      TEMP     ########################################
     def __init__(self, controller, primary, address, name):
         super(VirtualTemp, self).__init__(controller, primary, address, name)
+        self.poly = controller
         self.firstPass = True
         self.prevVal = 0.0
         self.tempVal = 0.0
@@ -271,13 +241,20 @@ class VirtualTemp(polyinterface.Node):          ################################
         self.CtoF = 0
         self.pullError = False
         self.lastUpdate = '0000'
+        controller.subscribe(controller.START, self.start, address)
+        controller.subscribe(controller.POLL, self.poll)
 
     def start(self):
+        self.isy = ISY(self.poly)
         self.currentTime = time.time()
         self.lastUpdateTime = time.time()
         self.setDriver('GV2', 0.0)
         self.createDBfile()
         if self.firstPass: self.resetStats(1)
+
+    def poll(self, polltype):
+        if 'shortPoll' in polltype:
+            self.update()
 
     def setOn(self, command):
         pass
@@ -460,7 +437,7 @@ class VirtualTemp(polyinterface.Node):          ################################
         _type = str(command1)
         _id = str(command2)
         #LOGGER.info('Pushing to http://%s/rest/vars%s%s/%s', self.parent.isy, _type, _id, self.tempVal)
-        requests.get('http://' + self.parent.isy + '/rest/vars' + _type + _id + '/' + str(self.tempVal), auth=(self.parent.user, self.parent.password))
+        self.isy.cmd('/rest/vars' + _type + _id + '/' + str(self.tempVal))
 
     def getDataFromID(self):
         if self.action1 == 2:
@@ -478,7 +455,7 @@ class VirtualTemp(polyinterface.Node):          ################################
             _id = str(command2)
             try:
                 #LOGGER.info('Pulling from http://%s/rest/vars/get%s%s/', self.parent.isy, _type, _id)
-                r = requests.get('http://' + self.parent.isy + '/rest/vars/get' + _type + _id, auth=(self.parent.user, self.parent.password))
+                r = self.isy.cmd('/rest/vars/get' + _type + _id)
                 _content = str(r.content)
                 #LOGGER.info('Content: %s', _content)
                 time.sleep(float(self.parent.parseDelay))
@@ -623,9 +600,11 @@ class VirtualTemp(polyinterface.Node):          ################################
                                         'setCtoF': setCtoF, 'setRawToPrec': setRawToPrec,
                     'resetStats': resetStats, 'deleteDB': deleteDB
                 }
-class VirtualTempC(polyinterface.Node):     #######################################    TEMP C     #######################################
+
+class VirtualTempC(udi_interface.Node):     #######################################    TEMP C     #######################################
     def __init__(self, controller, primary, address, name):
         super(VirtualTempC, self).__init__(controller, primary, address, name)
+        self.poly = controller
         self.firstPass = True
         self.prevVal = 0.0
         self.tempVal = 0.0
@@ -647,13 +626,20 @@ class VirtualTempC(polyinterface.Node):     ####################################
         self.FtoC = 0
         self.pullError = False
         self.lastUpdate = '0000'
+        controller.subscribe(controller.START, self.start, address)
+        controller.subscribe(controller.POLL, self.poll)
 
     def start(self):
+        self.isy = ISY(self.poly)
         self.currentTime = time.time()
         self.lastUpdateTime = time.time()
         self.setDriver('GV2', 0.0)
         self.createDBfile()
         if self.firstPass: self.resetStats(1)
+
+    def poll(self, polltype):
+        if 'shortPoll' in polltype:
+            self.update()
 
     def createDBfile(self):
         _name = str(self.name)
@@ -831,7 +817,7 @@ class VirtualTempC(polyinterface.Node):     ####################################
         _type = str(command1)
         _id = str(command2)
         #LOGGER.info('Pushing to http://%s/rest/vars%s%s/%s', self.parent.isy, _type, _id, self.tempVal)
-        requests.get('http://' + self.parent.isy + '/rest/vars' + _type + _id + '/' + str(self.tempVal), auth=(self.parent.user, self.parent.password))
+        self.isy.cmd('/rest/vars' + _type + _id + '/' + str(self.tempVal))
 
     def getDataFromID(self):
         if self.action1 == 2:
@@ -849,7 +835,7 @@ class VirtualTempC(polyinterface.Node):     ####################################
             _id = str(command2)
             try:
                 #LOGGER.info('Pulling from http://%s/rest/vars/get%s%s/', self.parent.isy, _type, _id)
-                r = requests.get('http://' + self.parent.isy + '/rest/vars/get' + _type + _id, auth=(self.parent.user, self.parent.password))
+                r = self.isy.cmd('/rest/vars/get' + _type + _id)
                 _content = str(r.content)
                 #LOGGER.info('Content: %s:', _content)
                 time.sleep(float(self.parent.parseDelay))
@@ -993,10 +979,11 @@ class VirtualTempC(polyinterface.Node):     ####################################
                     'resetStats': resetStats, 'deleteDB': deleteDB
                 }
 
-class VirtualGeneric(polyinterface.Node):    ######################################### Generic ###################################
+class VirtualGeneric(udi_interface.Node):    ######################################### Generic ###################################
     def __init__(self, controller, primary, address, name):
         super(VirtualGeneric, self).__init__(controller, primary, address, name)
         self.level = 0
+        controller.subscribe(controller.START, self.start, address)
 
     def start(self):
         self.createDBfile()
@@ -1095,9 +1082,6 @@ class VirtualGeneric(polyinterface.Node):    ###################################
         self.level = _level
         self.storeValues()
 
-    def update(self):
-        pass
-
     def getDataFromID(self):
         pass
 
@@ -1116,13 +1100,15 @@ class VirtualGeneric(polyinterface.Node):    ###################################
 
 if __name__ == "__main__":
     try:
-        polyglot = polyinterface.Interface('Virtual')
+        polyglot = udi_interface.Interface([])
 
         polyglot.start()
+        polyglot.updateProfile()
+        polyglot.setCustomParamsDoc()
 
-        control = Controller(polyglot)
+        Controller(polyglot, 'controller', 'controller', 'Virtual')
 
-        control.runForever()
+        polyglot.runForever()
 
     except (KeyboardInterrupt, SystemExit):
         polyglot.stop()
