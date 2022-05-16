@@ -1,6 +1,6 @@
 {
     "name": "Virtual",
-    "docs": "https://github.com/UniversalDevicesInc-PG3/Virtual",
+    "docs": "https://github.com/UniversalDevicesInc-PG3/Virtual/blob/master/README.md",
     "type": "python3",
     "executable": "Virtual.py",
     "install": "install.sh",
