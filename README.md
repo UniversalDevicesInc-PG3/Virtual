@@ -29,7 +29,7 @@ Pulling a temperature value from a variable.
 
 ## Updates
 
-3.0.0 Add Control functionality to Switch device
+3.0.0 Add Control functionality to Switch device  
 Refactor plugin to modern PG3 template.
 
 1.2.3 Bug fix.
