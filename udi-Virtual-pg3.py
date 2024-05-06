@@ -17,12 +17,14 @@ import sys
 
 LOGGER = udi_interface.LOGGER
 
-VERSION = '3.0.0'
+VERSION = '3.0.1'
 """
+3.0.1
+DONE fix get value from variable
+
 3.0.0
 DONE add control ability to contact device
-TODO refactored to modern template
-TODO add garage door aggregate device
+DONE refactored to modern template
 
 """
 

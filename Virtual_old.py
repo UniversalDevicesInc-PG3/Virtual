@@ -17,6 +17,7 @@ import re
 import shelve
 import os.path
 import subprocess
+from xml.dom.minidom import parse, parseString
 
 TYPELIST = ['/set/2/',  #1
             '/init/2/', #2

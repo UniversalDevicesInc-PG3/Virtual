@@ -13,6 +13,7 @@ import re
 import shelve
 import os.path
 import subprocess
+from xml.dom.minidom import parseString
 
 # external imports
 import udi_interface
@@ -321,18 +322,22 @@ class VirtualTemp(udi_interface.Node):
             try:
                 #LOGGER.info('Pulling from http://%s/rest/vars/get%s%s/', self.parent.isy, _type, _id)
                 r = self.isy.cmd('/rest/vars/get' + _type + _id)
-                _content = str(r.content)
-                #LOGGER.info('Content: %s', _content)
-                time.sleep(float(self.parent.parseDelay))
-                _value = re.findall(r'(\d+|\-\d+)', _content)
-                #LOGGER.info('Parsed: %s',_value)
+                LOGGER.debug(f'get value: {r}')
+                r = parseString(r)
+                # _content = str(r.content)p
+                _content = r.getElementsByTagName("var")[0].getElementsByTagName("val")[0].firstChild.toxml()
+                LOGGER.info('Content: %s', _content)
+                time.sleep(float(self.controller.parseDelay))
+                # _value = re.findall(r'(\d+|\-\d+)', _content)
+                # LOGGER.info('Parsed: %s',_value)
                 _newTemp = 0
             except Exception as e:
                 LOGGER.error('There was an error with the value pull: ' + str(e))
                 self.pullError = True
             try:
-                if command1 == '/2/' : _newTemp = int(_value[7])
-                if command1 == '/1/' : _newTemp = int(_value[5])
+                # if command1 == '/2/' : _newTemp = int(_value[7])
+                # if command1 == '/1/' : _newTemp = int(_value[5])
+                _newTemp = int(_content)
             except Exception as e:
                 LOGGER.error('An error occured during the content parse: ' + str(e))
                 self.pullError = True
@@ -345,8 +350,11 @@ class VirtualTemp(udi_interface.Node):
                 if self.tempVal == _testValRtoP or self.tempVal == _testValCtoF or self.tempVal == _testValRtoPandCtoF or self.tempVal == _newTemp:
                     pass
                 else:
-                    _lastUpdate = (str(_value[8])+'-'+str(_value[9])+':'+str(_value[10])+':'+str(_value[11]))
-                    self.lastUpdate = (_lastUpdate)
+                    # _lastUpdate = (str(_value[8])+'-'+str(_value[9])+':'+str(_value[10])+':'+str(_value[11]))
+                    # _content = r.getElementsByTagName("var")[0].getElementsByTagName("ts")[0].firstChild.toxml()
+                    # LOGGER.info(f'lastUpdate raw: {_content}')
+                    # _lastUpdate = (str(_value[8])+'-'+str(_value[9])+':'+str(_value[10])+':'+str(_value[11]))
+                    # self.lastUpdate = (_lastUpdate)
                     self.setTempFromData(_newTemp)
             self.pullError = False
 
