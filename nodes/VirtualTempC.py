@@ -332,7 +332,7 @@ class VirtualTempC(udi_interface.Node):
                 # if command1 == '/2/' : _newTemp = int(_value[7])
                 # if command1 == '/1/' : _newTemp = int(_value[5])
                 _newTemp = int(_content)
-                except Exception as e:
+            except Exception as e:
                 LOGGER.error('An error occured during the content parse: ' + str(e))
                 self.pullError = True
             if self.pullError:
