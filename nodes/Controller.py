@@ -248,8 +248,9 @@ class Controller(udi_interface.Node):
         else:
             LOGGER.debug('shortPoll (controller)')
             for node in self.poly.nodes():
-               node.getDataFromID()
-               time.sleep(float(self.pullDelay))
+                if node != self.address:
+                    node.getDataFromID()
+                time.sleep(float(self.pullDelay))
  
     def query(self, command = None):
         """
