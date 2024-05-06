@@ -246,7 +246,6 @@ class Controller(udi_interface.Node):
         if 'longPoll' in flag:
             LOGGER.debug('longPoll (controller)')
         else:
-             LOGGER.debug('shortPoll check for events (controller)')
             LOGGER.debug('shortPoll (controller)')
             for node in self.poly.nodes():
                node.getDataFromID()
