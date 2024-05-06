@@ -18,6 +18,7 @@ import subprocess
 import udi_interface
 
 LOGGER = udi_interface.LOGGER
+ISY = udi_interface.ISY
 
 TYPELIST = ['/set/2/',  #1
             '/init/2/', #2
@@ -106,6 +107,7 @@ class VirtualTempC(udi_interface.Node):
         This method is called after Polyglot has added the node per the
         START event subscription above
         """
+        self.isy = ISY(self.poly)
         self.currentTime = time.time()
         self.lastUpdateTime = time.time()
         self.setDriver('GV2', 0.0)

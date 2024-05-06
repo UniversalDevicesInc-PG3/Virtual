@@ -18,6 +18,7 @@ import subprocess
 import udi_interface
 
 LOGGER = udi_interface.LOGGER
+ISY = udi_interface.ISY
 
 TYPELIST = ['/set/2/',  #1
             '/init/2/', #2
@@ -106,6 +107,7 @@ class VirtualTemp(udi_interface.Node):
         This method is called after Polyglot has added the node per the
         START event subscription above
         """
+        self.isy = ISY(self.poly)
         self.currentTime = time.time()
         self.lastUpdateTime = time.time()
         self.setDriver('GV2', 0.0)
@@ -300,7 +302,7 @@ class VirtualTemp(udi_interface.Node):
         _type = str(command1)
         _id = str(command2)
         #LOGGER.info('Pushing to http://%s/rest/vars%s%s/%s', self.parent.isy, _type, _id, self.tempVal)
-        self.poly.cmd('/rest/vars' + _type + _id + '/' + str(self.tempVal))
+        self.isy.cmd('/rest/vars' + _type + _id + '/' + str(self.tempVal))
 
     def getDataFromID(self):
         if self.action1 == 2:
@@ -318,7 +320,7 @@ class VirtualTemp(udi_interface.Node):
             _id = str(command2)
             try:
                 #LOGGER.info('Pulling from http://%s/rest/vars/get%s%s/', self.parent.isy, _type, _id)
-                r = self.poly.cmd('/rest/vars/get' + _type + _id)
+                r = self.isy.cmd('/rest/vars/get' + _type + _id)
                 _content = str(r.content)
                 #LOGGER.info('Content: %s', _content)
                 time.sleep(float(self.parent.parseDelay))

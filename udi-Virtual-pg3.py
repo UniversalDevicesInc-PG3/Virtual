@@ -10,7 +10,6 @@ udi-Virtual-pg3 NodeServer/Plugin for EISY/Polisy
 
 (C) 2024 Stephen Jenkins
 
-main loop
 """
 
 import udi_interface
