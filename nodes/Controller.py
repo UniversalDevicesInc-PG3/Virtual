@@ -248,7 +248,7 @@ class Controller(udi_interface.Node):
         else:
             LOGGER.debug('shortPoll (controller)')
             for node in self.poly.nodes():
-                if node != self.address:
+                if node != self:
                     node.getDataFromID()
                 time.sleep(float(self.pullDelay))
  
