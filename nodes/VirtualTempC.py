@@ -320,6 +320,7 @@ class VirtualTempC(udi_interface.Node):
                 LOGGER.debug(f'get value: {r}')
                 r = parseString(r)
                 # _content = str(r.content)
+                _content = r.getElementsByTagName("var")[0].getElementsByTagName("val")[0].firstChild.toxml()
                 LOGGER.info('Content: %s:', _content)
                 time.sleep(float(self.controller.parseDelay))
                 # _value = re.findall(r'(\d+|\-\d+)', _content)
