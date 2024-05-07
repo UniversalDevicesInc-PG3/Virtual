@@ -2,10 +2,19 @@
 
 ## Plugin for Universal Devices Isy
 
+The Virtual plugin is one way to take data from external sources and in turn use these nodes of data more effectively.  The nodes become devices from which status and control are possible in programs & as an included device in scenes.  It as well as cleaner display in the AC and Remote tools.
+
 With this nodeserver you can create virtual switches or other devices
  which can be used in various applications.
 
 Devices store their status in a .db for retrieval on a restart.
+
+## Example Uses
+- I use REST to switch a virtual device from an 8266 device.  My Awning controller & heartbeat
+- from Alexa I switch a virtual device.  The status of my daughter's goodnight routine.
+- the above devices can be part of scenes or programs both status and control
+- these devices are one way to provide scene status if you make them part of a scene
+- virtual devices can consolidate data.  The temp devices, & I am looking to add a garage device.
 
 ## Switches
 
@@ -18,7 +27,6 @@ The virtual temperature device allows you to extract temperature information
 from a variable then display that as a device that can be put into a folder
 for other devices or apps.
 
-[![Virtual Node](https://github.com/markv58/github.io/blob/master/VTempC1.2.0.png)]
 Pulling a temperature value from a variable.
 
 **Options:**
@@ -29,8 +37,10 @@ Pulling a temperature value from a variable.
 
 ## Updates
 
+3.0.1 fix get value from variable for Temperature devices
+
 3.0.0 Add Control functionality to Switch device  
-Refactor plugin to modern PG3 template.
+      Refactor plugin to modern PG3 template.
 
 1.2.3 Bug fix.
 
