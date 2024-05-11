@@ -20,12 +20,13 @@ LOGGER = udi_interface.LOGGER
 VERSION = '3.1.0'
 """
 3.1.0
-YAML file option for configuration
-JSON option for web based configuration
-updates to YAML / JSON based on ISY name changes
-Discover button to update based on config updates
-new device garage door (update to/from variables option)
-update docs
+DONE: move version history out of README to own file
+STARTED: update docs  
+NEXT: YAML file option for configuration  
+TODO: JSON option for web based configuration  
+TODO: updates to YAML / JSON based on ISY name changes  
+TODO: Discover button to update based on config updates  
+TODO: new device garage door (update to/from variables option)  
 
 3.0.1
 DONE fix get value from variable
@@ -33,6 +34,9 @@ DONE fix get value from variable
 3.0.0
 DONE add control ability to contact device
 DONE refactored to modern template
+
+previous updates:
+see versionHistory.md
 
 """
 
