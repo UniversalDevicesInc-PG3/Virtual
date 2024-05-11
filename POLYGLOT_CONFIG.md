@@ -1,5 +1,8 @@
 # Virtual Device Controller
 
+**NEED TO TICK BOX FOR ISY ACCESS IN CONFIGURATION**  
+Required for variable write access
+
 After updating always Update Profile from Controller Page and restart the Admin Console
 
 Please enter the following to allow this nodeserver to access your ISY:
