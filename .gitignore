@@ -1,0 +1,7 @@
+*.cert
+*.key
+*.pid
+/logs/
+*.db
+.python-version
+__pycache__/
