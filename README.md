@@ -40,8 +40,13 @@ using a program or from a variable.  This is then displayed as a device
 - Farenheit converted and displayed as Celsius and vice versa.
 - Data Pushed to another variable.
 
+## Configuration
+
+see [POLYGLOT_CONFIG.md][config]
+
 ## Version History
 
 see [VersionHistory.md][versions]
 
 [versions]: VersionHistory.md
+[config]: POLYGLOT_CONFIG.md
