@@ -14,19 +14,51 @@ Required for variable write access
 - temperaturec    ... *Celcius units*
 - temperaturecr   ... *raw no-units*
 
-## Example Configuration
+## Example Configurations
+
+Three options for configuration.  **They can be mixed & matched**
+
+### Standard Configuration
+
+Key can be any positive **unique** integer,
+duplicate Keys will create ghost nodes
 
 ````md
 Key (var ID)    Value (device type)
   78              switch
   79              dimmer
   80              generic
-  82              temperature  
+  82              temperature
   85              temperaturec
   100             temperaturecr
 ````
 
-Key can be any positive unique integer, duplicate Keys will create ghost nodes  
+### JSON Configuration
+
+id is optional in the JSON string
+
+````md
+Key (var ID)    Value (device type)
+  78              {"id": "10", "type": "switch", "name": "switch 10"}
+  79              {"type": "dimmer", "name": "main dimmer"}
+  80              {"type": "generic", "name": "raw device"}
+  82              {"type": "temperature", "name": "lake temperature"}
+  85              {"id": "85", "type": "temperaturec", "name": "garden temp"}
+  100             {"type": "temperaturecr", "name": "raw temp"}
+````
+
+### YAML Configuration
+
+File name without path is within the node directory.
+Careful as this file will be deleted with node.
+Better to use path and store within admin home directory.
+Make sure file permissions are available to node.
+
+````md
+Key (var ID)    Value (device type)
+  devFile         exampleConfigFile.yaml
+  devFile         /home/admin/virtualdevice.yaml
+````
 
 ## Conversions Available
 
@@ -34,3 +66,7 @@ Key can be any positive unique integer, duplicate Keys will create ghost nodes
 - F to C  (TempC node convert Raw data before F to C)  
 - C to F  
 - Single precision conversion from Raw
+
+## Discovery
+
+- Discover button will add or remove nodes not in one of the configuration methods.

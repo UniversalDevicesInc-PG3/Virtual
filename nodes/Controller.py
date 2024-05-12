@@ -8,11 +8,8 @@ Controller class
 
 # std libraries
 import time
-import math
-import base64
 import json
-
-from requests import delete
+import yaml
 
 # external libraries
 import udi_interface
@@ -73,6 +70,8 @@ class Controller(udi_interface.Node):
         self.last = 0.0
         self.no_update = False
         self.discovery = False
+        self.valid_configuration = False
+        self.parmDone = False
 
         # Create data storage classes to hold specific data that we need
         # to interact with.  
@@ -135,11 +134,16 @@ class Controller(udi_interface.Node):
         # heartbeat in your node server
         self.heartbeat(True)
 
-        # Device discovery. Here you may query for your device(s) and 
-        # their capabilities.  Also where you can create nodes that
-        # represent the found device(s)
-        self.discover()
+        while self.valid_configuration is False:
+            LOGGER.info('Start: Waiting on valid configuration')
+            self.Notices['waiting'] = 'Waiting on valid configuration'
+            time.sleep(5)
 
+        while self.parmDone !=True:
+            LOGGER.info("Start: Waiting on first Discovery Completion")
+            time.sleep(1)
+
+        self.removeNoticesAll()
         LOGGER.info('Started Virtual Device NodeServer v%s', self.poly.serverdata)
         self.query()
 
@@ -158,9 +162,17 @@ class Controller(udi_interface.Node):
     parameters will result in a new event, causing an infinite loop.
     """
     def parameterHandler(self, params):
-        self.Notices.clear()
+        self.removeNoticesAll()
         self.Parameters.load(params)
-        LOGGER.info('Loading parameters now')
+        LOGGER.info('parmHandler: Loading parameters now')
+        if self.checkParams():
+            self.discoverNodes()
+            self.parmDone = True
+        LOGGER.info('parmHandler Done...')
+
+    def checkParams(self):
+        params = self.Parameters
+        self.devlist = []
         for key,val in params.items():
             a = key
             if a == "parseDelay":
@@ -168,28 +180,54 @@ class Controller(udi_interface.Node):
             elif a == "pullDelay":
                 self.pullDelay = float(val)
             elif a.isdigit():
-                if val == 'switch':
-                    if not self.poly.getNode(key):
-                        _name = str(val) + ' ' + str(key)
-                        self.poly.addNode(VirtualSwitch(self.poly, self.address, key, _name))
-                elif val == 'temperature':
-                    _name = str(val) + ' ' + str(key)
-                    if not self.poly.getNode(key):
-                        self.poly.addNode(VirtualTemp(self.poly, self.address, key, _name))
-                elif val == 'temperaturec' or val == 'temperaturecr':
-                    if not self.poly.getNode(key):
-                        _name = str(val) + ' ' + str(key)
-                        self.poly.addNode(VirtualTempC(self.poly, self.address, key, _name))
-                elif val == 'generic' or val == 'dimmer':
-                    if not self.poly.getNode(key):
-                        _name = str(val) + ' ' + str(key)
-                        self.poly.addNode(VirtualGeneric(self.poly, self.address, key, _name))
+                if val in {'switch', 'temperature', 'temperaturec', 'temperaturecr', 'generic', 'dimmer'}:
+                    name = str(val) + ' ' + str(key)
+                    device = {'id': a, 'type': val, 'name': name}
+                    self.devlist.append(device)
+                elif val is not None:
+                    try:
+                        device = {}
+                        device = json.loads(val)
+                        LOGGER.debug(f'json device before loads: {device}, type: {type(device)}')
+                        if "id" not in device:
+                            device["id"] = a
+                            LOGGER.debug(f'no id: inserting id: {a} into device: {device}')
+                        if device["id"] != a:
+                            device["id"] = a
+                            LOGGER.error(f"error id: {a} != deviceID: {device['id']} fixed device: {device}")
+                        self.devlist.append(device)
+                    except Exception as ex:
+                        LOGGER.error(f"JSON parse exception: {ex} for  key: {a} the value: {val} created exeption: {ex}" )
+                        return False
+            elif a == "devFile" or a == "devfile":
+                if val is not None:
+                    try:
+                        f = open(val)
+                    except Exception as ex:
+                        LOGGER.error(f"CheckParams: Failed to open {val}: {ex}")
+                        return False
+                    try:
+                        dev_yaml = yaml.safe_load(f.read())  # upload devfile into data
+                        f.close()
+                    except Exception as ex:
+                        LOGGER.error(f"checkParams: Failed to parse {val} content: {ex}")
+                        return False
+                    if "devices" not in dev_yaml:
+                        LOGGER.error(f"checkParams: Manual discovery file {val} is missing devices section")
+                        return False
+                    self.devlist.extend(dev_yaml["devices"])  # transfer devfile into devlist
+                    LOGGER.info(f'file: {val} with content: {dev_yaml} transferred into self.devlist')
                 else:
-                    pass
+                    LOGGER.error('checkParams: devFile missing filename')
+                    return False
             else:
-                pass
-        LOGGER.info('Check Params is complete')
+                LOGGER.error(f'unknown keyfield: {a}')
+                    
+        LOGGER.info('checkParams is complete')
+        LOGGER.info(f'checkParams: self.devlist: {self.devlist}')
         LOGGER.info('Pull Delay set to %s seconds, Parse Delay set to %s seconds', self.pullDelay, self.parseDelay)
+        self.valid_configuration = True
+        return True
 
         
     """
@@ -275,12 +313,56 @@ class Controller(udi_interface.Node):
         Do shade and scene discovery here. Called from controller start method
         and from DISCOVER command received from ISY
         """
+        self.checkParams()
+        self.discoverNodes()
+
+    def discoverNodes(self):
         if self.discovery:
             LOGGER.info('Discover already running.')
             return
 
         self.discovery = True
         LOGGER.info("In Discovery...")
+
+        nodes_new = []
+        for dev in self.devlist:
+            if ("id" not in dev or "type" not in dev):
+                LOGGER.error("Invalid device definition: {json.dumps(dev)}")
+                continue
+            type = str(dev["type"])
+            id = str(dev["id"])
+            if "name" in dev:
+                name = dev["name"]
+            else:
+                name = type + ' ' + id
+            if type == "switch":
+                if not self.poly.getNode(id):
+                    self.poly.addNode(VirtualSwitch(self.poly, self.address, id, name))
+                    self.wait_for_node_done()
+            elif type == 'temperature':
+                if not self.poly.getNode(id):
+                    self.poly.addNode(VirtualTemp(self.poly, self.address, id, name))
+                    self.wait_for_node_done()
+            elif type == 'temperaturec' or type == 'temperaturecr':
+                if not self.poly.getNode(id):
+                    self.poly.addNode(VirtualTempC(self.poly, self.address, id, name))
+                    self.wait_for_node_done()
+            elif type == 'generic' or type == 'dimmer':
+                if not self.poly.getNode(id):
+                    self.poly.addNode(VirtualGeneric(self.poly, self.address, id, name))
+                    self.wait_for_node_done()
+            else:
+                LOGGER.error(f"Device type {type} is not yet supported")
+                continue
+            nodes_new.append(id)
+
+        # routine to remove nodes which exist but are not in devlist
+        nodes = self.poly.getNodes()
+        nodes_get = {key: nodes[key] for key in nodes if key != self.id}
+        for node in nodes_get:
+            if (node not in nodes_new):
+                LOGGER.info(f"need to delete node {node}")
+                self.poly.delNode(node)
 
         self.discovery = False
         self.Notices.delete('hello')
