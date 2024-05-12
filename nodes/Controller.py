@@ -359,6 +359,8 @@ class Controller(udi_interface.Node):
         # routine to remove nodes which exist but are not in devlist
         nodes = self.poly.getNodes()
         nodes_get = {key: nodes[key] for key in nodes if key != self.id}
+        LOGGER.debug(f"nodes_new: {nodes_new}")
+        LOGGER.debug(f"nodes_get: {nodes_get}")
         for node in nodes_get:
             if (node not in nodes_new):
                 LOGGER.info(f"need to delete node {node}")
