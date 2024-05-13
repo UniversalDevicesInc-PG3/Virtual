@@ -2,11 +2,11 @@ devices:
 
 - id: 90
   type:  "switch"
-  name: "testSwitch 90"
+  name: "TestSwitch 90"
 - id: 91
   type:  "switch"
-  name: "testSwitch 91"
+  name: "TestSwitch 91"
 - id: 92
   type:  "dimmer"
-  name: "testDimmer 92"
+  name: "TestDimmer 92"
 

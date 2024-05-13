@@ -17,15 +17,18 @@ import sys
 
 LOGGER = udi_interface.LOGGER
 
-VERSION = '3.1.1'
+VERSION = '3.1.2'
 """
+3.1.2
+DONE: ISY name changes based on updates to config / YAML / JSON
+
+TODO: new device garage door (update to/from variables option)  
+
 3.1.1
 DONE: YAML file option for configuration  
 DONE: JSON option for web based configuration  
 DONE: Discover button to update based on config updates  
 
-TODO: updates to YAML / JSON based on ISY name changes  
-TODO: new device garage door (update to/from variables option)  
 
 3.1.0
 DONE: move version history out of README to own file

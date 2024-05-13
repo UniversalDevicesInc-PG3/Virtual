@@ -324,6 +324,14 @@ class Controller(udi_interface.Node):
         self.discovery = True
         LOGGER.info("In Discovery...")
 
+        nodes = self.poly.getNodes()
+        LOGGER.debug(f"current nodes = {nodes}")
+        nodes_old = []
+        for node in nodes:
+            LOGGER.debug(f"current node = {node}")
+            if node != self.id:
+                nodes_old.append(node)
+
         nodes_new = []
         for dev in self.devlist:
             if ("id" not in dev or "type" not in dev):
@@ -335,39 +343,56 @@ class Controller(udi_interface.Node):
                 name = dev["name"]
             else:
                 name = type + ' ' + id
+            nodeExists = self.poly.getNode(id)
             if type == "switch":
-                if not self.poly.getNode(id):
+                if not nodeExists:
                     self.poly.addNode(VirtualSwitch(self.poly, self.address, id, name))
                     self.wait_for_node_done()
+                else:
+                    if nodeExists.name != type + " " + id:
+                        nodeExists.rename(name)
             elif type == 'temperature':
                 if not self.poly.getNode(id):
                     self.poly.addNode(VirtualTemp(self.poly, self.address, id, name))
                     self.wait_for_node_done()
+                else:
+                    if nodeExists.name != type + " " + id:
+                        nodeExists.rename(name)
             elif type == 'temperaturec' or type == 'temperaturecr':
                 if not self.poly.getNode(id):
                     self.poly.addNode(VirtualTempC(self.poly, self.address, id, name))
                     self.wait_for_node_done()
+                else:
+                    if nodeExists.name != type + " " + id:
+                        nodeExists.rename(name)
             elif type == 'generic' or type == 'dimmer':
                 if not self.poly.getNode(id):
                     self.poly.addNode(VirtualGeneric(self.poly, self.address, id, name))
                     self.wait_for_node_done()
+                else:
+                    if nodeExists.name != type + " " + id:
+                        nodeExists.rename(name)
             else:
                 LOGGER.error(f"Device type {type} is not yet supported")
                 continue
             nodes_new.append(id)
 
-        # routine to remove nodes which exist but are not in devlist
+        # remove nodes which do not exist in gateway
+        nodes = self.poly.getNodesFromDb()
+        LOGGER.info(f"db nodes = {nodes}")
         nodes = self.poly.getNodes()
         nodes_get = {key: nodes[key] for key in nodes if key != self.id}
-        LOGGER.debug(f"nodes_new: {nodes_new}")
-        LOGGER.debug(f"nodes_get: {nodes_get}")
+        LOGGER.info(f"old nodes = {nodes_old}")
+        LOGGER.info(f"new nodes = {nodes_new}")
+        LOGGER.info(f"pre-delete nodes = {nodes_get}")
         for node in nodes_get:
             if (node not in nodes_new):
                 LOGGER.info(f"need to delete node {node}")
                 self.poly.delNode(node)
 
         self.discovery = False
-        self.Notices.delete('hello')
+        if nodes_get == nodes_new:
+            LOGGER.error('Discovery NO NEW activity')
         LOGGER.info('Discovery complete.')
 
     def delete(self):
