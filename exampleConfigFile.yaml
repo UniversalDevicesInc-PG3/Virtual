@@ -1,12 +1,28 @@
 devices:
 
-- id: 90
+- id: 10
   type:  "switch"
-  name: "TestSwitch 90"
-- id: 91
-  type:  "switch"
-  name: "TestSwitch 91"
-- id: 92
+  name: "TestSwitch"
+- id: 20
+  type:  "temperature"
+  name: "TestTemp"
+- id: 30
   type:  "dimmer"
   name: "TestDimmer 92"
+- id: 40
+  type:  "garage"
+  name:  "Ratgdo"
+  # below are optional
+  lightT: 1
+  lightId: 3
+  doorT: 1
+  doorId: 61
+  commandT: 1
+  commandId: 129
+  motionT: 1
+  motionId: 130
+  lockT: 1
+  lockId: 133
+  obstructT: 1
+  obstructId: 131
 

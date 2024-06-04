@@ -280,15 +280,16 @@ class Controller(udi_interface.Node):
     def poll(self, flag):
         # pause updates when in discovery
         if self.discovery == True:
-            return
-        if 'longPoll' in flag:
-            LOGGER.debug('longPoll (controller)')
+            LOGGER.info('Skipping poll while in Discovery')
         else:
-            LOGGER.debug('shortPoll (controller)')
-            for node in self.poly.nodes():
-                if node != self:
-                    node.getDataFromID()
-                time.sleep(float(self.pullDelay))
+            if 'longPoll' in flag:
+                LOGGER.debug('longPoll (controller)')
+                for node in self.poly.nodes():
+                    if node != self:
+                        node.getDataFromID()
+                    time.sleep(float(self.pullDelay))
+            else:
+                LOGGER.debug('shortPoll (controller)')
  
     def query(self, command = None):
         """
@@ -368,6 +369,13 @@ class Controller(udi_interface.Node):
             elif type == 'generic' or type == 'dimmer':
                 if not self.poly.getNode(id):
                     self.poly.addNode(VirtualGeneric(self.poly, self.address, id, name))
+                    self.wait_for_node_done()
+                else:
+                    if nodeExists.name != type + " " + id:
+                        nodeExists.rename(name)
+            elif type == 'garage':
+                if not self.poly.getNode(id):
+                    self.poly.addNode(VirtualGarage(self.poly, self.address, id, name))
                     self.wait_for_node_done()
                 else:
                     if nodeExists.name != type + " " + id:
