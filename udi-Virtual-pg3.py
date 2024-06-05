@@ -17,8 +17,11 @@ import sys
 
 LOGGER = udi_interface.LOGGER
 
-VERSION = '3.1.3'
+VERSION = '3.1.4'
 """
+3.1.4
+DONE docs updated for garage
+
 3.1.3
 DONE: new device 'garage' door (update to/from variables option)  
 

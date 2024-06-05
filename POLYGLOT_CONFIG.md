@@ -13,6 +13,7 @@ Required for variable write access
 - temperature     ... *Farenheit units*
 - temperaturec    ... *Celcius units*
 - temperaturecr   ... *raw no-units*
+- garage
 
 ## Example Configurations
 
@@ -70,3 +71,35 @@ Key (var ID)    Value (device type)
 ## Discovery
 
 - Discover button will add or remove nodes not in one of the configuration methods.
+
+## Variable pull / push
+
+- temperature devices have selection of variables available in the IoX node display
+- garage device have selection in the configuration (JSON or YAML)
+- note: **may add this feature to temperature devices if demand is there**
+
+- YAML example below from the exampleConfigFile.yaml in package directory
+
+````yaml
+devices:
+
+- id: 40
+  type:  "garage"
+  name:  "Ratgdo"
+  # below are optional & only individually used if defined
+  # each name refers to feature
+  # type {1: state var, 2:state init, 3:integer var, 4:integer init}
+  # Id number of variable
+  lightT: 1
+  lightId: 3
+  doorT: 1
+  doorId: 61
+  commandT: 1
+  commandId: 129
+  motionT: 1
+  motionId: 130
+  lockT: 1
+  lockId: 133
+  obstructT: 1
+  obstructId: 131
+````

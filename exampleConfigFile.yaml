@@ -12,7 +12,10 @@ devices:
 - id: 40
   type:  "garage"
   name:  "Ratgdo"
-  # below are optional
+  # below are optional & only individually used if defined
+  # each name refers to feature
+  # type {1: state var, 2:state init, 3:integer var, 4:integer init}
+  # Id number of variable
   lightT: 1
   lightId: 3
   doorT: 1
