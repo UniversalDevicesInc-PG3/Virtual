@@ -123,21 +123,22 @@ class VirtualTempC(udi_interface.Node):
             self.update()
 
     def createDBfile(self):
-        _name = str(self.name)
-        _name = _name.replace(" ","_")
-        _key = 'key' + str(self.address)
-        _check = _name + '.db'
-        LOGGER.debug('Checking to see if %s exists', _check)
-        if os.path.exists(_check):
-            LOGGER.debug('The file does exists')
-            self.retrieveValues()
-            pass
-        else:
-            LOGGER.info('Creating %s', _check)
-            s = shelve.open(_name, writeback=True)
-            s[_key] = { 'created': 'yes'}
-            time.sleep(2)
-            s.close()
+        try:
+            _name = str(self.name).replace(" ","_")
+            _key = 'key' + str(self.address)
+            _check = _name + '.db'
+            LOGGER.info(f'Checking to see existence of db file: {_check}')
+            if os.path.exists(_check):
+                LOGGER.info('...file exists')
+                self.retrieveValues()
+            else:
+                s = shelve.open(_name, writeback=True)
+                s[_key] = { 'created': 'yes'}
+                time.sleep(2)
+                s.close()
+                LOGGER.info("...file didn\'t exist, created successfully")
+        except Exception as ex:
+                LOGGER.error(f"createDBfile error: {ex}")
 
     def deleteDB(self, command):
         _name = str(self.name)

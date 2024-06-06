@@ -17,14 +17,36 @@ import sys
 
 LOGGER = udi_interface.LOGGER
 
-VERSION = '3.0.1'
+VERSION = '3.1.4'
 """
+3.1.4
+DONE docs updated for garage
+
+3.1.3
+DONE: new device 'garage' door (update to/from variables option)  
+
+3.1.2
+DONE: ISY name changes based on updates to config / YAML / JSON
+
+3.1.1
+DONE: YAML file option for configuration  
+DONE: JSON option for web based configuration  
+DONE: Discover button to update based on config updates  
+
+
+3.1.0
+DONE: move version history out of README to own file
+DONE: update docs  
+
 3.0.1
 DONE fix get value from variable
 
 3.0.0
 DONE add control ability to contact device
 DONE refactored to modern template
+
+previous updates:
+see versionHistory.md
 
 """
 

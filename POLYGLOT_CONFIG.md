@@ -1,31 +1,105 @@
 # Virtual Device Controller
 
-After updating always Update Profile from Controller Page and restart the Admin Console
+**NEED TO SELECT ISY ACCESS AND SAVE IN CONFIGURATION**  
+Required for variable write access
 
-Please enter the following to allow this nodeserver to access your ISY:
+**After updating you MAY need to restart your Admin Console**
 
-    Key             Value
-    isy              xxx.xxx.xxx.xxx:port
-    user             username
-    password         password
+## Device Types
 
-There are 3 kinds of virtual devices, switch, dimmer and temperature. You do not need to have a state variable for each entry.
+- switch
+- dimmer
+- generic
+- temperature     ... *Farenheit units*
+- temperaturec    ... *Celcius units*
+- temperaturecr   ... *raw no-units*
+- garage
 
-Temerature will be displayed as farenheit unless a 'c' is added.
+## Example Configurations
 
-Raw Celsius data converted with an extra step in a program.
-F to C and C to F conversions are available.
-In the TempC node convert Raw data before the F to C conversion
-if nessecary otherwise there will be no Raw conversion.
+Three options for configuration.  **They can be mixed & matched**
 
-    Key (var ID)    Value (device type)
-    78              switch
-    79              dimmer or generic
-    82              temperature     (will be displayed as farenheit)
-    85              temperaturec or temperaturecr
-                    (will be displayed as celsius)
-                    (the r can be used to note raw data if you prefer)
+### Standard Configuration
 
-Each Key must be unique, duplicate Keys will create ghost nodes.
+Key can be any positive **unique** integer,
+duplicate Keys will create ghost nodes
 
-Existing nodes are not effected by updates.
+````md
+Key (var ID)    Value (device type)
+  78              switch
+  79              dimmer
+  80              generic
+  82              temperature
+  85              temperaturec
+  100             temperaturecr
+````
+
+### JSON Configuration
+
+id is optional in the JSON string
+
+````md
+Key (var ID)    Value (device type)
+  78              {"id": "10", "type": "switch", "name": "switch 10"}
+  79              {"type": "dimmer", "name": "main dimmer"}
+  80              {"type": "generic", "name": "raw device"}
+  82              {"type": "temperature", "name": "lake temperature"}
+  85              {"id": "85", "type": "temperaturec", "name": "garden temp"}
+  100             {"type": "temperaturecr", "name": "raw temp"}
+````
+
+### YAML Configuration
+
+File name without path is within the node directory.
+Careful as this file will be deleted with node.
+Better to use path and store within admin home directory.
+Make sure file permissions are available to node.
+
+````md
+Key (var ID)    Value (device type)
+  devFile         exampleConfigFile.yaml
+  devFile         /home/admin/virtualdevice.yaml
+````
+
+## Conversions Available
+
+- Raw Celsius data
+- F to C  (TempC node convert Raw data before F to C)  
+- C to F  
+- Single precision conversion from Raw
+
+## Discovery
+
+- Discover button will add or remove nodes not in one of the configuration methods.
+
+## Variable pull / push
+
+- temperature devices have selection of variables available in the IoX node display
+- garage device have selection in the configuration (JSON or YAML)
+- note: **may add this feature to temperature devices if demand is there**
+
+- YAML example below from the exampleConfigFile.yaml in package directory
+
+````yaml
+devices:
+
+- id: 40
+  type:  "garage"
+  name:  "Ratgdo"
+  # below are optional & only individually used if defined
+  # each name refers to feature
+  # type {1: state var, 2:state init, 3:integer var, 4:integer init}
+  # Id number of variable
+  lightT: 1
+  lightId: 3
+  doorT: 1
+  doorId: 61
+  commandT: 1
+  commandId: 129
+  motionT: 1
+  motionId: 130
+  lockT: 1
+  lockId: 133
+  obstructT: 1
+  obstructId: 131
+````

@@ -16,6 +16,7 @@
           </sends>
           <accepts>
             <cmd id="QUERY" />
+            <cmd id="DISCOVER" />
           </accepts>
         </cmds>
     </nodeDef>
@@ -162,5 +163,43 @@
           </cmd>
         </accepts>
       </cmds>
+    </nodeDef>
+        <!-- virtualgarageid -->
+    <nodeDef id="virtualgarage" nls="GARAGE">
+        <editors />
+        <sts>
+          <st id="GV0" editor="GLIGHT" />
+          <st id="GV1" editor="GDOOR" />
+          <st id="GV2" editor="GCOMMAND" />
+          <st id="GV3" editor="GMOTION" />
+          <st id="GV4" editor="GLOCK" />
+          <st id="GV5" editor="GOBST" />  
+          <st id="GV6" editor="minutes" />
+          <st id="GV7" editor="seconds" />
+        </sts>
+        <cmds>
+          <sends>
+            <cmd id="LT_ON" />
+            <cmd id="LT_OFF" />
+            <cmd id="OPEN" />
+            <cmd id="CLOSE" />
+            <cmd id="TRIGGER" />
+            <cmd id="STOP" />
+            <cmd id="LOCK" />
+            <cmd id="UNLOCK" />
+            <cmd id="resetStats" />
+          </sends>
+          <accepts>
+            <cmd id="LT_ON" />
+            <cmd id="LT_OFF" />
+            <cmd id="OPEN" />
+            <cmd id="CLOSE" />
+            <cmd id="TRIGGER" />
+            <cmd id="STOP" />
+            <cmd id="LOCK" />
+            <cmd id="UNLOCK" />
+            <cmd id="resetStats" />
+          </accepts>
+        </cmds>
     </nodeDef>
 </nodeDefs>

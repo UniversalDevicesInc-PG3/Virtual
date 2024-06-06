@@ -26,7 +26,11 @@
     </editor>
     
     <editor id="minutes">
-        <range uom="45" min="0" max="1440" prec="2" step=".5"/>
+        <range uom="45" min="0" max="9999" prec="2" step=".5"/>
+    </editor>
+    
+    <editor id="seconds">
+        <range uom="58" min="0" max="9999" prec="0" step="1"/>
     </editor>
     
     <editor id="level">
@@ -41,5 +45,23 @@
         <range uom="4" min="-60" max="130" step="1" prec="1"/>
     </editor>
 
+    <editor id="GLIGHT">
+        <range uom="2" subset="0,1" nls="GLIGHT" />
+    </editor>
+    <editor id="GDOOR">
+        <range uom="25" subset="0,1,2,3,4" nls="GDOOR" />
+    </editor>
+    <editor id="GCOMMAND">
+        <range uom="25" subset="0,1,2,3,4" nls="GCOMMAND" />
+    </editor>
+    <editor id="GMOTION">
+        <range uom="2" subset="0,1" nls="GMOTION" />
+    </editor>
+    <editor id="GLOCK">
+        <range uom="2" subset="0,1" nls="GLOCK" />
+    </editor>
+    <editor id="GOBST">
+        <range uom="2" subset="0,1" nls="GOBST" />
+    </editor>
 
 </editors>

@@ -1,0 +1,31 @@
+devices:
+
+- id: 10
+  type:  "switch"
+  name: "TestSwitch"
+- id: 20
+  type:  "temperature"
+  name: "TestTemp"
+- id: 30
+  type:  "dimmer"
+  name: "TestDimmer 92"
+- id: 40
+  type:  "garage"
+  name:  "Ratgdo"
+  # below are optional & only individually used if defined
+  # each name refers to feature
+  # type {1: state var, 2:state init, 3:integer var, 4:integer init}
+  # Id number of variable
+  lightT: 1
+  lightId: 3
+  doorT: 1
+  doorId: 61
+  commandT: 1
+  commandId: 129
+  motionT: 1
+  motionId: 130
+  lockT: 1
+  lockId: 133
+  obstructT: 1
+  obstructId: 131
+
