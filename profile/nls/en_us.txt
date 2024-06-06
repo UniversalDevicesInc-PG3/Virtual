@@ -3,7 +3,7 @@
 ND-controller-NAME = Virtual Device Controller
 ND-controller-ICON = Switch
 CMD-ctl-QUERY"-NAME = Query
-CMD-ctl-DISCOVER-NAME = Re-Discover
+CMD-ctl-DISCOVER-NAME = Discover
 CMD-ctl-UPDATE_PROFILE-NAME = Update Profile
 CMD-ctl-REMOVE_NOTICES_ALL-NAME = Remove All Notices
 CMD-ctl-REMOVE_NOTICE_TEST-NAME = Remove Notice Test
@@ -95,4 +95,55 @@ TYPE-1 = State Var
 TYPE-2 = State Init
 TYPE-3 = Integer Var
 TYPE-4 = Integer Init
+
+# garage
+ND-virtualgarage-NAME = MQTT Ratgdo
+ND-virtualgarage-ICON = GenericRspCtl
+
+CMD-GARAGE-LT_ON-NAME = On
+CMD-GARAGE-LT_OFF-NAME = Off
+
+CMD-GARAGE-OPEN-NAME = Open
+CMD-GARAGE-CLOSE-NAME = Close
+CMD-GARAGE-TRIGGER-NAME = Trigger
+CMD-GARAGE-STOP-NAME = Stop
+
+CMD-GARAGE-LOCK-NAME = Lock
+CMD-GARAGE-UNLOCK-NAME = Unlock
+
+CMD-GARAGE-resetStats-NAME = ResetStats
+
+ST-GARAGE-GV0-NAME = Light
+ST-GARAGE-GV1-NAME = Door
+ST-GARAGE-GV2-NAME = Command
+ST-GARAGE-GV3-NAME = Motion
+ST-GARAGE-GV4-NAME = Lock
+ST-GARAGE-GV5-NAME = Obstruction
+ST-GARAGE-GV6-NAME = UpdateTime
+ST-GARAGE-GV7-NAME = OpenTime
+
+GLIGHT-0 = Off
+GLIGHT-1 = On
+GLIGHT-100 = On
+
+GDOOR-0 = Closed
+GDOOR-1 = Open
+GDOOR-2 = Opening
+GDOOR-3 = Stopped
+GDOOR-4 = Closing
+
+GCOMMAND-0 = ---
+GCOMMAND-1 = Open
+GCOMMAND-2 = Close
+GCOMMAND-3 = Trigger
+GCOMMAND-4 = Stop
+
+GMOTION-0 = Clear
+GMOTION-1 = Detected
+
+GOBST-0 = Clear
+GOBST-1 = Obstructed
+
+GLOCK-0 = Unlocked
+GLOCK-1 = Locked
 

@@ -1,0 +1,11 @@
+*.cert
+*.key
+*.pid
+/logs/
+*.db
+.python-version
+__pycache__/
+*.~1~
+*.~2~
+*.~3~
+*.~4~

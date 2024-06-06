@@ -7,152 +7,199 @@
         <editors />
         <sts>
             <st id="ST" editor="bool" />
-            </sts>
+        </sts>
         <cmds>
-            <sends />
-            <accepts>
-              <cmd id="QUERY" />
-            </accepts>
+          <sends>
+            <!-- These are for our heartbeat -->
+            <cmd id="DON" />
+            <cmd id="DOF" />
+          </sends>
+          <accepts>
+            <cmd id="QUERY" />
+            <cmd id="DISCOVER" />
+          </accepts>
         </cmds>
     </nodeDef>
         <!-- virtualswitchid -->
     <nodeDef id="virtualswitch" nls="vswitch">
         <editors />
         <sts>
-            <st id="ST" editor="on_off" />
+          <st id="ST" editor="on_off" />
         </sts>
         <cmds>
-            <sends />
-            <accepts>
-                <cmd id="DON" />
-                <cmd id="DOF" />
-            </accepts>
+          <sends>
+            <cmd id="DON" />
+            <cmd id="DOF" />
+          </sends>
+          <accepts>
+            <cmd id="DON" />
+            <cmd id="DOF" />
+          </accepts>
         </cmds>
     </nodeDef>
         <!-- virtualtempid -->
     <nodeDef id="virtualtemp" nls="vtemp">
         <editors />
         <sts>
-            <st id="ST" editor="temp" />
-            <st id="GV1" editor="temp" />
-            <st id="GV2" editor="minutes" />
-            <st id="GV3" editor="temp" />
-            <st id="GV4" editor="temp" />  
-            <st id="GV5" editor="temp" />
-            <st id="GV6" editor="action_type" />
-            <st id="GV7" editor="variable_type" />
-            <st id="GV8" editor="variableID" />
-            <st id="GV9" editor="action_type" />  
-            <st id="GV10" editor="variable_type" />
-            <st id="GV11" editor="variableID" />
-            <st id="GV12" editor="on_off" />  
-            <st id="GV13" editor="on_off" />
+          <st id="ST" editor="temp" />
+          <st id="GV1" editor="temp" />
+          <st id="GV2" editor="minutes" />
+          <st id="GV3" editor="temp" />
+          <st id="GV4" editor="temp" />  
+          <st id="GV5" editor="temp" />
+          <st id="GV6" editor="action_type" />
+          <st id="GV7" editor="variable_type" />
+          <st id="GV8" editor="variableID" />
+          <st id="GV9" editor="action_type" />  
+          <st id="GV10" editor="variable_type" />
+          <st id="GV11" editor="variableID" />
+          <st id="GV12" editor="on_off" />  
+          <st id="GV13" editor="on_off" />
         </sts>
         <cmds>
-            <sends />
-            <accepts>
-                <cmd id="resetStats" />
-                <cmd id="deleteDB" />
-                <cmd id="setTemp">
-                  <p id="" editor="temp" init="ST" />
-                </cmd>
-                <cmd id="setAction1">
-                  <p id="" editor="action_type" init="GV6" />
-                </cmd>
-                <cmd id="setAction1type">
-                  <p id="" editor="variable_type" init="GV7" />
-                </cmd>
-                <cmd id="setAction1id">
-                  <p id="" editor="variableID" init="GV8" />
-                </cmd> 
-                <cmd id="setAction2">
-                  <p id="" editor="action_type" init="GV9" />
-                </cmd>
-                <cmd id="setAction2type">
-                  <p id="" editor="variable_type" init="GV10" />
-                </cmd>
-                <cmd id="setAction2id">
-                  <p id="" editor="variableID" init="GV11" />
-                </cmd>
-                <cmd id="setRawToPrec">
-                  <p id="" editor="on_off" init="GV12"/>
-                </cmd>                
-                <cmd id="setCtoF">
-                  <p id="" editor="on_off" init="GV13"/>
-                </cmd>                
-            </accepts>       </cmds>
+          <sends />
+          <accepts>
+            <cmd id="resetStats" />
+            <cmd id="deleteDB" />
+            <cmd id="setTemp">
+              <p id="" editor="temp" init="ST" />
+            </cmd>
+            <cmd id="setAction1">
+              <p id="" editor="action_type" init="GV6" />
+            </cmd>
+            <cmd id="setAction1type">
+              <p id="" editor="variable_type" init="GV7" />
+            </cmd>
+            <cmd id="setAction1id">
+              <p id="" editor="variableID" init="GV8" />
+            </cmd> 
+            <cmd id="setAction2">
+              <p id="" editor="action_type" init="GV9" />
+            </cmd>
+            <cmd id="setAction2type">
+              <p id="" editor="variable_type" init="GV10" />
+            </cmd>
+            <cmd id="setAction2id">
+              <p id="" editor="variableID" init="GV11" />
+            </cmd>
+            <cmd id="setRawToPrec">
+              <p id="" editor="on_off" init="GV12"/>
+            </cmd>                
+            <cmd id="setCtoF">
+              <p id="" editor="on_off" init="GV13"/>
+            </cmd>                
+          </accepts>
+        </cmds>
     </nodeDef>
-            <!-- virtualtempcid -->
+    <!-- virtualtempcid -->
     <nodeDef id="virtualtempc" nls="vtempc">
-        <editors />
-        <sts>
-            <st id="ST" editor="tempc" />
-            <st id="GV1" editor="tempc" />
-            <st id="GV2" editor="minutes" />
-            <st id="GV3" editor="tempc" />
-            <st id="GV4" editor="tempc" />
-            <st id="GV5" editor="tempc" />
-            <st id="GV6" editor="action_type" />
-            <st id="GV7" editor="variable_type" />
-            <st id="GV8" editor="variableID" />
-            <st id="GV9" editor="action_type" />  
-            <st id="GV10" editor="variable_type" />
-            <st id="GV11" editor="variableID" />
-            <st id="GV12" editor="on_off" />  
-            <st id="GV13" editor="on_off" />
-        </sts>
-        <cmds>
-            <sends />
-            <accepts>
-                <cmd id="resetStats" />
-                <cmd id="deleteDB" />
-                <cmd id="setTemp">
-                  <p id="" editor="tempc" init="ST" />
-                </cmd>
-                <cmd id="setAction1">
-                  <p id="" editor="action_type" init="GV6" />
-                </cmd>
-                <cmd id="setAction1type">
-                  <p id="" editor="variable_type" init="GV7" />
-                </cmd>
-                <cmd id="setAction1id">
-                  <p id="" editor="variableID" init="GV8" />
-                </cmd> 
-                <cmd id="setAction2">
-                  <p id="" editor="action_type" init="GV9" />
-                </cmd>
-                <cmd id="setAction2type">
-                  <p id="" editor="variable_type" init="GV10" />
-                </cmd>
-                <cmd id="setAction2id">
-                  <p id="" editor="variableID" init="GV11" />
-                </cmd>
-                <cmd id="setRawToPrec">
-                  <p id="" editor="on_off" init="GV12"/>
-                </cmd>                
-                <cmd id="setFtoC">
-                  <p id="" editor="on_off" init="GV13"/>
-                </cmd>                
-            </accepts>
+      <editors />
+      <sts>
+        <st id="ST" editor="tempc" />
+        <st id="GV1" editor="tempc" />
+        <st id="GV2" editor="minutes" />
+        <st id="GV3" editor="tempc" />
+        <st id="GV4" editor="tempc" />
+        <st id="GV5" editor="tempc" />
+        <st id="GV6" editor="action_type" />
+        <st id="GV7" editor="variable_type" />
+        <st id="GV8" editor="variableID" />
+        <st id="GV9" editor="action_type" />  
+        <st id="GV10" editor="variable_type" />
+        <st id="GV11" editor="variableID" />
+        <st id="GV12" editor="on_off" />  
+        <st id="GV13" editor="on_off" />
+      </sts>
+      <cmds>
+        <sends />
+        <accepts>
+          <cmd id="resetStats" />
+          <cmd id="deleteDB" />
+          <cmd id="setTemp">
+            <p id="" editor="tempc" init="ST" />
+          </cmd>
+          <cmd id="setAction1">
+            <p id="" editor="action_type" init="GV6" />
+          </cmd>
+          <cmd id="setAction1type">
+            <p id="" editor="variable_type" init="GV7" />
+          </cmd>
+          <cmd id="setAction1id">
+            <p id="" editor="variableID" init="GV8" />
+          </cmd> 
+          <cmd id="setAction2">
+            <p id="" editor="action_type" init="GV9" />
+          </cmd>
+          <cmd id="setAction2type">
+            <p id="" editor="variable_type" init="GV10" />
+          </cmd>
+          <cmd id="setAction2id">
+            <p id="" editor="variableID" init="GV11" />
+          </cmd>
+          <cmd id="setRawToPrec">
+            <p id="" editor="on_off" init="GV12"/>
+          </cmd>                
+          <cmd id="setFtoC">
+            <p id="" editor="on_off" init="GV13"/>
+          </cmd>                
+        </accepts>
         </cmds>
     </nodeDef>
         <!-- virtualgenericid -->
     <nodeDef id="virtualgeneric" nls="vgeneric">
+      <editors />
+      <sts>
+        <st id="ST" editor="value" />
+      </sts>
+      <cmds>
+        <sends />
+        <accepts>
+          <cmd id="DON" />
+          <cmd id="DOF" />
+          <cmd id="BRT" />
+          <cmd id="DIM" />
+          <cmd id="setDim">
+            <p id="" editor="value" init="ST" />
+          </cmd>
+        </accepts>
+      </cmds>
+    </nodeDef>
+        <!-- virtualgarageid -->
+    <nodeDef id="virtualgarage" nls="GARAGE">
         <editors />
         <sts>
-            <st id="ST" editor="value" />
+          <st id="GV0" editor="GLIGHT" />
+          <st id="GV1" editor="GDOOR" />
+          <st id="GV2" editor="GCOMMAND" />
+          <st id="GV3" editor="GMOTION" />
+          <st id="GV4" editor="GLOCK" />
+          <st id="GV5" editor="GOBST" />  
+          <st id="GV6" editor="minutes" />
+          <st id="GV7" editor="seconds" />
         </sts>
         <cmds>
-            <sends />
-            <accepts>
-                <cmd id="DON" />
-                <cmd id="DOF" />
-                <cmd id="BRT" />
-                <cmd id="DIM" />
-                <cmd id="setDim">
-                  <p id="" editor="value" init="ST" />
-                    </cmd>
-            </accepts>
+          <sends>
+            <cmd id="LT_ON" />
+            <cmd id="LT_OFF" />
+            <cmd id="OPEN" />
+            <cmd id="CLOSE" />
+            <cmd id="TRIGGER" />
+            <cmd id="STOP" />
+            <cmd id="LOCK" />
+            <cmd id="UNLOCK" />
+            <cmd id="resetStats" />
+          </sends>
+          <accepts>
+            <cmd id="LT_ON" />
+            <cmd id="LT_OFF" />
+            <cmd id="OPEN" />
+            <cmd id="CLOSE" />
+            <cmd id="TRIGGER" />
+            <cmd id="STOP" />
+            <cmd id="LOCK" />
+            <cmd id="UNLOCK" />
+            <cmd id="resetStats" />
+          </accepts>
         </cmds>
     </nodeDef>
 </nodeDefs>
