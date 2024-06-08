@@ -38,7 +38,7 @@ Key (var ID)    Value (device type)
 
 id is optional in the JSON string
 
-````md
+```md
 Key (var ID)    Value (device type)
   78              {"id": "10", "type": "switch", "name": "switch 10"}
   79              {"type": "dimmer", "name": "main dimmer"}
@@ -46,7 +46,7 @@ Key (var ID)    Value (device type)
   82              {"type": "temperature", "name": "lake temperature"}
   85              {"id": "85", "type": "temperaturec", "name": "garden temp"}
   100             {"type": "temperaturecr", "name": "raw temp"}
-````
+```
 
 ### YAML Configuration
 
@@ -55,11 +55,11 @@ Careful as this file will be deleted with node.
 Better to use path and store within admin home directory.
 Make sure file permissions are available to node.
 
-````md
+```md
 Key (var ID)    Value (device type)
   devFile         exampleConfigFile.yaml
   devFile         /home/admin/virtualdevice.yaml
-````
+```
 
 ## Conversions Available
 
@@ -80,7 +80,7 @@ Key (var ID)    Value (device type)
 
 - YAML example below from the exampleConfigFile.yaml in package directory
 
-````yaml
+```yaml
 devices:
 
 - id: 40
@@ -102,4 +102,4 @@ devices:
   lockId: 133
   obstructT: 1
   obstructId: 131
-````
+```

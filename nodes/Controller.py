@@ -13,6 +13,7 @@ import yaml
 
 # external libraries
 import udi_interface
+import markdown2
 
 # personal libraries
 from nodes import *
@@ -131,7 +132,7 @@ class Controller(udi_interface.Node):
             with open("POLYGLOT_CONFIG.html", 'r') as f:
                 docFile = f.read()
         except:
-            docFile = None
+            docFile = markdown2.markdown_path("POLYGLOT_CONFIG.md", extras=["fenced-code-blocks"])
 
         self.poly.setCustomParamsDoc(docFile)
 
