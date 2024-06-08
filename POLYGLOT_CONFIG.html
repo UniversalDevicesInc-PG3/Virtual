@@ -1,0 +1,111 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+	"http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+
+<head>
+<title>POLYGLOT_CONFIG.html</title>
+<meta http-equiv="Content-Type" content="text/html;charset=utf-8"/>
+
+</head>
+
+<body>
+
+<h1 id="virtual-device-controller">Virtual Device Controller</h1>
+<p><strong>NEED TO SELECT ISY ACCESS AND SAVE IN
+CONFIGURATION</strong><br />
+Required for variable write access</p>
+<p><strong>After updating you MAY need to restart your Admin
+Console</strong></p>
+<h2 id="device-types">Device Types</h2>
+<ul>
+<li>switch</li>
+<li>dimmer</li>
+<li>generic</li>
+<li>temperature … <em>Farenheit units</em></li>
+<li>temperaturec … <em>Celcius units</em></li>
+<li>temperaturecr … <em>raw no-units</em></li>
+<li>garage</li>
+</ul>
+<h2 id="example-configurations">Example Configurations</h2>
+<p>Three options for configuration. <strong>They can be mixed &amp;
+matched</strong></p>
+<h3 id="standard-configuration">Standard Configuration</h3>
+<p>Key can be any positive <strong>unique</strong> integer, duplicate
+Keys will create ghost nodes</p>
+<!-- -->
+<div class="sourceCode" id="cb1"><pre class="sourceCode md"><code class="sourceCode markdown"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a>Key (var ID)    Value (device type)</span>
+<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a>  78              switch</span>
+<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a>  79              dimmer</span>
+<span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a>  80              generic</span>
+<span id="cb1-5"><a href="#cb1-5" aria-hidden="true" tabindex="-1"></a>  82              temperature</span>
+<span id="cb1-6"><a href="#cb1-6" aria-hidden="true" tabindex="-1"></a>  85              temperaturec</span>
+<span id="cb1-7"><a href="#cb1-7" aria-hidden="true" tabindex="-1"></a>  100             temperaturecr</span></code></pre></div>
+<h3 id="json-configuration">JSON Configuration</h3>
+<p>id is optional in the JSON string</p>
+<div class="sourceCode" id="cb2"><pre class="sourceCode md"><code class="sourceCode markdown"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a>Key (var ID)    Value (device type)</span>
+<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a>  78              {&quot;id&quot;: &quot;10&quot;, &quot;type&quot;: &quot;switch&quot;, &quot;name&quot;: &quot;switch 10&quot;}</span>
+<span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a>  79              {&quot;type&quot;: &quot;dimmer&quot;, &quot;name&quot;: &quot;main dimmer&quot;}</span>
+<span id="cb2-4"><a href="#cb2-4" aria-hidden="true" tabindex="-1"></a>  80              {&quot;type&quot;: &quot;generic&quot;, &quot;name&quot;: &quot;raw device&quot;}</span>
+<span id="cb2-5"><a href="#cb2-5" aria-hidden="true" tabindex="-1"></a>  82              {&quot;type&quot;: &quot;temperature&quot;, &quot;name&quot;: &quot;lake temperature&quot;}</span>
+<span id="cb2-6"><a href="#cb2-6" aria-hidden="true" tabindex="-1"></a>  85              {&quot;id&quot;: &quot;85&quot;, &quot;type&quot;: &quot;temperaturec&quot;, &quot;name&quot;: &quot;garden temp&quot;}</span>
+<span id="cb2-7"><a href="#cb2-7" aria-hidden="true" tabindex="-1"></a>  100             {&quot;type&quot;: &quot;temperaturecr&quot;, &quot;name&quot;: &quot;raw temp&quot;}</span></code></pre></div>
+<h3 id="yaml-configuration">YAML Configuration</h3>
+<p>File name without path is within the node directory. Careful as this
+file will be deleted with node. Better to use path and store within
+admin home directory. Make sure file permissions are available to
+node.</p>
+<div class="sourceCode" id="cb3"><pre class="sourceCode md"><code class="sourceCode markdown"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a>Key (var ID)    Value (device type)</span>
+<span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a>  devFile         exampleConfigFile.yaml</span>
+<span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a>  devFile         /home/admin/virtualdevice.yaml</span></code></pre></div>
+<h2 id="conversions-available">Conversions Available</h2>
+<ul>
+<li>Raw Celsius data</li>
+<li>F to C (TempC node convert Raw data before F to C)<br />
+</li>
+<li>C to F<br />
+</li>
+<li>Single precision conversion from Raw</li>
+</ul>
+<h2 id="discovery">Discovery</h2>
+<ul>
+<li>Discover button will add or remove nodes not in one of the
+configuration methods.</li>
+</ul>
+<h2 id="variable-pull-push">Variable pull / push</h2>
+<ul>
+<li><p>temperature devices have selection of variables available in the
+IoX node display</p></li>
+<li><p>garage device have selection in the configuration (JSON or
+YAML)</p></li>
+<li><p>note: <strong>may add this feature to temperature devices if
+demand is there</strong></p></li>
+<li><p>YAML example below from the exampleConfigFile.yaml in package
+directory</p></li>
+</ul>
+<div class="sourceCode" id="cb4"><pre
+class="sourceCode yaml"><code class="sourceCode yaml"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a><span class="fu">devices</span><span class="kw">:</span></span>
+<span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-3"><a href="#cb4-3" aria-hidden="true" tabindex="-1"></a><span class="kw">-</span><span class="at"> </span><span class="fu">id</span><span class="kw">:</span><span class="at"> </span><span class="dv">40</span></span>
+<span id="cb4-4"><a href="#cb4-4" aria-hidden="true" tabindex="-1"></a><span class="at">  </span><span class="fu">type</span><span class="kw">:</span><span class="at">  </span><span class="st">&quot;garage&quot;</span></span>
+<span id="cb4-5"><a href="#cb4-5" aria-hidden="true" tabindex="-1"></a><span class="at">  </span><span class="fu">name</span><span class="kw">:</span><span class="at">  </span><span class="st">&quot;Ratgdo&quot;</span></span>
+<span id="cb4-6"><a href="#cb4-6" aria-hidden="true" tabindex="-1"></a><span class="co">  # below are optional &amp; only individually used if defined</span></span>
+<span id="cb4-7"><a href="#cb4-7" aria-hidden="true" tabindex="-1"></a><span class="co">  # each name refers to feature</span></span>
+<span id="cb4-8"><a href="#cb4-8" aria-hidden="true" tabindex="-1"></a><span class="co">  # type {1: state var, 2:state init, 3:integer var, 4:integer init}</span></span>
+<span id="cb4-9"><a href="#cb4-9" aria-hidden="true" tabindex="-1"></a><span class="co">  # Id number of variable</span></span>
+<span id="cb4-10"><a href="#cb4-10" aria-hidden="true" tabindex="-1"></a><span class="at">  </span><span class="fu">lightT</span><span class="kw">:</span><span class="at"> </span><span class="dv">1</span></span>
+<span id="cb4-11"><a href="#cb4-11" aria-hidden="true" tabindex="-1"></a><span class="at">  </span><span class="fu">lightId</span><span class="kw">:</span><span class="at"> </span><span class="dv">3</span></span>
+<span id="cb4-12"><a href="#cb4-12" aria-hidden="true" tabindex="-1"></a><span class="at">  </span><span class="fu">doorT</span><span class="kw">:</span><span class="at"> </span><span class="dv">1</span></span>
+<span id="cb4-13"><a href="#cb4-13" aria-hidden="true" tabindex="-1"></a><span class="at">  </span><span class="fu">doorId</span><span class="kw">:</span><span class="at"> </span><span class="dv">61</span></span>
+<span id="cb4-14"><a href="#cb4-14" aria-hidden="true" tabindex="-1"></a><span class="at">  </span><span class="fu">commandT</span><span class="kw">:</span><span class="at"> </span><span class="dv">1</span></span>
+<span id="cb4-15"><a href="#cb4-15" aria-hidden="true" tabindex="-1"></a><span class="at">  </span><span class="fu">commandId</span><span class="kw">:</span><span class="at"> </span><span class="dv">129</span></span>
+<span id="cb4-16"><a href="#cb4-16" aria-hidden="true" tabindex="-1"></a><span class="at">  </span><span class="fu">motionT</span><span class="kw">:</span><span class="at"> </span><span class="dv">1</span></span>
+<span id="cb4-17"><a href="#cb4-17" aria-hidden="true" tabindex="-1"></a><span class="at">  </span><span class="fu">motionId</span><span class="kw">:</span><span class="at"> </span><span class="dv">130</span></span>
+<span id="cb4-18"><a href="#cb4-18" aria-hidden="true" tabindex="-1"></a><span class="at">  </span><span class="fu">lockT</span><span class="kw">:</span><span class="at"> </span><span class="dv">1</span></span>
+<span id="cb4-19"><a href="#cb4-19" aria-hidden="true" tabindex="-1"></a><span class="at">  </span><span class="fu">lockId</span><span class="kw">:</span><span class="at"> </span><span class="dv">133</span></span>
+<span id="cb4-20"><a href="#cb4-20" aria-hidden="true" tabindex="-1"></a><span class="at">  </span><span class="fu">obstructT</span><span class="kw">:</span><span class="at"> </span><span class="dv">1</span></span>
+<span id="cb4-21"><a href="#cb4-21" aria-hidden="true" tabindex="-1"></a><span class="at">  </span><span class="fu">obstructId</span><span class="kw">:</span><span class="at"> </span><span class="dv">131</span></span></code></pre></div>
+
+</body>
+</html>
