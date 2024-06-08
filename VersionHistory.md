@@ -2,6 +2,12 @@
 
 ## see udi-Virtual-pg3.py for current work
 
+3.1.5
+      repair docs due to markdown2 issue
+
+3.1.4
+      docs updated for garage
+
 3.1.3 new device 'garage' door (update to/from variables option)  
 
 3.1.2 ISY name changes based on updates to config / YAML / JSON

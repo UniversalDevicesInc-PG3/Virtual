@@ -17,8 +17,11 @@ import sys
 
 LOGGER = udi_interface.LOGGER
 
-VERSION = '3.1.4'
+VERSION = '3.1.5'
 """
+3.1.5
+FIX repair docs due to markdown2 issue
+
 3.1.4
 DONE docs updated for garage
 
