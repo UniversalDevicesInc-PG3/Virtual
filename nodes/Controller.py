@@ -128,6 +128,7 @@ class Controller(udi_interface.Node):
 
         # Send the default custom parameters documentation file to Polyglot
         # for display in the dashboard.
+<<<<<<< HEAD
         try:
             with open("POLYGLOT_CONFIG.html", 'r') as f:
                 docFile = f.read()
@@ -135,6 +136,17 @@ class Controller(udi_interface.Node):
             docFile = markdown2.markdown_path("POLYGLOT_CONFIG.md", extras=["fenced-code-blocks"])
 
         self.poly.setCustomParamsDoc(docFile)
+||||||| 8b5b21b
+        try:
+            with open("POLYGLOT_CONFIG.html", 'r') as f:
+                docFile = f.read()
+        except:
+            docFile = None
+
+        self.poly.setCustomParamsDoc(docFile)
+=======
+        self.poly.setCustomParamsDoc()
+>>>>>>> v3.1.x
 
         # Initializing a heartbeat is an example of something you'd want
         # to do during start.  Note that it is not required to have a
