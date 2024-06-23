@@ -17,8 +17,12 @@ import sys
 
 LOGGER = udi_interface.LOGGER
 
-VERSION = '3.1.6'
+VERSION = '3.1.7'
 """
+3.1.7
+Small refactors
+redo environment
+
 3.1.6
 FIX better solution to markdown2 issue
 
