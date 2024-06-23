@@ -13,10 +13,13 @@ import yaml
 
 # external libraries
 import udi_interface
-import markdown2
 
 # personal libraries
-from nodes import *
+from nodes import VirtualSwitch
+from nodes import VirtualTemp
+from nodes import VirtualTempC
+from nodes import VirtualGeneric
+from nodes import VirtualGarage
 
 """
 Some shortcuts for udi interface components
@@ -140,7 +143,7 @@ class Controller(udi_interface.Node):
             self.Notices['waiting'] = 'Waiting on valid configuration'
             time.sleep(5)
 
-        while self.parmDone !=True:
+        while not self.parmDone:
             LOGGER.info("Start: Waiting on first Discovery Completion")
             time.sleep(1)
 
@@ -280,7 +283,7 @@ class Controller(udi_interface.Node):
     """
     def poll(self, flag):
         # pause updates when in discovery
-        if self.discovery == True:
+        if self.discovery:
             LOGGER.info('Skipping poll while in Discovery')
         else:
             if 'longPoll' in flag:

@@ -1,0 +1,14 @@
+[[source]]
+url = "https://pypi.org/simple"
+verify_ssl = true
+name = "pypi"
+
+[packages]
+udi-interface = "*"
+markdown2 = "*"
+pyaml = "*"
+
+[dev-packages]
+
+[requires]
+python_version = "3.11.9"
