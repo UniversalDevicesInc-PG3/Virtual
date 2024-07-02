@@ -8,8 +8,7 @@ VirtualGarage class
 # system imports
 import os
 import time
-
-
+import requests
 import shelve
 import os.path
 import subprocess
@@ -21,6 +20,7 @@ import udi_interface
 LOGGER = udi_interface.LOGGER
 ISY = udi_interface.ISY
 
+# var constants
 TYPELIST = ['/set/2/',  #1
             '/init/2/', #2
             '/set/1/',  #3
@@ -33,6 +33,26 @@ GETLIST = [' ',
            '/1/',
            '/1/'
           ]
+
+# ratdgo constants
+BUTTON = "/binary_sensor/button"
+LIGHT = "/light/light"
+DOOR = "/cover/door"
+LOCK_REMOTES = "/lock/lock_remotes"
+MOTION = "/binary_sensor/motion"
+MOTOR = "/binary_sensor/motor"
+OBSTRUCTION = "/binary_sensor/obstruction"
+
+LOCK = "/lock"
+UNLOCK = "/unlock"
+
+OPEN = "/open"
+CLOSE = "/close"
+STOP = "/stop"
+
+TURN_ON = "/turn_on"
+TURN_OFF = "/turn_off"
+TOGGLE = "/toggle"
 
 class VirtualGarage(udi_interface.Node):
     id = 'virtualgarage'
@@ -123,7 +143,8 @@ class VirtualGarage(udi_interface.Node):
         
     def getConfigData(self):
         # repull config data for var data, light, door, dcommand, motion, lock, obstruction
-        # type & ID are optional, also, will pull with only ID assuming type = 1
+        # var type & ID are optional, also, will pull with only ID assuming type = 1
+        # ratgdo = nonexist, false, true or ip address, true assumes http://ratgdov25i-fad8fd.local
         success = False
         for dev in self.controller.devlist:
             if str(dev['type']) == 'garage':
@@ -193,6 +214,23 @@ class VirtualGarage(udi_interface.Node):
                 LOGGER.debug(f'self.obstructId = {self.obstructId}')
             except:
                 self.obstructId = 0
+            self.controller.Notices.delete('ratgdo')
+            try:
+                self.ratgdo = self.dev['ratgdo']
+                if self.ratgdo == 'true' or self.ratgdo == 'True':
+                    self.ratgdo = "ratgdov25i-fad8fd.local"
+                elif self.ratgdo == 'false':
+                    self.ratgdo = False
+                LOGGER.info(f'self.ratgdo = {self.ratgdo}')
+                if self.ratgdo != False:
+                    res = requests.get(f'http://{self.ratgdo}/{LIGHT}')
+                    if res.json()['id'] == 'light-light':
+                        LOGGER.info('RATGDO communications good!')
+                    else:
+                        self.controller.Notices['ratgdo'] = 'RATGDO communications failed!'
+                        LOGGER.error('RATGDO communications failed!')
+            except:
+                self.ratgdo = False
         else:
             LOGGER.error('no self.dev data')
         

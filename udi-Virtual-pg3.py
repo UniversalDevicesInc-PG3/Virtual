@@ -17,11 +17,14 @@ import sys
 
 LOGGER = udi_interface.LOGGER
 
-VERSION = '3.1.7'
+VERSION = '3.1.8'
 """
+3.1.8
+TODO Garage device to talk to Ratgdo directly through RESTapi
+
 3.1.7
-Small refactors
-redo environment
+DONE Small refactors
+DONE redo environment
 
 3.1.6
 FIX better solution to markdown2 issue
