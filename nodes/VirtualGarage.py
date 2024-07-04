@@ -5,17 +5,21 @@ udi-Virtual-pg3 NodeServer/Plugin for EISY/Polisy
 
 VirtualGarage class
 """
-# system imports
+# standard imports
 import os
 import time
-import requests
 import shelve
 import os.path
 import subprocess
+import ipaddress
 from xml.dom.minidom import parseString
 
 # external imports
+import requests
 import udi_interface
+
+#personal imports
+
 
 LOGGER = udi_interface.LOGGER
 ISY = udi_interface.ISY
@@ -35,6 +39,9 @@ GETLIST = [' ',
           ]
 
 # ratdgo constants
+
+RATGDO = "ratgdov25i-fad8fd"
+
 BUTTON = "/binary_sensor/button"
 LIGHT = "/light/light"
 DOOR = "/cover/door"
@@ -109,8 +116,14 @@ class VirtualGarage(udi_interface.Node):
         self.openTime = '0000'
         self.firstPass = True
 
+        self.bonjourCommand = None
+        self.bonjourOn = False
+        self.bonjourOnce = True
+        self.ratgdoOK = False
+        
         self.poly.subscribe(self.poly.START, self.start, address)
         self.poly.subscribe(self.poly.POLL, self.poll)
+        self.poly.subscribe(self.poly.BONJOUR, self.bonjour)
 
     def start(self):
         """
@@ -120,6 +133,8 @@ class VirtualGarage(udi_interface.Node):
         """
         self.firstPass = True
         self.isy = ISY(self.poly)
+
+        self.bonjourOnce = True
 
         self.getConfigData()
         
@@ -215,22 +230,29 @@ class VirtualGarage(udi_interface.Node):
             except:
                 self.obstructId = 0
             self.controller.Notices.delete('ratgdo')
+            self.ratgdoOK = False
             try:
                 self.ratgdo = self.dev['ratgdo']
-                if self.ratgdo == 'true' or self.ratgdo == 'True':
-                    self.ratgdo = "ratgdov25i-fad8fd.local"
+                if self.ratgdo in ['true', True, RATGDO, f"{RATGDO}.local"]:
+                    self.ratgdo = RATGDO
+                    self.bonjourOn = True
+                    warn = f"Searching for RATGDO IP: {RATGDO}"
+                    LOGGER.error(warn)
+                    self.controller.Notices['ratgdo'] = warn
                 elif self.ratgdo == 'false':
                     self.ratgdo = False
-                LOGGER.info(f'self.ratgdo = {self.ratgdo}')
-                if self.ratgdo != False:
-                    res = requests.get(f'http://{self.ratgdo}/{LIGHT}')
-                    if res.json()['id'] == 'light-light':
-                        LOGGER.info('RATGDO communications good!')
-                    else:
-                        self.controller.Notices['ratgdo'] = 'RATGDO communications failed!'
-                        LOGGER.error('RATGDO communications failed!')
+                else:
+                    try:
+                        ipaddress.ip_address(self.ratgdo)
+                        self.ratgdoCheck()
+                    except:
+                        self.ratgdo = False
+                        error = f"RATGDO address error: {self.ratgdo}"
+                        LOGGER.error(error)
+                        self.controller.Notices['ratgdo'] = error
             except:
                 self.ratgdo = False
+            LOGGER.info(f'self.ratgdo = {self.ratgdo}')                        
         else:
             LOGGER.error('no self.dev data')
         
@@ -239,7 +261,49 @@ class VirtualGarage(udi_interface.Node):
             LOGGER.debug(f"longPoll {self.name}")
         else:
             LOGGER.debug(f"shortPoll {self.name}")
+            if self.bonjourOnce and self.bonjourOn:
+                self.bonjourOnce = False
+                self.poly.bonjour(None, None, None)
             self.updateAll()
+
+    def bonjour(self, command):
+        # bonjour(self, type, subtypes, protocol)
+        LOGGER.info(f"bonjour message")
+        try:
+            if command['success']:
+                mdns = command['mdns']
+                for addr in mdns:
+                    LOGGER.info(f"addr: {addr['name']}")
+                    if addr['name'] == RATGDO:
+                        self.controller.Notices.delete('ratgdo')
+                        self.ratgdo = addr['addresses'][0]
+                        LOGGER.warn(f"FOUND RATGDO@'{self.ratgdo}': addresses: {addr['addresses']}, name: {addr['name']}")
+                        self.ratgdoCheck()
+                        self.bonjourOn = False
+                        break
+        except Exception as ex:
+            LOGGER.error(f"error: {ex}, command: {command}")
+        self.bonjourOnce = True
+
+    def ratgdoCheck(self):
+        try:
+            ipaddress.ip_address(self.ratgdo)
+            resTxt = f'http://{self.ratgdo}{LIGHT}'
+            LOGGER.debug(f'get {resTxt}')
+            res = requests.get(resTxt)
+            LOGGER.debug(f"res.status_code = {res.status_code}")
+            if res.json()['id'] == 'light-light':
+                LOGGER.info('RATGDO communications good!')
+                self.ratgdoOK = True
+                return True
+        except Exception as ex:
+            LOGGER.error(f"error: {ex}")
+            LOGGER.error(f"res.status_code = {res.status_code}")
+            error = f"RATGDO communications error code: {res.error}"
+            self.controller.Notices['ratgdo'] = error
+            LOGGER.error(error)
+        self.ratgdoOK = False
+        return False
 
     def createDB(self):
         success = False

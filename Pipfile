@@ -7,8 +7,11 @@ name = "pypi"
 udi-interface = "*"
 markdown2 = "*"
 pyaml = "*"
+requests = "*"
 
 [dev-packages]
+pylsp-mypy = "*"
+pyls = "*"
 
 [requires]
 python_version = "3.11.9"
