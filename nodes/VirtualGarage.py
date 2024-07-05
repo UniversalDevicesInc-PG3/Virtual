@@ -18,8 +18,8 @@ from xml.dom.minidom import parseString
 import requests
 import udi_interface
 
-#personal imports
-
+# local imports
+pass
 
 LOGGER = udi_interface.LOGGER
 ISY = udi_interface.ISY
@@ -292,17 +292,18 @@ class VirtualGarage(udi_interface.Node):
             resTxt = f'http://{self.ratgdo}{LIGHT}'
             LOGGER.debug(f'get {resTxt}')
             res = requests.get(resTxt)
-            LOGGER.debug(f"res.status_code = {res.status_code}")
+            if res.ok:
+                LOGGER.debug(f"res.status_code = {res.status_code}")
+            else:
+                error = f"RATGDO communications error code: {res.status_code}"
+                LOGGER.error(f"{error}")
+                self.controller.Notices['ratgdo'] = error
             if res.json()['id'] == 'light-light':
                 LOGGER.info('RATGDO communications good!')
                 self.ratgdoOK = True
                 return True
         except Exception as ex:
             LOGGER.error(f"error: {ex}")
-            LOGGER.error(f"res.status_code = {res.status_code}")
-            error = f"RATGDO communications error code: {res.error}"
-            self.controller.Notices['ratgdo'] = error
-            LOGGER.error(error)
         self.ratgdoOK = False
         return False
 
@@ -380,11 +381,12 @@ class VirtualGarage(udi_interface.Node):
         if self.ratgdoOK:
             LOGGER.info(f'post:{post}')
             try:
-                r = requests.post(f"http://{post}")
+                rpost = requests.post(f"http://{post}")
+                if not rpost.ok:
+                    LOGGER.error(f"{post}: {rpost.status_code}")
             except Exception as ex:
                 LOGGER.error(f"{post}: {ex}")
         
-        # TODO open time
     def ltOn(self, command = None):
         LOGGER.debug(f'command:{command}')
         self.light = 1
@@ -404,7 +406,7 @@ class VirtualGarage(udi_interface.Node):
             self.pushTheValue(self.lightT, self.lightId, self.light)
         self.storeValues()
         post = f"{self.ratgdo}{LIGHT}{TURN_OFF}"
-        ratgdoPost(post)
+        self.ratgdoPost(post)
         self.resetTime()
         
     def drOpen(self, command = None):
@@ -582,6 +584,53 @@ class VirtualGarage(udi_interface.Node):
             except Exception as ex:
                 LOGGER.error(f'There was an error with the value pull or Parse: {ex}')
         return success, _data
+
+    def pullFromRatgdo(self):
+        pass
+        # getDict = {
+        #     LIGHT: self.light,
+        #     DOOR: self.door,
+        #     LOCK_REMOTES: self.lock,
+        #     MOTION: self.motion,
+        #     MOTOR: self.motor,
+        #     OBSTRUCTION: self.obstruct,
+        #     BUTTON: self.button,
+        # }
+        # for api in getDict:
+        #     resTxt = f'http://{self.ratgdo}{api}'
+        #     LOGGER.info(f'get {resTxt}')
+        #     try:
+        #         res = requests.get(resTxt)
+        #         LOGGER.info(f"res.status_code = {res.status_code}")
+        #         _data = getDict[api]
+        # 
+        # 
+        # 
+        #     if res.status_code == 200:
+        #         try:
+        #             self.ratgdo = res.json()['data']
+        # 
+        # for api in getArray:
+        #     resTxt = f'http://{self.ratgdo}{api}'
+        #     LOGGER.info(f'get {resTxt}')
+        #     try:
+        #         res = requests.get(resTxt)
+        #         LOGGER.info(f"res.status_code = {res.status_code}")
+        #         
+        #     if res.json()['id'] == 'light-light':
+        #         LOGGER.info('RATGDO communications good!')
+        #         self.ratgdoOK = True
+        #         return True
+        # except Exception as ex:
+        #     LOGGER.error(f"error: {ex}")
+        #     LOGGER.error(f"res.status_code = {res.status_code}")
+        #     error = f"RATGDO communications error code: {res.error}"
+        #     self.controller.Notices['ratgdo'] = error
+        #     LOGGER.error(error)
+        # self.ratgdoOK = False
+        # return False
+
+    
 
     def updateAll(self):
         _currentTime = time.time()
