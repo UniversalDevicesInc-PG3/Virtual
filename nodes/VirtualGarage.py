@@ -587,48 +587,30 @@ class VirtualGarage(udi_interface.Node):
 
     def pullFromRatgdo(self):
         pass
-        # getDict = {
-        #     LIGHT: self.light,
-        #     DOOR: self.door,
-        #     LOCK_REMOTES: self.lock,
-        #     MOTION: self.motion,
-        #     MOTOR: self.motor,
-        #     OBSTRUCTION: self.obstruct,
-        #     BUTTON: self.button,
-        # }
-        # for api in getDict:
-        #     resTxt = f'http://{self.ratgdo}{api}'
-        #     LOGGER.info(f'get {resTxt}')
-        #     try:
-        #         res = requests.get(resTxt)
-        #         LOGGER.info(f"res.status_code = {res.status_code}")
-        #         _data = getDict[api]
-        # 
-        # 
-        # 
-        #     if res.status_code == 200:
-        #         try:
-        #             self.ratgdo = res.json()['data']
-        # 
-        # for api in getArray:
-        #     resTxt = f'http://{self.ratgdo}{api}'
-        #     LOGGER.info(f'get {resTxt}')
-        #     try:
-        #         res = requests.get(resTxt)
-        #         LOGGER.info(f"res.status_code = {res.status_code}")
+        getDict = dict(zip(LIGHT, DOOR, LOCK_REMOTES, MOTION, MOTOR, OBSTRUCTION, BUTTON))
+
+        for api in getDict:
+            resTxt = f'{self.ratgdo}{api}'
+            LOGGER.info(f'get {resTxt}')
+            try:
+                res = requests.get(f"http://{resTxt}")
+                if res.ok:
+                    LOGGER.debug(f"res.status_code = {res.status_code}")
+                else:
+                    LOGGER.error(f"res.status_code = {res.status_code}")
+                    
+
         #         
         #     if res.json()['id'] == 'light-light':
         #         LOGGER.info('RATGDO communications good!')
         #         self.ratgdoOK = True
         #         return True
-        # except Exception as ex:
-        #     LOGGER.error(f"error: {ex}")
-        #     LOGGER.error(f"res.status_code = {res.status_code}")
-        #     error = f"RATGDO communications error code: {res.error}"
-        #     self.controller.Notices['ratgdo'] = error
-        #     LOGGER.error(error)
-        # self.ratgdoOK = False
-        # return False
+
+
+            except Exception as ex:
+                LOGGER.error(f"error: {ex}")
+        self.ratgdoOK = False
+        return False
 
     
 
