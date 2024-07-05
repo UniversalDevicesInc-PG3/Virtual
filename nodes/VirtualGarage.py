@@ -48,7 +48,7 @@ DOOR = "/cover/door"
 LOCK_REMOTES = "/lock/lock_remotes"
 MOTION = "/binary_sensor/motion"
 MOTOR = "/binary_sensor/motor"
-OBSTRUCTION = "/binary_sensor/obstruction"
+OBSTRUCT = "/binary_sensor/obstruction"
 TRIGGER = "/button/toggle_door/press"
 
 LOCK = "/lock"
@@ -482,74 +482,47 @@ class VirtualGarage(udi_interface.Node):
         self.isy.cmd('/rest/vars' + _type + _id + '/' + str(value))
     
     def getDataFromID(self):
+        # called by controller, carry-over from other virtual devices
+        # TODO: find better way to do this
         pass
-    
-    def UpdateVars(self):
+
+    def updateVar(self, name, dev, T, Id, rat):
         success = False
         change = False
         _data = 0
-        if self.lightT > 0 and self.lightId > 0:
-            success, _data = self.pullFromISY(self.lightT, self.lightId)
-            LOGGER.debug(f'light success: {success}, _data: {_data}')
-            if success:
-                if self.light != _data:
-                    self.light = _data
-                    LOGGER.info(f'self.light = {self.light}')
-                    change = True
-            else:
-                LOGGER.error('light, no success')
-        if self.doorT > 0 and self.doorId > 0:
-            success, _data = self.pullFromISY(self.doorT, self.doorId)
-            LOGGER.debug(f'door success: {success}, _data: {_data}')
-            if success:
-                if self.door == 0 and _data != 0:
-                    self.openTime = time.time()
-                if self.door != _data:
-                    self.door = _data
-                    LOGGER.info(f'self.door = {self.door}')
-                    change = True
-            else:
-                LOGGER.error('door, no success')
-        if self.dcommandT > 0 and self.dcommandId > 0:
-            success, _data = self.pullFromISY(self.dcommandT, self.dcommandId)
-            LOGGER.debug(f'dcommand success: {success}, _data: {_data}')
-            if success:
-                if self.dcommand != _data:
-                    self.dcommand = _data
-                    LOGGER.info(f'self.dcommand = {self.dcommand}')
-                    change = True
-            else:
-                LOGGER.error('dcommand, no success')
-        if self.motionT > 0 and self.motionId > 0:
-            success, _data = self.pullFromISY(self.motionT, self.motionId)
-            LOGGER.debug(f'motion success: {success}, _data: {_data}')
-            if success:
-                if self.motion != _data:
-                    self.motion = _data
-                    LOGGER.info(f'self.motion = {self.motion}')
-                    change = True
-            else:
-                LOGGER.error('motion, no success')
-        if self.lockT > 0 and self.lockId > 0:
-            success, _data = self.pullFromISY(self.lockT, self.lockId)
-            LOGGER.debug(f'lock success: {success}, _data: {_data}')
-            if success:
-                if self.lock != _data:
-                    self.lock = _data
-                    LOGGER.info(f'self.lock = {self.lock}')
-                    change = True
-            else:
-                LOGGER.error('lock, no success')
-        if self.obstructT > 0 and self.obstructId > 0:
-            success, _data = self.pullFromISY(self.obstructT, self.obstructId)
-            LOGGER.debug(f'obstruct success: {success}, _data: {_data}')
-            if success:
-                if self.obstruct != _data:
-                    self.obstruct = _data
-                    LOGGER.info(f'self.obstruct = {self.obstruct}')
-                    change = True
-            else:
-                LOGGER.error('obstruct, no success')
+        if T > 0 and Id > 0:
+            success, _data = self.pullFromISY(T, Id)
+        elif self.ratgdoOK:
+            ratSuccess, _ratData = self.pullFromRatgdo(rat)
+            LOGGER.info(f"Ratgdo {ratSuccess}, {_ratData}")
+        else:
+            success = False
+        if success:
+            LOGGER.debug(f'{name} success: {success}, _data: {_data}')
+            if dev != _data:
+                LOGGER.info(f'changed {name} = {dev}')
+                change = True
+                dev = _data
+        else:
+            LOGGER.error(f'{name} NO success: {success}, _data: {_data}')
+            
+        return success, dev, change
+    
+    def updateVars(self):
+        success = False
+        change = False
+        _data = 0
+        success, self.light, change = self.updateVar('light', self.light, self.lightT, self.lightId, LIGHT)
+        success, _data, change = self.updateVar('door', self.door, self.doorT, self.doorId, DOOR)
+        if success:
+            if self.door == 0 and _data != 0:
+                self.openTime = time.time()
+            if change:
+                self.door = _data
+        success, self.dcommand, change = self.updateVar('dcommand', self.dcommand, self.dcommandT, self.dcommandId, DOOR)
+        success, self.motion, change = self.updateVar('motion', self.motion, self.motionT, self.motionId, MOTION)
+        success, self.lock, change = self.updateVar('lock', self.lock, self.lockT, self.lockId, LOCK)
+        success, self.obstruct, change = self.updateVar('obstruct', self.obstruct, self.obstructT, self.obstructId, OBSTRUCT)
         if change:
             self.storeValues()
         return change
@@ -585,38 +558,27 @@ class VirtualGarage(udi_interface.Node):
                 LOGGER.error(f'There was an error with the value pull or Parse: {ex}')
         return success, _data
 
-    def pullFromRatgdo(self):
-        pass
-        getDict = dict(zip(LIGHT, DOOR, LOCK_REMOTES, MOTION, MOTOR, OBSTRUCTION, BUTTON))
-
-        for api in getDict:
-            resTxt = f'{self.ratgdo}{api}'
-            LOGGER.info(f'get {resTxt}')
-            try:
-                res = requests.get(f"http://{resTxt}")
-                if res.ok:
-                    LOGGER.debug(f"res.status_code = {res.status_code}")
-                else:
-                    LOGGER.error(f"res.status_code = {res.status_code}")
-                    
-
-        #         
-        #     if res.json()['id'] == 'light-light':
-        #         LOGGER.info('RATGDO communications good!')
-        #         self.ratgdoOK = True
-        #         return True
-
-
-            except Exception as ex:
-                LOGGER.error(f"error: {ex}")
-        self.ratgdoOK = False
-        return False
-
-    
+    def pullFromRatgdo(self, get):
+        success = False
+        _data = 0
+        resTxt = f'{self.ratgdo}{get}'
+        LOGGER.info(f'get {resTxt}')
+        try:
+            res = requests.get(f"http://{resTxt}")
+            if res.ok:
+                LOGGER.debug(f"res.status_code = {res.status_code}")
+            else:
+                LOGGER.error(f"res.status_code = {res.status_code}")
+            _data = res.json()
+            LOGGER.info(f"{get} = {_data}")
+            success = True
+        except Exception as ex:
+            LOGGER.error(f"error: {ex}")
+        return success, _data
 
     def updateAll(self):
         _currentTime = time.time()
-        if self.UpdateVars() or self.firstPass:
+        if self.updateVars() or self.firstPass:
             self.setDriver('GV0', self.light)
             if self.getDriver('GV1') != self.door:
                 self.dcommand = 0
