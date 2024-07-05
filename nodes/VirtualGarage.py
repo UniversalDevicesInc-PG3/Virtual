@@ -49,6 +49,7 @@ LOCK_REMOTES = "/lock/lock_remotes"
 MOTION = "/binary_sensor/motion"
 MOTOR = "/binary_sensor/motor"
 OBSTRUCTION = "/binary_sensor/obstruction"
+TRIGGER = "/button/toggle_door/press"
 
 LOCK = "/lock"
 UNLOCK = "/unlock"
@@ -375,6 +376,14 @@ class VirtualGarage(udi_interface.Node):
         self.lock = existing['lock']
         self.obstruct = existing['obstruct']
 
+    def ratgdoPost(self, post):
+        if self.ratgdoOK:
+            LOGGER.info(f'post:{post}')
+            try:
+                r = requests.post(f"http://{post}")
+            except Exception as ex:
+                LOGGER.error(f"{post}: {ex}")
+        
         # TODO open time
     def ltOn(self, command = None):
         LOGGER.debug(f'command:{command}')
@@ -383,6 +392,8 @@ class VirtualGarage(udi_interface.Node):
         if self.lightId > 0:
             self.pushTheValue(self.lightT, self.lightId, self.light)
         self.storeValues()
+        post = f"{self.ratgdo}{LIGHT}{TURN_ON}"
+        self.ratgdoPost(post)
         self.resetTime()
 
     def ltOff(self, command = None):
@@ -392,6 +403,8 @@ class VirtualGarage(udi_interface.Node):
         if self.lightId > 0:
             self.pushTheValue(self.lightT, self.lightId, self.light)
         self.storeValues()
+        post = f"{self.ratgdo}{LIGHT}{TURN_OFF}"
+        ratgdoPost(post)
         self.resetTime()
         
     def drOpen(self, command = None):
@@ -401,6 +414,8 @@ class VirtualGarage(udi_interface.Node):
         if self.dcommandId > 0:
             self.pushTheValue(self.dcommandT, self.dcommandId, self.dcommand)
         self.storeValues()
+        post = f"{self.ratgdo}{DOOR}{OPEN}"
+        self.ratgdoPost(post)
         self.resetTime()
     
     def drClose(self, command = None):
@@ -410,14 +425,18 @@ class VirtualGarage(udi_interface.Node):
         if self.dcommandId > 0:
             self.pushTheValue(self.dcommandT, self.dcommandId, self.dcommand)
         self.storeValues()
+        post = f"{self.ratgdo}{DOOR}{CLOSE}"
+        self.ratgdoPost(post)
         self.resetTime()
-
+        
     def drTrigger(self, command = None):
         LOGGER.debug(f'command:{command}')
         self.dcommand = 3
         self.setDriver('GV2', self.dcommand)
         if self.dcommandId > 0:
             self.pushTheValue(self.dcommandT, self.dcommandId, self.dcommand)
+        post = f"{self.ratgdo}{TRIGGER}"
+        self.ratgdoPost(post)
         self.storeValues()
         self.resetTime()
         
@@ -427,6 +446,8 @@ class VirtualGarage(udi_interface.Node):
         self.setDriver('GV2', self.dcommand)
         if self.dcommandId > 0:
             self.pushTheValue(self.dcommandT, self.dcommandId, self.dcommand)
+        post = f"{self.ratgdo}{DOOR}{STOP}"
+        self.ratgdoPost(post)
         self.storeValues()
         self.resetTime()
         
@@ -437,6 +458,8 @@ class VirtualGarage(udi_interface.Node):
         if self.lockId > 0:
             self.pushTheValue(self.lockT, self.lockId, self.lock)
         self.storeValues()
+        post = f"{self.ratgdo}{LOCK_REMOTES}{LOCK}"
+        self.ratgdoPost(post)
         self.resetTime()
     def lkUnlock(self, command = None):
         LOGGER.debug(f'command:{command}')
@@ -445,6 +468,8 @@ class VirtualGarage(udi_interface.Node):
         if self.lockId > 0:
             self.pushTheValue(self.lockT, self.lockId, self.lock)
         self.storeValues()
+        post = f"{self.ratgdo}{LOCK_REMOTES}{UNLOCK}"
+        self.ratgdoPost(post)
         self.resetTime()
 
     def pushTheValue(self, type, id, value):

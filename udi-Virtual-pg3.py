@@ -20,7 +20,10 @@ LOGGER = udi_interface.LOGGER
 VERSION = '3.1.8'
 """
 3.1.8
-TODO Garage device to talk to Ratgdo directly through RESTapi
+TODO Garage device read status directly from Ratgdo through ESPHome RESTapi
+TODO Speed up Bonjour discovery (and make more reliable)
+DONE Garage device sends commands directly to Ratgdo through ESPHome RESTapi
+DONE Bonjour discovery of Ratgdo garage device
 
 3.1.7
 DONE Small refactors
