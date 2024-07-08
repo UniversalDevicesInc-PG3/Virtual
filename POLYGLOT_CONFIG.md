@@ -46,12 +46,13 @@ Key (var ID)    Value (device type)
   82              {"type": "temperature", "name": "lake temperature"}
   85              {"id": "85", "type": "temperaturec", "name": "garden temp"}
   100             {"type": "temperaturecr", "name": "raw temp"}
+  200             {"type": "garage", "name": "garage door", "ratgdo": True}
 ```
 
 ### YAML Configuration
 
 File name without path is within the node directory.
-Careful as this file will be deleted with node.
+Careful this file is deleted with the node.
 Better to use path and store within admin home directory.
 Make sure file permissions are available to node.
 
@@ -83,13 +84,28 @@ Key (var ID)    Value (device type)
 ```yaml
 devices:
 
+- id: 10
+  type:  "switch"
+  name: "TestSwitch"
+- id: 20
+  type:  "temperature"
+  name: "TestTemp"
+- id: 30
+  type:  "dimmer"
+  name: "TestDimmer 92"
 - id: 40
   type:  "garage"
   name:  "Ratgdo"
+  ratgdo: True # will find the Ratgdo device (slower startup)
+  # ratgdo: False # no Ratgdo device
+  # ratgdo: 10.0.1.41 # IP address (faster startup)
+  
   # below are optional & only individually used if defined
   # each name refers to feature
   # type {1: state var, 2:state init, 3:integer var, 4:integer init}
   # Id number of variable
+  # if ratgdo is True, or IP defined then only writes to these
+  # if ratgdo is False then reads and writes to these
   lightT: 1
   lightId: 3
   doorT: 1

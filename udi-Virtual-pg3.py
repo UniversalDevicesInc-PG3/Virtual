@@ -17,12 +17,14 @@ import sys
 
 LOGGER = udi_interface.LOGGER
 
-VERSION = '3.1.8'
+VERSION = '3.1.9'
 """
+3.1.9
+DONE Garage device read status directly from Ratgdo through ESPHome RESTapi
+DONE update docs for garage Ratgdo integration
+TODO Bonjour discovery is sometimes slow
+
 3.1.8
-TODO Garage device read status directly from Ratgdo through ESPHome RESTapi
-TODO Speed up Bonjour discovery (and make more reliable)
-TODO update docs for garage Ratgdo integration
 DONE Garage device sends commands directly to Ratgdo through ESPHome RESTapi
 DONE Bonjour discovery of Ratgdo garage device
 

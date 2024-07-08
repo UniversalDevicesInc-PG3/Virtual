@@ -24,8 +24,12 @@ Devices store their status in a .db for retrieval on a restart.
 
 ## Switches
 
-You can add a virtual switch to a scene and that switch polled to
-determine if the scene is on or off.
+You can add a virtual switch to a scene and that ON/OFF switch is polled to
+determine if the scene is ON or OFF. Programs can read / set as any device. 
+
+## Dimmer or Generic
+
+Percent of ON for a dimmer or generic.
 
 ## Temperature
 
@@ -39,6 +43,12 @@ using a program or from a variable.  This is then displayed as a device
 - Raw data converted to prec 1.
 - Farenheit converted and displayed as Celsius and vice versa.
 - Data Pushed to another variable.
+
+## Garage
+
+A virtual garage device for a garage door.  Can be populated from a Ratgdo device,
+from Home Assistant, or from variables.  Commands can go to a Ratgdo device, or
+variables, which can then be picked up by Home Assistant.
 
 ## Configuration
 

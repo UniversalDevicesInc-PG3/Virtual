@@ -142,14 +142,15 @@ class Controller(udi_interface.Node):
             LOGGER.info('Start: Waiting on valid configuration')
             self.Notices['waiting'] = 'Waiting on valid configuration'
             time.sleep(5)
+        self.Notices.delete('waiting')
 
         while not self.parmDone:
             LOGGER.info("Start: Waiting on first Discovery Completion")
             time.sleep(1)
 
-        self.removeNoticesAll()
         LOGGER.info('Started Virtual Device NodeServer v%s', self.poly.serverdata)
         self.query()
+        self.Notices.delete('hello')
 
     """
     Called via the CUSTOMPARAMS event. When the user enters or
@@ -166,7 +167,6 @@ class Controller(udi_interface.Node):
     parameters will result in a new event, causing an infinite loop.
     """
     def parameterHandler(self, params):
-        self.removeNoticesAll()
         self.Parameters.load(params)
         LOGGER.info('parmHandler: Loading parameters now')
         if self.checkParams():

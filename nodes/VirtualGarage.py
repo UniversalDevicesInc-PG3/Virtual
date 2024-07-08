@@ -113,13 +113,14 @@ class VirtualGarage(udi_interface.Node):
         self.obstructT = 1
         self.obstructId = 0
 
-        self.lastUpdate = '0000'
         self.openTime = '0000'
         self.firstPass = True
+        self.updatingAll = 0
 
         self.bonjourCommand = None
         self.bonjourOn = False
         self.bonjourOnce = True
+        self.ratgdo = False
         self.ratgdoOK = False
         
         self.poly.subscribe(self.poly.START, self.start, address)
@@ -233,17 +234,19 @@ class VirtualGarage(udi_interface.Node):
             self.controller.Notices.delete('ratgdo')
             self.ratgdoOK = False
             try:
-                self.ratgdo = self.dev['ratgdo']
-                if self.ratgdo in ['true', True, RATGDO, f"{RATGDO}.local"]:
-                    self.ratgdo = RATGDO
-                    self.bonjourOn = True
-                    warn = f"Searching for RATGDO IP: {RATGDO}"
-                    LOGGER.error(warn)
-                    self.controller.Notices['ratgdo'] = warn
-                elif self.ratgdo == 'false':
+                ratgdoTemp = self.dev['ratgdo']
+                if ratgdoTemp in ['true', True, RATGDO, f"{RATGDO}.local"]:
+                    if self.ratgdoOK == False:
+                        self.ratgdo = RATGDO
+                        self.bonjourOn = True
+                        warn = f"Searching for RATGDO IP: {RATGDO}"
+                        LOGGER.error(warn)
+                        self.controller.Notices['ratgdo'] = warn
+                elif ratgdoTemp in [False, 'false', 'False']:
                     self.ratgdo = False
                 else:
                     try:
+                        self.ratgdo = ratgdoTemp
                         ipaddress.ip_address(self.ratgdo)
                         self.ratgdoCheck()
                     except:
@@ -258,29 +261,34 @@ class VirtualGarage(udi_interface.Node):
             LOGGER.error('no self.dev data')
         
     def poll(self, flag):
+        LOGGER.debug(f"POLLING: {flag} {self.name}")
         if 'longPoll' in flag:
-            LOGGER.debug(f"longPoll {self.name}")
+            pass
         else:
-            LOGGER.debug(f"shortPoll {self.name}")
             if self.bonjourOnce and self.bonjourOn:
                 self.bonjourOnce = False
-                self.poly.bonjour(None, None, None)
-            self.updateAll()
+                self.poly.bonjour('http', None, None)
+            if self.updatingAll <= 0:
+                self.updateAll()
+            elif 1 == self.updatingAll <=3:
+                self.updatingAll += 1
+            else:
+                self.updatingAll = 0
 
     def bonjour(self, command):
         # bonjour(self, type, subtypes, protocol)
-        LOGGER.info(f"bonjour message")
+        LOGGER.info(f"BonjourMessage")
         try:
             if command['success']:
                 mdns = command['mdns']
                 for addr in mdns:
-                    LOGGER.info(f"addr: {addr['name']}")
+                    LOGGER.info(f"addr: {addr['name']}, type:{addr['type']}")
                     if addr['name'] == RATGDO:
                         self.controller.Notices.delete('ratgdo')
                         self.ratgdo = addr['addresses'][0]
-                        LOGGER.warn(f"FOUND RATGDO@'{self.ratgdo}': addresses: {addr['addresses']}, name: {addr['name']}")
-                        self.ratgdoCheck()
-                        self.bonjourOn = False
+                        LOGGER.warn(f"FOUND RATGDO@'{self.ratgdo}':ip: {addr['addresses']}, name: {addr['name']}")
+                        if self.ratgdoCheck():
+                            self.bonjourOn = False
                         break
         except Exception as ex:
             LOGGER.error(f"error: {ex}, command: {command}")
@@ -354,15 +362,6 @@ class VirtualGarage(udi_interface.Node):
         finally:
             s.close()
         LOGGER.info('Values Stored')
-        self.listValues()
-
-    def listValues(self):
-        s = shelve.open(self.key, writeback=True)
-        try:
-            existing = s[self.key]
-        finally:
-            s.close()
-        LOGGER.info(existing)
 
     def retrieveValues(self):
         s = shelve.open(self.key, writeback=True)
@@ -393,9 +392,9 @@ class VirtualGarage(udi_interface.Node):
         self.setDriver('GV0', self.light)
         if self.lightId > 0:
             self.pushTheValue(self.lightT, self.lightId, self.light)
-        self.storeValues()
         post = f"{self.ratgdo}{LIGHT}{TURN_ON}"
         self.ratgdoPost(post)
+        self.storeValues()
         self.resetTime()
 
     def ltOff(self, command = None):
@@ -404,9 +403,9 @@ class VirtualGarage(udi_interface.Node):
         self.setDriver('GV0', self.light)
         if self.lightId > 0:
             self.pushTheValue(self.lightT, self.lightId, self.light)
-        self.storeValues()
         post = f"{self.ratgdo}{LIGHT}{TURN_OFF}"
         self.ratgdoPost(post)
+        self.storeValues()
         self.resetTime()
         
     def drOpen(self, command = None):
@@ -415,9 +414,9 @@ class VirtualGarage(udi_interface.Node):
         self.setDriver('GV2', self.dcommand)
         if self.dcommandId > 0:
             self.pushTheValue(self.dcommandT, self.dcommandId, self.dcommand)
-        self.storeValues()
         post = f"{self.ratgdo}{DOOR}{OPEN}"
         self.ratgdoPost(post)
+        self.storeValues()
         self.resetTime()
     
     def drClose(self, command = None):
@@ -426,9 +425,9 @@ class VirtualGarage(udi_interface.Node):
         self.setDriver('GV2', self.dcommand)
         if self.dcommandId > 0:
             self.pushTheValue(self.dcommandT, self.dcommandId, self.dcommand)
-        self.storeValues()
         post = f"{self.ratgdo}{DOOR}{CLOSE}"
         self.ratgdoPost(post)
+        self.storeValues()
         self.resetTime()
         
     def drTrigger(self, command = None):
@@ -459,19 +458,20 @@ class VirtualGarage(udi_interface.Node):
         self.setDriver('GV4', self.lock)
         if self.lockId > 0:
             self.pushTheValue(self.lockT, self.lockId, self.lock)
-        self.storeValues()
         post = f"{self.ratgdo}{LOCK_REMOTES}{LOCK}"
         self.ratgdoPost(post)
+        self.storeValues()
         self.resetTime()
+        
     def lkUnlock(self, command = None):
         LOGGER.debug(f'command:{command}')
         self.lock = 0
         self.setDriver('GV4', self.lock)
         if self.lockId > 0:
             self.pushTheValue(self.lockT, self.lockId, self.lock)
-        self.storeValues()
         post = f"{self.ratgdo}{LOCK_REMOTES}{UNLOCK}"
         self.ratgdoPost(post)
+        self.storeValues()
         self.resetTime()
 
     def pushTheValue(self, type, id, value):
@@ -486,43 +486,87 @@ class VirtualGarage(udi_interface.Node):
         # TODO: find better way to do this
         pass
 
-    def updateVar(self, name, dev, T, Id, rat):
+    def updateVar(self, name, dev, T, Id):
         success = False
         change = False
         _data = 0
-        if T > 0 and Id > 0:
-            success, _data = self.pullFromISY(T, Id)
-        elif self.ratgdoOK:
-            ratSuccess, _ratData = self.pullFromRatgdo(rat)
-            LOGGER.info(f"Ratgdo {ratSuccess}, {_ratData}")
-        else:
-            success = False
-        if success:
-            LOGGER.debug(f'{name} success: {success}, _data: {_data}')
-            if dev != _data:
-                LOGGER.info(f'changed {name} = {dev}')
-                change = True
-                dev = _data
-        else:
-            LOGGER.error(f'{name} NO success: {success}, _data: {_data}')
-            
+        try:
+            if T > 0 and Id > 0:
+                success, _data = self.pullFromISY(T, Id)
+                if success:
+                    LOGGER.debug(f'{name} success: {success}, _data: {_data}')
+                    if dev != _data:
+                        LOGGER.info(f'changed {name} = {dev}')
+                        change = True
+                        dev = _data
+        except Exception as ex:
+            LOGGER.error(f"Error: {ex}")
         return success, dev, change
     
     def updateVars(self):
         success = False
         change = False
         _data = 0
-        success, self.light, change = self.updateVar('light', self.light, self.lightT, self.lightId, LIGHT)
-        success, _data, change = self.updateVar('door', self.door, self.doorT, self.doorId, DOOR)
-        if success:
-            if self.door == 0 and _data != 0:
-                self.openTime = time.time()
-            if change:
-                self.door = _data
-        success, self.dcommand, change = self.updateVar('dcommand', self.dcommand, self.dcommandT, self.dcommandId, DOOR)
-        success, self.motion, change = self.updateVar('motion', self.motion, self.motionT, self.motionId, MOTION)
-        success, self.lock, change = self.updateVar('lock', self.lock, self.lockT, self.lockId, LOCK)
-        success, self.obstruct, change = self.updateVar('obstruct', self.obstruct, self.obstructT, self.obstructId, OBSTRUCT)
+        state = None
+        if self.ratgdo and self.ratgdoOK:
+            success, _data = self.pullFromRatgdo(LIGHT)
+            if success:
+                state = _data['state']
+                LOGGER.debug(f"id: {_data['id']}, state: {state}")
+                if state == 'ON':
+                    self.light = 1
+                else:
+                    self.light = 0
+            success, _data = self.pullFromRatgdo(DOOR)
+            if success:
+                state = _data['state']
+                LOGGER.debug(f"id: {_data['id']}, value: {_data['value']}, state: {state}")
+                if state == 'CLOSED':
+                    self.door = 0
+                elif state == 'OPEN':
+                        self.door = 1
+                elif state == 'OPENING':
+                        self.door = 2
+                elif state == 'STOPPED':
+                        self.door = 3
+                elif state == 'CLOSING':
+                        self.door = 4
+            success, _data = self.pullFromRatgdo(MOTION)
+            if success:
+                value = _data['value']
+                LOGGER.debug(f"id: {_data['id']}, value: {value}, state: {_data['state']}")
+                if value:
+                    self.motion = 1
+                else:
+                    self.motion = 0
+            success, _data = self.pullFromRatgdo(LOCK_REMOTES)
+            if success:
+                state = _data['state']
+                LOGGER.debug(f"id: {_data['id']}, value: {_data['value']}, state: {state}")
+                if state == 'LOCKED':
+                    self.lock = 1
+                elif state == 'UNLOCKED':
+                    self.lock = 0
+            success, _data = self.pullFromRatgdo(OBSTRUCT)
+            if success:
+                value = _data['value']
+                LOGGER.debug(f"id: {_data['id']}, value: {value}, state: {_data['state']}")
+                if value:
+                    self.obstruct = 1
+                else:
+                    self.obstruct = 0
+        else:
+            success, self.light, change = self.updateVar('light', self.light, self.lightT, self.lightId)
+            success, _data, change = self.updateVar('door', self.door, self.doorT, self.doorId)
+            if success:
+                if self.door == 0 and _data != 0:
+                    self.openTime = time.time()
+                if change:
+                    self.door = _data
+            success, self.dcommand, change = self.updateVar('dcommand', self.dcommand, self.dcommandT, self.dcommandId)
+            success, self.motion, change = self.updateVar('motion', self.motion, self.motionT, self.motionId)
+            success, self.lock, change = self.updateVar('lock', self.lock, self.lockT, self.lockId)
+            success, self.obstruct, change = self.updateVar('obstruct', self.obstruct, self.obstructT, self.obstructId)
         if change:
             self.storeValues()
         return change
@@ -560,9 +604,9 @@ class VirtualGarage(udi_interface.Node):
 
     def pullFromRatgdo(self, get):
         success = False
-        _data = 0
+        _data = {}
         resTxt = f'{self.ratgdo}{get}'
-        LOGGER.info(f'get {resTxt}')
+        # LOGGER.debug(f'get {resTxt}')
         try:
             res = requests.get(f"http://{resTxt}")
             if res.ok:
@@ -570,13 +614,14 @@ class VirtualGarage(udi_interface.Node):
             else:
                 LOGGER.error(f"res.status_code = {res.status_code}")
             _data = res.json()
-            LOGGER.info(f"{get} = {_data}")
+            LOGGER.debug(f"{get} = {_data}")
             success = True
         except Exception as ex:
             LOGGER.error(f"error: {ex}")
         return success, _data
 
     def updateAll(self):
+        self.updatingAll = 1
         _currentTime = time.time()
         if self.updateVars() or self.firstPass:
             self.setDriver('GV0', self.light)
@@ -595,7 +640,6 @@ class VirtualGarage(udi_interface.Node):
             if self.getDriver('GV0') != self.light:
                 self.setDriver('GV0', self.light)
                 self.resetTime()
-                
             _doorOldStatus = self.getDriver('GV1')
             if _doorOldStatus != self.door:
                 if _doorOldStatus == 0 and self.door != 0:
@@ -615,7 +659,6 @@ class VirtualGarage(udi_interface.Node):
             if self.getDriver('GV5') != self.obstruct:
                 self.setDriver('GV5', self.obstruct)
                 self.resetTime()
-
         _sinceLastUpdate = round(((_currentTime - self.lastUpdateTime) / 60), 1)
         if _sinceLastUpdate < 9999:
             self.setDriver('GV6', _sinceLastUpdate)
@@ -627,6 +670,7 @@ class VirtualGarage(udi_interface.Node):
         else:
             _openTimeDelta = 0
         self.setDriver('GV7', _openTimeDelta)
+        self.updatingAll = 0
 
     def resetStats(self, command = None):
         LOGGER.info('Resetting Stats')
