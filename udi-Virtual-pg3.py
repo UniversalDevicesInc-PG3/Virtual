@@ -22,6 +22,7 @@ VERSION = '3.1.9'
 3.1.9
 DONE Garage device read status directly from Ratgdo through ESPHome RESTapi
 DONE update docs for garage Ratgdo integration
+FIX  switch st uom from 2 True/False to 25 On/Off
 TODO Bonjour discovery is sometimes slow
 
 3.1.8
