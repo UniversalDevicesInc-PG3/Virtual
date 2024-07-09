@@ -174,7 +174,7 @@ class VirtualSwitch(udi_interface.Node):
     UOM 2 is boolean so the ISY will display 'True/False'
     """
     drivers = [
-        {'driver': 'ST', 'value': 0, 'uom': 2, 'name': "Status"},
+        {'driver': 'ST', 'value': 0, 'uom': 25, 'name': "Status"},
     ]
 
     """
