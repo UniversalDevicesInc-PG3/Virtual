@@ -4,9 +4,6 @@ ND-controller-NAME = Virtual Device Controller
 ND-controller-ICON = Switch
 CMD-ctl-QUERY"-NAME = Query
 CMD-ctl-DISCOVER-NAME = Discover
-CMD-ctl-UPDATE_PROFILE-NAME = Update Profile
-CMD-ctl-REMOVE_NOTICES_ALL-NAME = Remove All Notices
-CMD-ctl-REMOVE_NOTICE_TEST-NAME = Remove Notice Test
 ST-ctl-ST-NAME = NodeServer Online
 
 

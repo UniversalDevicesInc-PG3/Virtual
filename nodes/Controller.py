@@ -10,6 +10,7 @@ Controller class
 import time
 import json
 import yaml
+import subprocess
 
 # external libraries
 import udi_interface
@@ -295,7 +296,7 @@ class Controller(udi_interface.Node):
             else:
                 LOGGER.debug('shortPoll (controller)')
  
-    def query(self, command = None):
+    def query(self, command=None):
         """
         The query method will be called when the ISY attempts to query the
         status of the node directly.  You can do one of two things here.
@@ -304,12 +305,13 @@ class Controller(udi_interface.Node):
         device represented by the node and report back the current 
         status.
         """
+        LOGGER.debug(command)
         nodes = self.poly.getNodes()
         for node in nodes:
             nodes[node].reportDrivers()
 
     def updateProfile(self,command):
-        LOGGER.info('update profile')
+        LOGGER.info(f'update profile: {command}')
         st = self.poly.updateProfile()
         return st
 
@@ -318,6 +320,12 @@ class Controller(udi_interface.Node):
         Do shade and scene discovery here. Called from controller start method
         and from DISCOVER command received from ISY
         """
+        LOGGER.info(command)
+        try:
+            subprocess.call("rm db/*.db", shell=True)
+            LOGGER.info("db directory cleaned-up")
+        except Exception as e:
+            LOGGER.error(f"Database delete Error: {e}")
         self.checkParams()
         self.discoverNodes()
 
@@ -400,6 +408,7 @@ class Controller(udi_interface.Node):
         for node in nodes_get:
             if (node not in nodes_new):
                 LOGGER.info(f"need to delete node {node}")
+                node.deleteDB()
                 self.poly.delNode(node)
 
         self.discovery = False
@@ -441,13 +450,6 @@ class Controller(udi_interface.Node):
             self.reportCmd("DOF",2)
             self.hb = 0
 
-    def removeNoticesAll(self, command = None):
-        LOGGER.info('remove_notices_all: notices={}'.format(self.Notices))
-        # Remove all existing notices
-        self.Notices.clear()
-
-
-
     # Status that this node has. Should match the 'sts' section
     # of the nodedef file.
     drivers = [
@@ -459,6 +461,4 @@ class Controller(udi_interface.Node):
     commands = {
         'QUERY': query,
         'DISCOVER': discover,
-        'UPDATE_PROFILE': updateProfile,
-        'REMOVE_NOTICES_ALL': removeNoticesAll,
     }
