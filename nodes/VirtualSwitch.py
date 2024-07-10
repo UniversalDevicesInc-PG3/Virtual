@@ -39,7 +39,7 @@ class VirtualSwitch(udi_interface.Node):
         it has changed.  if force is true, send regardless.
     reportDrivers(): Forces a full update of all drivers to Polyglot/ISY.
     query(): Called when ISY sends a query request to Polyglot for this
-        specific node
+        specific node.
     """
     def __init__(self, polyglot, primary, address, name):
         """ Sent by the Controller class node.
@@ -54,7 +54,9 @@ class VirtualSwitch(udi_interface.Node):
         subscribes:
         START: used to create/check/load DB file
         POLL: not needed as no timed updates for this node
-        Controller node calls self.getDataFromId() TODO change this method
+        Controller node calls:
+          self.getDataFromId() every longPoll
+          self.deleteDB() when ISY deletes the node or discovers it gone
         """
         super().__init__(polyglot, primary, address, name)
 
@@ -70,7 +72,7 @@ class VirtualSwitch(udi_interface.Node):
         # self.poly.subscribe(self.poly.POLL, self.poll)
 
     def start(self):
-        """ Just on startup """
+        """ START event subscription above """
         self.createDBfile()
         
     # poll NOT required in this node, keeping as comment for easy debugging
