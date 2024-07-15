@@ -176,6 +176,7 @@ class Controller(udi_interface.Node):
         LOGGER.info('parmHandler Done...')
 
     def checkParams(self):
+        self.Notices.delete('config')
         params = self.Parameters
         self.devlist = []
         for key,val in params.items():
@@ -203,6 +204,7 @@ class Controller(udi_interface.Node):
                         self.devlist.append(device)
                     except Exception as ex:
                         LOGGER.error(f"JSON parse exception: {ex} for  key: {a} the value: {val} created exeption: {ex}" )
+                        self.Notices['config'] = 'Bad configuration, please re-check.'
                         return False
             elif a == "devFile" or a == "devfile":
                 if val is not None:

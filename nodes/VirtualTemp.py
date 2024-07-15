@@ -35,7 +35,7 @@ GETLIST = [' ',
 class VirtualTemp(udi_interface.Node):
     id = 'virtualtemp'
 
-    """ This class respresents a simple virtual temperature sensor.
+    """ This class represents a simple virtual temperature sensor.
     This device can be populated directly or from variables.
     Conversion to/from raw or F/C is supported.  Finally, the data can
     be sent to a variable or used directly.  Programs can use the data

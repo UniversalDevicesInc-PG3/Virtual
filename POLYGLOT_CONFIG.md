@@ -12,7 +12,7 @@ Required for variable write access
 - generic
 - temperature     ... *Farenheit units*
 - temperaturec    ... *Celcius units*
-- temperaturecr   ... *raw no-units*
+- temperaturecr   ... *raw no-units DEPRECIATED AS SAME AS CELCIUS*
 - garage
 
 ## Example Configurations
