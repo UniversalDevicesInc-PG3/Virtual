@@ -95,7 +95,7 @@ class Controller(udi_interface.Node):
         self.poly.subscribe(self.poly.CUSTOMPARAMS, self.parameterHandler)
         self.poly.subscribe(self.poly.CUSTOMTYPEDPARAMS, self.typedParameterHandler)
         self.poly.subscribe(self.poly.CUSTOMTYPEDDATA, self.typedDataHandler)
-        self.poly.subscribe(self.poly.POLL, self.poll)
+        # self.poly.subscribe(self.poly.POLL, self.poll)
         self.poly.subscribe(self.poly.STOP, self.stop)
         self.poly.subscribe(self.poly.DISCOVER, self.discover)
         self.poly.subscribe(self.poly.ADDNODEDONE, self.node_queue)
@@ -270,17 +270,8 @@ class Controller(udi_interface.Node):
     """
     def handleLevelChange(self, level):
         LOGGER.info('New log level: {}'.format(level))
-
             
-    """
-    Called via the POLL event.  The POLL event is triggerd at
-    the intervals specified in the node server configuration. There
-    are two separate poll events, a long poll and a short poll. Which
-    one is indicated by the flag.  flag will hold the poll type either
-    'longPoll' or 'shortPoll'.
-
-    Use this if you want your node server to do something at fixed
-    intervals.
+    # poll NOT required in this node, keeping as comment for easy debugging
     """
     def poll(self, flag):
         # pause updates when in discovery
@@ -289,12 +280,9 @@ class Controller(udi_interface.Node):
         else:
             if 'longPoll' in flag:
                 LOGGER.debug('longPoll (controller)')
-                for node in self.poly.nodes():
-                    if node != self:
-                        node.getDataFromID()
-                    time.sleep(float(self.pullDelay))
             else:
                 LOGGER.debug('shortPoll (controller)')
+    """
  
     def query(self, command=None):
         """

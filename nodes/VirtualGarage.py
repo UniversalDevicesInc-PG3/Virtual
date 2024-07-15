@@ -600,6 +600,7 @@ class VirtualGarage(udi_interface.Node):
                     LOGGER.error(f'r: {_r}')
             except Exception as ex:
                 LOGGER.error(f'There was an error with the value pull or Parse: {ex}')
+                time.sleep(2)
         return success, _data
 
     def pullFromRatgdo(self, get):
@@ -618,6 +619,7 @@ class VirtualGarage(udi_interface.Node):
             success = True
         except Exception as ex:
             LOGGER.error(f"error: {ex}")
+            time.sleep(2)
         return success, _data
 
     def updateAll(self):

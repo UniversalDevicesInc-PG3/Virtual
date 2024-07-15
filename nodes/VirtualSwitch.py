@@ -14,12 +14,13 @@ import subprocess
 # external libraries
 import udi_interface
 
+# constants
 LOGGER = udi_interface.LOGGER
 
 class VirtualSwitch(udi_interface.Node):
     id = 'virtualswitch'
 
-    """ This is class represents a simple virtual switch / relay / light.
+    """ This class represents a simple virtual switch / relay / light.
     This device can be made a part of a scene to provide easy indication
     for the scene.  It can also be used as control or status in a program
     and manipulated by then or else.
@@ -145,10 +146,6 @@ class VirtualSwitch(udi_interface.Node):
         LOGGER.debug(command)
         self.setDriver('ST', 0)
         self.switchStatus = 0
-        self.storeValues()
-
-    def getDataFromID(self):
-        """ called by Controller"""
         self.storeValues()
 
     def query(self, command=None):

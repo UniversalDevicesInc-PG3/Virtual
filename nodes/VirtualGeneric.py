@@ -14,12 +14,13 @@ import subprocess
 #external libraries
 import udi_interface
 
+# constants
 LOGGER = udi_interface.LOGGER
 
 class VirtualGeneric(udi_interface.Node):
     id = 'virtualgeneric'
 
-    """ This is class represents a simple virtual generic or dimmer switch / relay.
+    """ This class represents a simple virtual generic or dimmer switch / relay.
     This device can be made a part of a scene to provide easy indication
     for the scene.  It can also be used as control or status in a program
     and manipulated by then or else.
@@ -171,10 +172,6 @@ class VirtualGeneric(udi_interface.Node):
         _level = int(command.get('value'))
         self.setDriver('ST', _level)
         self.level = _level
-        self.storeValues()
-
-    def getDataFromID(self):
-        """ called by Controller"""
         self.storeValues()
 
     def query(self, command=None):
