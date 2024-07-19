@@ -59,7 +59,6 @@ class VirtualGeneric(udi_interface.Node):
         START: used to create/check/load DB file
         POLL: not needed as no timed updates for this node
         Controller node calls:
-          self.getDataFromId() every longPoll
           self.deleteDB() when ISY deletes the node or discovers it gone
         """
         super().__init__(polyglot, primary, address, name)

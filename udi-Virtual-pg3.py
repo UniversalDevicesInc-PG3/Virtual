@@ -23,8 +23,10 @@ LOGGER = udi_interface.LOGGER
 VERSION = '3.1.10'
 """
 3.1.10
-TODO clean up code
-TODO move db files to subfolder
+DONE rewrite switch, dimmer, temp, tempc, garage
+DONE docs
+DONE move db files to subfolder
+INPROCESS garage switch from polling to events
 TODO Bonjour discovery is sometimes slow
 
 3.1.9

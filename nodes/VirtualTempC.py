@@ -57,18 +57,15 @@ class VirtualTempC(udi_interface.Node):
     'GV12': raw to precision
     'GV13': Fahrenheit to Celsius
 
-    'setTemp'       : set temperature to specific number
-    'setAction1'    : set Action 1 None, push, pull
-    'setAction1id'  : set Action 1 id
-    'setAction1type': set Action 1 type
-    'setAction2'    : set Action 2 None, push, pull
-    'setAction2id'  : set Action 2 id
-    'setAction2type': set Action 2 type
-    'setCtoF'       : set Celsius to Fahrenheit
-    'setRawToPrec'  : set Raw To Precision
-    'resetStats'    : reset Statistics
-    'deleteDB'      : delete Database
-
+    'setTemp'           : set temperature to specific number
+    'setAction[1,2]'    : set Action 1,2 None, push, pull
+    'setAction[1,2]id'  : set Action 1,2 id
+    'setAction[1,2]type': set Action 1,2 type
+    'setCtoF'           : set Celsius to Fahrenheit
+    'setRawToPrec'      : set Raw To Precision
+    'resetStats'        : reset Statistics
+    'deleteDB'          : delete Database
+    
     Class Methods (generic):
     setDriver('ST', 1, report = True, force = False):
         This sets the driver 'ST' to 1. If report is False we do not report
@@ -88,31 +85,22 @@ class VirtualTempC(udi_interface.Node):
         :param name: This nodes name
 
         class variables:
-        self.prevVal storage of last temperature value
-        self.tempVal storage of current temperature value
-        self.currentTime timestamp
-        self.lastUpdateTime last time we updated the value
-        self.highTemp range of high temp, set very low on install or db reset
-        self.lowTemp range of low temp, set very high on install or db reset
-        self.previousHigh storage of previous high
-        self.previousLow storage of previous low
-        self.prevAvgTemp storage of previous average
-        self.currentAvgTemp storage of current average temp
-        self.action1 none, push, pull
-        self.action1id id of variable,  0 - 400
-        self.action1type State var or init, Int var or init, 0 - 2
-        self.action2 none, push, pull
-        self.action2id id of variable,  0 - 400
-        self.action2type State var or init, Int var or init, 0 - 2
+        self.prevVal, tempVal storage of last, current temperature value
+        self.lastUpdateTime timestamps
+        self.highTemp, lowTemp range of high temp, set to None on init
+         self.previousHigh, previousLow storage of previous range
+        self.prevAvgTemp, currentAvgTemp storage of averages
+        self.action1, action2 none, push, pull
+        self.action1id, action1id id of variable,  0=None, 1 - 400
+        self.action1type, action2type  State var or init, Int var or init, 1 - 4
         self.RtoPrec Raw to precision conversion
         self.CtoF Celsius to Fahrenheit conversion
         self.pullError True or False
 
         subscribes:
         START: used to create/check/load DB file
-        POLL: not needed as no timed updates for this node TODO call from Controller?
+        POLL: shortPoll for updates
         Controller node calls:
-          self.getDataFromId() every longPoll
           self.deleteDB() when ISY deletes the node or discovers it gone
         """
         super().__init__(polyglot, primary, address, name)
@@ -125,7 +113,6 @@ class VirtualTempC(udi_interface.Node):
 
         self.prevVal = 0.0
         self.tempVal = 0.0
-        self.currentTime = 0.0
         self.lastUpdateTime = 0.0
         self.highTemp = None
         self.lowTemp = None
@@ -149,7 +136,6 @@ class VirtualTempC(udi_interface.Node):
     def start(self):
         """ START event subscription above """
         self.isy = ISY(self.poly)
-        self.currentTime = time.time()
         self.lastUpdateTime = time.time()
         self.setDriver('GV2', 0.0)
         self.createDBfile()
@@ -255,8 +241,8 @@ class VirtualTempC(udi_interface.Node):
         self.setDriver('GV10', self.action2type)
         self.RtoPrec = existing['RtoPrec']
         self.setDriver('GV12', self.RtoPrec)
-        self.CtoF = existing['CtoF']
-        self.setDriver('GV13', self.CtoF)
+        self.FtoC = existing['FtoC']
+        self.setDriver('GV13', self.FtoC)
 
     def setAction1(self, command):
         self.action1 = int(command.get('value'))
@@ -325,7 +311,6 @@ class VirtualTempC(udi_interface.Node):
                 r = rx.toxml(encoding=None, standalone=None)
                 # _content = (r.getElementsByTagName("var")[0].getElementsByTagName("val")[0].firstChild).toxml()
                 LOGGER.info(f'Type-Id:{_type}-{_id}, Content: {r}')
-                time.sleep(float(self.controller.parseDelay))
             except Exception as e:
                 LOGGER.error('There was an error with the value pull: ' + str(e))
                 self.pullError = True
@@ -343,7 +328,7 @@ class VirtualTempC(udi_interface.Node):
             self.pullError = False
 
     def setTemp(self, command):
-        LOGGER.info(command)
+        LOGGER.debug(command)
         self.setDriver('GV2', 0.0)
         self.lastUpdateTime = time.time()
         self.prevVal = self.tempVal
@@ -405,20 +390,15 @@ class VirtualTempC(udi_interface.Node):
         self.prevTemp = None
         self.tempVal = None
         self.setDriver('GV1', 0)
-        #time.sleep(.1)
         self.setDriver('GV5', 0)
-        #time.sleep(.1)
         self.setDriver('GV3', 0)
-        #time.sleep(.1)
         self.setDriver('GV4', 0)
-        #time.sleep(.1)
         self.setDriver('ST', 0)
         self.storeValues()
 
     def update(self):
         """ called by Node shortPoll """
-        _currentTime = time.time()
-        _sinceLastUpdate = round(((_currentTime - self.lastUpdateTime) / 60), 1)
+        _sinceLastUpdate = round(((time.time() - self.lastUpdateTime) / 60), 1)
         if _sinceLastUpdate < 1440:
             self.setDriver('GV2', _sinceLastUpdate)
         else:

@@ -46,7 +46,7 @@ Key (var ID)    Value (device type)
   82              {"type": "temperature", "name": "lake temperature"}
   85              {"id": "85", "type": "temperaturec", "name": "garden temp"}
   100             {"type": "temperaturecr", "name": "raw temp"}
-  200             {"type": "garage", "name": "garage door", "ratgdo": True}
+  200             {"type": "garage", "name": "garage door", "ratgdo": "True"}
 ```
 
 ### YAML Configuration

@@ -66,10 +66,6 @@ class Controller(udi_interface.Node):
         self.primary = primary
         self.address = address
         self.name = name
-        self.parseDelay = 0.1
-        self.pullError = False
-        self.pullDelay = 0.1
-
 
         self.n_queue = []
         self.last = 0.0
@@ -181,11 +177,7 @@ class Controller(udi_interface.Node):
         self.devlist = []
         for key,val in params.items():
             a = key
-            if a == "parseDelay":
-                self.parseDelay = float(val)
-            elif a == "pullDelay":
-                self.pullDelay = float(val)
-            elif a.isdigit():
+            if a.isdigit():
                 if val in {'switch', 'temperature', 'temperaturec', 'temperaturecr', 'generic', 'dimmer'}:
                     name = str(val) + ' ' + str(key)
                     device = {'id': a, 'type': val, 'name': name}
@@ -232,7 +224,6 @@ class Controller(udi_interface.Node):
                     
         LOGGER.info('checkParams is complete')
         LOGGER.info(f'checkParams: self.devlist: {self.devlist}')
-        LOGGER.info('Pull Delay set to %s seconds, Parse Delay set to %s seconds', self.pullDelay, self.parseDelay)
         self.valid_configuration = True
         return True
 
