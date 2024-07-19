@@ -80,7 +80,7 @@ class VirtualGarage(udi_interface.Node):
     'GV4' : remote-lock Unlocked/Locked      
     'GV5' : obstruction Clear/Obstructed
     'GV6' : time since last update in minutes
-    'GV7' : variable type integer or state
+    'GV7' : time garage open = not closed
 
     'query'         : query all vars
     'ltOn'          : light on
@@ -132,6 +132,7 @@ class VirtualGarage(udi_interface.Node):
         self.name = name
 
         self.lastUpdateTime = 0.0
+        self.openTime = 0.0
 
         self.light = 0
         self.lightT = 1
@@ -733,8 +734,11 @@ class VirtualGarage(udi_interface.Node):
             self.setDriver('GV6', 9999)
 
         if self.door != 0:
-            _openTimeDelta = round((_currentTime - self.lastUpdateTime), 1)
+            if self.openTime == 0.0:
+                self.openTime = _currentTime
+            _openTimeDelta = round((_currentTime - self.openTime), 1)
         else:
+            self.openTime = 0.0
             _openTimeDelta = 0
         self.setDriver('GV7', _openTimeDelta)
         self.updatingAll = 0
