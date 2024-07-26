@@ -643,7 +643,6 @@ class VirtualGarage(udi_interface.Node):
         return success
     
     def pullFromRatgdo(self, get):
-        success = False
         _data = {}
         resTxt = f'{self.ratgdo}{get}'
         # LOGGER.debug(f'get {resTxt}')
@@ -653,13 +652,13 @@ class VirtualGarage(udi_interface.Node):
                 LOGGER.debug(f"res.status_code = {res.status_code}")
             else:
                 LOGGER.error(f"res.status_code = {res.status_code}")
+                return False, {}
             _data = res.json()
             LOGGER.debug(f"{get} = {_data}")
-            success = True
+            return True, _data
         except Exception as ex:
             LOGGER.error(f"error: {ex}")
-            time.sleep(2)
-        return success, _data
+            return False, {}
 
     def getRatgdoEvents(self):
         try:

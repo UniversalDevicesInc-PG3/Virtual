@@ -91,7 +91,7 @@ class Controller(udi_interface.Node):
         self.poly.subscribe(self.poly.CUSTOMPARAMS, self.parameterHandler)
         self.poly.subscribe(self.poly.CUSTOMTYPEDPARAMS, self.typedParameterHandler)
         self.poly.subscribe(self.poly.CUSTOMTYPEDDATA, self.typedDataHandler)
-        # self.poly.subscribe(self.poly.POLL, self.poll)
+        self.poly.subscribe(self.poly.POLL, self.poll)
         self.poly.subscribe(self.poly.STOP, self.stop)
         self.poly.subscribe(self.poly.DISCOVER, self.discover)
         self.poly.subscribe(self.poly.ADDNODEDONE, self.node_queue)
@@ -264,8 +264,6 @@ class Controller(udi_interface.Node):
     def handleLevelChange(self, level):
         LOGGER.info('New log level: {}'.format(level))
             
-    # poll NOT required in this node, keeping as comment for easy debugging
-    """
     def poll(self, flag):
         # pause updates when in discovery
         if self.discovery:
@@ -273,9 +271,10 @@ class Controller(udi_interface.Node):
         else:
             if 'longPoll' in flag:
                 LOGGER.debug('longPoll (controller)')
+                self.heartbeat()
             else:
                 LOGGER.debug('shortPoll (controller)')
-    """
+
  
     def query(self, command=None):
         """
