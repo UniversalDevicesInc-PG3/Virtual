@@ -112,6 +112,10 @@ devices:
   doorId: 61
   commandT: 1
   commandId: 129
+  motorT: 1
+  motorId: 132
+  positionT: 1
+  positionId: 134
   motionT: 1
   motionId: 130
   lockT: 1

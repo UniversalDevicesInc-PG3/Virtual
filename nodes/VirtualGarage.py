@@ -12,7 +12,8 @@ import shelve
 import os.path
 import subprocess
 import ipaddress
-import json
+import yaml
+import re
 from xml.dom.minidom import parseString
 
 # external imports
@@ -47,6 +48,7 @@ BUTTON = "/binary_sensor/button"
 LIGHT = "/light/light"
 DOOR = "/cover/door"
 LOCK_REMOTES = "/lock/lock_remotes"
+MOTOR = "/binary_sensor/motor"
 MOTION = "/binary_sensor/motion"
 MOTOR = "/binary_sensor/motor"
 OBSTRUCT = "/binary_sensor/obstruction"
@@ -81,6 +83,8 @@ class VirtualGarage(udi_interface.Node):
     'GV5' : obstruction Clear/Obstructed
     'GV6' : time since last update in minutes
     'GV7' : time garage open = not closed
+    'GV8' : motor status On/Off
+    'GV8' : door position
 
     'query'         : query all vars
     'ltOn'          : light on
@@ -143,6 +147,12 @@ class VirtualGarage(udi_interface.Node):
         self.dcommand = 0
         self.dcommandT = 1
         self.dcommandId = 0
+        self.motor = 0
+        self.motorT = 1
+        self.motorId = 0
+        self.position = 0
+        self.positionT = 1
+        self.positionId = 0
         self.motion = 0
         self.motionT = 1
         self.motionId = 0
@@ -167,7 +177,7 @@ class VirtualGarage(udi_interface.Node):
         self.eventTimer = 0
 
         self.ratgdo_do_poll = True
-        self.ratgdo_do_events = False
+        self.ratgdo_do_events = True
         
         self.poly.subscribe(self.poly.START, self.start, address)
         self.poly.subscribe(self.poly.POLL, self.poll)
@@ -176,27 +186,34 @@ class VirtualGarage(udi_interface.Node):
     def start(self):
         """ START event subscription above """
         self.isy = ISY(self.poly)
+        self.firstPass = True
         self.dCommand = 0
         self.bonjourOnce = True
         self.getConfigData()
         self.resetTime()
         self.createDBfile()
+        if self.ratgdo and self.ratgdo_do_events:
+            while not self.ratgdoOK:
+                time.sleep(2)
+            while True:
+                self.getRatgdoEvents()
+                LOGGER.error('start events dropped out')
+                time.sleep(10)
         
     def poll(self, flag):
         """ POLL event subscription above """
         LOGGER.debug(f"POLLING: {flag} {self.name}")
         if 'longPoll' in flag:
-            pass
+            if self.ratgdo and self.ratgdoOK:
+                if self.ratgdo_do_poll:
+                    self.getRatgdoDirect()
         else:
             if self.bonjourOnce and self.bonjourOn:
                 self.bonjourOnce = False
                 self.poly.bonjour('http', None, None)
-            if self.updatingAll <= 0:
-                self.updateAll()
-            elif 1 == self.updatingAll <=3:
-                self.updatingAll += 1
-            else:
-                self.updatingAll = 0
+            if not self.ratgdo:
+                self.updateVars()
+            self.updateISY()
 
     def createDBfile(self):
         """
@@ -260,7 +277,7 @@ class VirtualGarage(udi_interface.Node):
         self.obstruct = existing['obstruct']
 
     def getConfigData(self):
-        # repull config data for var data, light, door, dcommand, motion, lock, obstruction
+        # repull config data for var data, light, door, dcommand, motor, motion, lock, obstruction
         # var type & ID are optional, also, will pull with only ID assuming type = 1
         # ratgdo = nonexist, false, true or ip address, true assumes http://ratgdov25i-fad8fd.local
         success = False
@@ -302,6 +319,26 @@ class VirtualGarage(udi_interface.Node):
                 LOGGER.debug(f'self.dcommandId = {self.dcommandId}')
             except:
                 self.dcommandId = 0
+            try:
+                self.positionT = self.dev['positionT']
+                LOGGER.debug(f'self.positionT = {self.positionT}')
+            except:
+                self.positionT = 1
+            try:
+                self.positionId = self.dev['positionId']
+                LOGGER.debug(f'self.positionId = {self.positionId}')
+            except:
+                self.positionId = 0
+            try:
+                self.motorT = self.dev['motorT']
+                LOGGER.debug(f'self.motorT = {self.motorT}')
+            except:
+                self.motorT = 1
+            try:
+                self.motorId = self.dev['motorId']
+                LOGGER.debug(f'self.motorId = {self.motorId}')
+            except:
+                self.motorId = 0
             try:
                 self.motionT = self.dev['motionT']
                 LOGGER.debug(f'self.motionT = {self.motionT}')
@@ -411,34 +448,185 @@ class VirtualGarage(udi_interface.Node):
             except Exception as ex:
                 LOGGER.error(f"{post}: {ex}")
         
-    def sseProcess(self):
-        if not self.ratgdo:
-            self.ratgdo_sse = self.sseInit()
-        yy = str(self.ratgdo_sse)
-        try:
+    def getRatgdoEvents(self):
+        # MAYBE TODO log parsing eg DOOR state=CLOSED
+        timer = 0
+        msg = {}
+        while True:
+            self.sseEvents = self.sseProcess()
+            LOGGER.info('new process')
             while True:
-                LOGGER.info(yy)
-                yy = str(yy) + str(next(self.ratgdo_sse))
-        except:
-            pass
-        LOGGER.info(f"yy:{yy}")
-        return yy
+                LOGGER.debug(f'gIN: {timer}')
+                try:
+                    i = self.sseEvent()
+                except:
+                    break
+                LOGGER.debug(f'gOUT: {i}')
+                if i == {} or i == None:
+                    timer += 1
+                else:
+                    timer = 0
+                    self.ratgdo_event.append(i)
+                    LOGGER.info(self.ratgdo_event)
+                if timer >= 1000:
+                    break
+                while self.ratgdo_event != []:
+                    try:
+                        event = self.ratgdo_event[0]
+                        if event['event'] == 'ping':
+                            LOGGER.info('event:ping')
+                            self.ratgdo_event.remove(event)
+                        elif event['event'] == 'state':
+                            try:
+                                msg = event['data']
+                                id = msg['id']
+                            except:
+                                LOGGER.error(f'bad event data {event}')
+                                id = 'bad'
+                            finally:
+                                LOGGER.info(f"event:state: {id}")
+                                if id == 'light-light':
+                                    self.setRatgdoLight(msg)
+                                elif id == 'cover-door':
+                                    self.setRatgdoDoor(msg)
+                                elif id == 'binary_sensor-motor':
+                                    self.setRatgdoMotor(msg)
+                                elif id == 'binary_sensor-motion':
+                                    self.setRatgdoMotion(msg)
+                                elif id == 'lock-lock_remotes':
+                                    self.setRatgdoLock(msg)
+                                elif id == 'binary_sensor-obstruction': 
+                                    self.setRatgdoObstruct(msg)
+                                else:
+                                    LOGGER.warn(f'event:state - NO ACTION - {id}')
+                            self.ratgdo_event.remove(event)
+                        elif event['event'] == 'error':
+                            LOGGER.info('event:error')
+                            self.ratgdo_event.remove(event)
+                        elif event['event'] == 'log':
+                            LOGGER.info('event:log')
+                            self.ratgdo_event.remove(event)
+                            if 'Rebooting...' in event['data']:
+                                LOGGER.warn('API Rebooting...')
+                                break
+                        elif event['event'] == 'other':
+                            LOGGER.info('event:other')
+                            self.ratgdo_event.remove(event)
+                        else:
+                            LOGGER.error(f'event - NONE FOUND - <{event}>')
+                            self.ratgdo_event.remove(event)
+                    except:
+                        LOGGER.error("event error")
+                        break
+            LOGGER.error('Dropped out of getRatgdoEvents')
+            
+    def sseEvent(self):
+        x = self.sseEvents
+        event = {}
+        if True:
+            LOGGER.debug(f'eIN:')
+            i = next(x)
+            LOGGER.debug(f'eOUT: {i}')
+            if i == None:
+                event = {}
+            else:
+                if 'event' in i:
+                    event = i
+                    LOGGER.debug(f'dIN:')
+                    i = next(x)
+                    LOGGER.debug(f'dOUT: {i}')
+                    if i == None:
+                        LOGGER.debug(f'sseEvent: Data = None')
+                        event = dict(event = event, data = None)
+                        return None
+                    if 'data' in i:
+                        # LOGGER.debug(f'sseEvent: Data in i = {i}')
+                        if type(i) == str:
+                            i = dict(data = i.replace('data','').replace(': ', ''))
+                        try:
+                            event = event | i
+                        except:
+                            event = dict(event = 'error', data = i['data'])
+                    else:
+                        LOGGER.debug(f'sseEvent: {event}')
+                        event = dict(event = event, data = str(i))
+                else:
+                    event = dict(event = 'other', data = str(i))
+        LOGGER.debug(f'sseEvent: {event}')
+        return event
+    
+    def sseProcess(self):
+        if True:
+            for i in self.sseInit():
+                if i == None:
+                    break
+                for ii in i:
+                    try:
+                        # ii = ii.encode(encoding='utf-8').decode()
+                        ii = ii.replace('\x1b[0;36m[D]', '')
+                        ii = ii.replace('\x1b[0m', '')
+                        ii = re.sub(r'\[.{3,8}:[0-9]{3}\]:', '', ii)
+                        ii = re.sub(r'Setting:', '', ii)
+                        ii = re.sub(r',"color_mode.*$', '}', ii)
+                        yield yaml.full_load(ii)
+                    except yaml.YAMLError as exc:
+                        if hasattr(exc, 'problem_mark'):
+                            err = f'  parser says\n {str(exc.problem_mark)}\n  {str(exc.problem)} '
+                            if exc.context != None:
+                                LOGGER.debug(err + str(exc.context))
+                            else:
+                                LOGGER.debug(err)
+                        else:
+                            LOGGER.error("other error while parsing yaml")
+                        LOGGER.debug(f"raw:{ii}")
+                        yield ii
+                    except Exception as ex:
+                        LOGGER.error(f"{ex} raw:{ii}")
+                        yield ii
+            LOGGER.error('Dropped out of Process')
+            time.sleep(5)
                     
     def sseInit(self):
         """ connect and pull from the ratgdo stream of events """
         self.ratgdo_event = []
-
-        url = f"http://{self.ratgdo}{EVENTS}"
+        # url = f"http://{self.ratgdo}{EVENTS}"
+        url = f"http://10.0.1.41{EVENTS}"
+        cs = 10
         LOGGER.info(f"url: {url}")
         try:
-            sse = requests.get(url, headers={"Accept": "application/x-ldjson"}, stream=True)
-            x = (s.rstrip() for s in sse)
-            # y = str("raw = {}".format(next(x)))
-            # LOGGER.info(y)
-        except:
-            x = False
-        return str(x)
-
+            yy = ['']
+            timer = 0
+            with requests.get(url, stream=True, timeout=30) as res:
+                for chunk in res.iter_content(chunk_size=cs):
+                    if chunk == -1:
+                        return
+                    chunk = chunk.decode('UTF-8')
+                    xx = chunk.splitlines()
+                    if yy[0] != '':
+                        xx[0] = yy[0] + xx[0]
+                    yy = xx
+                    if len(xx) > 1:
+                        yy = [xx[-1]]
+                        del xx[-1]
+                    elif len(xx) == 1 and len(xx[0]) >= cs:
+                        if xx[0].count('}') == 1:
+                            yy = ['']
+                        else:
+                            timer += 1
+                            # LOGGER.debug(f'timerCounter: {timer}')
+                            if timer > 1:
+                                LOGGER.error('timer break')
+                                yield xx
+                            else:
+                                timer = 0
+                                continue
+                    else:
+                        yy = ['']
+                    yield xx
+            LOGGER.error('stream done')
+        except Exception as ex:
+            LOGGER.error(ex)
+            
     def ltOn(self, command = None):
         LOGGER.debug(f'command:{command}')
         self.light = 1
@@ -525,18 +713,12 @@ class VirtualGarage(udi_interface.Node):
     def updateVars(self):
         success = False
         change = False
-        if self.ratgdo and self.ratgdoOK:
-            if self.ratgdo_do_poll:
-                success = self.getRatgdoDirect()
-            if self.ratgdo_do_events:
-                success = self.getRatgdoEvents()
-        else:
-            success, self.light, change = self.updateVar('light', self.light, self.lightT, self.lightId)
-            success, self.door, change = self.updateVar('door', self.door, self.doorT, self.doorId)
-            success, self.dcommand, change = self.updateVar('dcommand', self.dcommand, self.dcommandT, self.dcommandId)
-            success, self.motion, change = self.updateVar('motion', self.motion, self.motionT, self.motionId)
-            success, self.lock, change = self.updateVar('lock', self.lock, self.lockT, self.lockId)
-            success, self.obstruct, change = self.updateVar('obstruct', self.obstruct, self.obstructT, self.obstructId)
+        success, self.light, change = self.updateVar('light', self.light, self.lightT, self.lightId)
+        success, self.door, change = self.updateVar('door', self.door, self.doorT, self.doorId)
+        success, self.dcommand, change = self.updateVar('dcommand', self.dcommand, self.dcommandT, self.dcommandId)
+        success, self.motion, change = self.updateVar('motion', self.motion, self.motionT, self.motionId)
+        success, self.lock, change = self.updateVar('lock', self.lock, self.lockT, self.lockId)
+        success, self.obstruct, change = self.updateVar('obstruct', self.obstruct, self.obstructT, self.obstructId)
         if success:
             self.storeValues()
         return change
@@ -593,55 +775,99 @@ class VirtualGarage(udi_interface.Node):
     def getRatgdoDirect(self):
         success = False
         _data = 0
-        state = None
         success, _data = self.pullFromRatgdo(LIGHT)
         if success:
-            state = _data['state']
-            LOGGER.debug(f"id: {_data['id']}, state: {state}")
-            if state == 'ON':
-                self.light = 1
-            elif state == 'OFF':
-                self.light = 0
+            self.setRatgdoLight(_data)
             success, _data = self.pullFromRatgdo(DOOR)
             if success:
-                state = _data['state']
-                LOGGER.debug(f"id: {_data['id']}, value: {_data['value']}, state: {state}")
-                if state == 'CLOSED':
-                    self.door = 0
-                elif state == 'OPEN':
-                        self.door = 1
-                elif state == 'OPENING':
-                        self.door = 2
-                elif state == 'STOPPED':
-                        self.door = 3
-                elif state == 'CLOSING':
-                        self.door = 4
+                self.setRatgdoDoor(_data)
                 success, _data = self.pullFromRatgdo(MOTION)
                 if success:
-                    state = _data['state']
-                    LOGGER.debug(f"id: {_data['id']}, value: {_data['value']}, state: {_data['state']}")
-                    if state == 'ON':
-                        self.motion = 1
-                    elif state =='OFF':
-                        self.motion = 0
-                    success, _data = self.pullFromRatgdo(LOCK_REMOTES)
+                    self.setRatgdoMotor(_data)
+                    success, _data = self.pullFromRatgdo(MOTOR)
                     if success:
-                        state = _data['state']
-                        LOGGER.debug(f"id: {_data['id']}, value: {_data['value']}, state: {state}")
-                        if state == 'LOCKED':
-                            self.lock = 1
-                        elif state == 'UNLOCKED':
-                            self.lock = 0
-                        success, _data = self.pullFromRatgdo(OBSTRUCT)
+                        self.setRatgdoMotion(_data)
+                        success, _data = self.pullFromRatgdo(LOCK_REMOTES)
                         if success:
-                            state = _data['state']
-                            LOGGER.debug(f"id: {_data['id']}, value: {_data['value']}, state: {_data['state']}")
-                            if state == 'ON':
-                                self.obstruct = 1
-                            elif state == 'OFF':
-                                self.obstruct = 0
+                            self.setRatgdoLock(_data)
+                            success, _data = self.pullFromRatgdo(OBSTRUCT)
+                            if success:
+                                self.setRatgdoObstruct(_data)
+        LOGGER.info(f'success = {success}')
         return success
-    
+                                
+    def setRatgdoLight(self, _data):
+        state = _data['state']
+        LOGGER.debug(f"id: {_data['id']}, state: {state}")
+        if state == 'ON':
+            self.light = 1
+        elif state == 'OFF':
+            self.light = 0
+
+    def setRatgdoDoor(self, _data):
+        state = _data['state']
+        value = int(round(_data['value'] * 100))
+        current_operation = _data['current_operation']
+        LOGGER.debug(f"id: {_data['id']}, value: {value}, state: {state}, current: {current_operation}")
+
+        if current_operation == 'IDLE':
+            if state == 'CLOSED':
+                self.door = 0
+            elif state == 'OPEN':
+                    self.door = 100
+            elif state == 'OPENING':
+                    self.door = 104
+            elif state == 'STOPPED':
+                    self.door = 102
+            elif state == 'CLOSING':
+                    self.door = 103
+            else: # UNKNOWN
+                    self.door = 101
+        elif current_operation == 'OPENING':
+            self.door = 104
+        elif current_operation == 'CLOSING':
+            self.door = 103
+            
+        # check position
+        if 0 <= value <= 100:
+            LOGGER.info(f"value True, value: {value}")
+            self.position = value
+        else:
+            LOGGER.info(f"value False, value: {value}")
+            self.position = 101
+
+    def setRatgdoMotor(self, _data):
+        state = _data['state']
+        LOGGER.debug(f"id: {_data['id']}, value: {_data['value']}, state: {state}")
+        if state == 'ON':
+            self.motor = 1
+        elif state =='OFF':
+            self.motor = 0
+
+    def setRatgdoMotion(self, _data):
+        state = _data['state']
+        LOGGER.debug(f"id: {_data['id']}, value: {_data['value']}, state: {state}")
+        if state == 'ON':
+            self.motion = 1
+        elif state =='OFF':
+            self.motion = 0
+
+    def setRatgdoLock(self, _data):
+        state = _data['state']
+        LOGGER.debug(f"id: {_data['id']}, value: {_data['value']}, state: {state}")
+        if state == 'LOCKED':
+            self.lock = 1
+        elif state == 'UNLOCKED':
+            self.lock = 0
+
+    def setRatgdoObstruct(self, _data):
+        state = _data['state']
+        LOGGER.debug(f"id: {_data['id']}, value: {_data['value']}, state: {state}")
+        if state == 'ON':
+            self.obstruct = 1
+        elif state == 'OFF':
+            self.obstruct = 0
+                                
     def pullFromRatgdo(self, get):
         _data = {}
         resTxt = f'{self.ratgdo}{get}'
@@ -660,46 +886,16 @@ class VirtualGarage(udi_interface.Node):
             LOGGER.error(f"error: {ex}")
             return False, {}
 
-    def getRatgdoEvents(self):
-        try:
-            event = list(filter(lambda events: events['event'] == 'ping', self.ratgdo_event))
-            if event:
-                event = event[0]
-                LOGGER.warn('event - ping - {}'.format(event))
-                self.ratgdo_event.remove(event)
-            event = list(filter(lambda events: events['event'] == 'state', self.ratgdo_event))
-            if event:
-                event = event[0]
-                LOGGER.warn('event - state - {}'.format(event))
-                self.ratgdo_event.remove(event)
-        except:
-            LOGGER.error("LongPoll event error")
-        LOGGER.info("event(total) = {}".format(self.ratgdo_event))
-        try:
-            if self.ratgdoOK:
-                yy = self.sseProcess()
-                # if yy != {}:
-                #     self.ratgdo_event.append(yy)
-                LOGGER.info(f"{self.eventTimer} new event = {yy}")
-                self.eventTimer = 0
-        except:
-            self.eventTimer += 1
-            LOGGER.info(f"increment eventTimer = {self.eventTimer}")
-            if self.eventTimer > self.eventTimeout:
-                self.ratgdo_sse = self.sseInit()
-                LOGGER.info(f"eventTimeout")
-                self.eventTimer = 0
-        return True # success
-
-    def updateAll(self):
-        self.updatingAll = 1
+    def updateISY(self):
         _currentTime = time.time()
-        if self.updateVars() or self.firstPass:
+        if self.firstPass:
             self.setDriver('GV0', self.light)
             if self.getDriver('GV1') != self.door:
                 self.dcommand = 0
             self.setDriver('GV1', self.door)
             self.setDriver('GV2', self.dcommand)
+            self.setDriver('GV8', self.motor)
+            self.setDriver('GV9', self.position)
             self.setDriver('GV3', self.motion)
             self.setDriver('GV4', self.lock)
             self.setDriver('GV5', self.obstruct)
@@ -716,6 +912,15 @@ class VirtualGarage(udi_interface.Node):
                 self.resetTime()
             if self.getDriver('GV2') != self.dcommand:
                 self.setDriver('GV2', self.dcommand)
+                self.resetTime()
+            if self.getDriver('GV8') != self.motor:
+                self.setDriver('GV8', self.motor)
+                self.resetTime()
+            if self.getDriver('GV9') != self.position:
+                self.setDriver('GV9', self.position)
+                self.resetTime()
+            if self.getDriver('GV3') != self.motor:
+                self.setDriver('GV3', self.motor)
                 self.resetTime()
             if self.getDriver('GV3') != self.motion:
                 self.setDriver('GV3', self.motion)
@@ -740,7 +945,6 @@ class VirtualGarage(udi_interface.Node):
             self.openTime = 0.0
             _openTimeDelta = 0
         self.setDriver('GV7', _openTimeDelta)
-        self.updatingAll = 0
 
     def resetStats(self, command = None):
         LOGGER.info('Resetting Stats')
@@ -750,15 +954,12 @@ class VirtualGarage(udi_interface.Node):
         self.storeValues()
 
     def resetTime(self):
+        """ Reset the last update time to now """
         self.lastUpdateTime = time.time()
         self.setDriver('GV6', 0.0)
         
     def query(self, command = None):
-        """
-        Called by ISY to report all drivers for this node. This is done in
-        the parent class, so you don't need to override this method unless
-        there is a need.
-        """
+        """ Query for updated values """ 
         LOGGER.debug(f'command:{command}')
         self.reportDrivers()
 
@@ -774,7 +975,9 @@ class VirtualGarage(udi_interface.Node):
     """
     drivers = [
         {"driver": "GV0", "value": 0, "uom": 2},  #light
-        {"driver": "GV1", "value": 0, "uom": 25}, #door status
+        {"driver": "GV1", "value": 0, "uom": 97}, #door status
+        {'driver': 'GV8', 'value': 0, 'uom': 2},  #motor
+        {"driver": "GV9", "value": 0, "uom": 97}, #door position
         {"driver": "GV2", "value": 0, "uom": 25}, #door command
         {"driver": "GV3", "value": 0, "uom": 2},  #motion
         {"driver": "GV4", "value": 0, "uom": 2},  #lock

@@ -20,14 +20,18 @@ import udi_interface
 
 LOGGER = udi_interface.LOGGER
 
-VERSION = '3.1.10'
+VERSION = '3.1.11'
 """
+3.1.11
+DONE poll on longPoll, events sse
+DONE add motor, door position
+DONE update docs
+TODO Bonjour discovery is sometimes slow
+
 3.1.10
 DONE rewrite switch, dimmer, temp, tempc, garage
 DONE docs
 DONE move db files to subfolder
-INPROCESS garage switch from polling to events
-TODO Bonjour discovery is sometimes slow
 
 3.1.9
 DONE Garage device read status directly from Ratgdo through ESPHome RESTapi
