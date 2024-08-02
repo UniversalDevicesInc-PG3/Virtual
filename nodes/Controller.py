@@ -9,10 +9,10 @@ Controller class
 # std libraries
 import time
 import json
-import yaml
 import subprocess
 
 # external libraries
+import yaml
 import udi_interface
 
 # personal libraries

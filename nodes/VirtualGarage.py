@@ -12,12 +12,12 @@ import shelve
 import os.path
 import subprocess
 import ipaddress
-import yaml
 import re
 from xml.dom.minidom import parseString
 
 # external imports
 import requests
+import yaml
 import udi_interface
 
 # local imports
