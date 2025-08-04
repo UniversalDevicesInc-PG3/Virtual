@@ -523,7 +523,7 @@ class VirtualGarage(udi_interface.Node):
             with s.get(url,headers=None, stream=True, timeout=3) as gateway_sse:
                 for val in gateway_sse.iter_lines():
                     dval = val.decode('utf-8')
-                    LOGGER.debug(f"raw:{dval}")
+                    LOGGER.debug(f"raw decode:[{dval}]")
                     if val:                            
                         if e:
                             try:
@@ -539,6 +539,7 @@ class VirtualGarage(udi_interface.Node):
                                 continue
                             else:
                                 i = (dict(dval, data = None))
+                                LOGGER.debug(f"raw dict:[{i}]")
                                 self.ratgdo_event.append(i)
                                 success = True
         except requests.exceptions.Timeout:
