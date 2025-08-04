@@ -16,6 +16,7 @@ from xml.dom.minidom import parseString
 
 # external imports
 import requests
+import json
 import udi_interface
 
 # local imports
@@ -470,7 +471,7 @@ class VirtualGarage(udi_interface.Node):
                         self.ratgdo_event.remove(event)
                     elif event['event'] == 'state':
                         try:
-                            msg = event['data']
+                            msg = json.loads(event['data'])
                             id = msg['id']
                         except:
                             LOGGER.error(f'bad event data {event}')
@@ -537,7 +538,7 @@ class VirtualGarage(udi_interface.Node):
                                 e = dval.replace('event: ','')
                                 continue
                             else:
-                                i = (dict(event = dval, data = None))
+                                i = (dict(dval, data = None))
                                 self.ratgdo_event.append(i)
                                 success = True
         except requests.exceptions.Timeout:
