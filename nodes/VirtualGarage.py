@@ -12,12 +12,10 @@ import shelve
 import os.path
 import subprocess
 import ipaddress
-import re
 from xml.dom.minidom import parseString
 
 # external imports
 import requests
-import yaml
 import udi_interface
 
 # local imports
@@ -409,7 +407,7 @@ class VirtualGarage(udi_interface.Node):
                     if addr['name'] == RATGDO:
                         self.controller.Notices.delete('ratgdo')
                         self.ratgdo = addr['addresses'][0]
-                        LOGGER.warn(f"FOUND RATGDO@'{self.ratgdo}':ip: {addr['addresses']}, name: {addr['name']}")
+                        LOGGER.warning(f"FOUND RATGDO@'{self.ratgdo}':ip: {addr['addresses']}, name: {addr['name']}")
                         if self.ratgdoCheck():
                             self.bonjourOn = False
                         break
@@ -449,184 +447,138 @@ class VirtualGarage(udi_interface.Node):
                 LOGGER.error(f"{post}: {ex}")
         
     def getRatgdoEvents(self):
-        # MAYBE TODO log parsing eg DOOR state=CLOSED
         timer = 0
         msg = {}
         while True:
-            self.sseEvents = self.sseProcess()
-            LOGGER.info('new process')
-            while True:
-                LOGGER.debug(f'gIN: {timer}')
+            LOGGER.debug(f'gIN: {timer}')
+            try:
+                i = self.sseEvent()
+            except:
+                break
+            if not i:
+                timer += 1
+            else:
+                timer = 0
+                LOGGER.info(self.ratgdo_event)
+            if timer >= 1000:
+                break
+            while self.ratgdo_event != []:
                 try:
-                    i = self.sseEvent()
+                    event = self.ratgdo_event[0]
+                    if event['event'] == 'ping':
+                        LOGGER.info('event:ping')
+                        self.ratgdo_event.remove(event)
+                    elif event['event'] == 'state':
+                        try:
+                            msg = event['data']
+                            id = msg['id']
+                        except:
+                            LOGGER.error(f'bad event data {event}')
+                            id = 'bad'
+                        finally:
+                            LOGGER.info(f"event:state: {id}")
+                            if id == 'light-light':
+                                self.setRatgdoLight(msg)
+                            elif id == 'cover-door':
+                                self.setRatgdoDoor(msg)
+                            elif id == 'binary_sensor-motor':
+                                self.setRatgdoMotor(msg)
+                            elif id == 'binary_sensor-motion':
+                                self.setRatgdoMotion(msg)
+                            elif id == 'lock-lock_remotes':
+                                self.setRatgdoLock(msg)
+                            elif id == 'binary_sensor-obstruction': 
+                                self.setRatgdoObstruct(msg)
+                            else:
+                                LOGGER.warning(f'event:state - NO ACTION - {id}')
+                        self.ratgdo_event.remove(event)
+                    elif event['event'] == 'error':
+                        LOGGER.info('event:error')
+                        self.ratgdo_event.remove(event)
+                    elif event['event'] == 'log':
+                        LOGGER.info('event:log')
+                        self.ratgdo_event.remove(event)
+                        if 'Rebooting...' in event['data']:
+                            LOGGER.warning('API Rebooting...')
+                            break
+                    elif event['event'] == 'other':
+                        LOGGER.info('event:other')
+                        self.ratgdo_event.remove(event)
+                    else:
+                        LOGGER.error(f'event - NONE FOUND - <{event}>')
+                        self.ratgdo_event.remove(event)
                 except:
+                    LOGGER.error("event error")
                     break
-                LOGGER.debug(f'gOUT: {i}')
-                if i == {} or i == None:
-                    timer += 1
-                else:
-                    timer = 0
-                    self.ratgdo_event.append(i)
-                    LOGGER.info(self.ratgdo_event)
-                if timer >= 1000:
-                    break
-                while self.ratgdo_event != []:
-                    try:
-                        event = self.ratgdo_event[0]
-                        if event['event'] == 'ping':
-                            LOGGER.info('event:ping')
-                            self.ratgdo_event.remove(event)
-                        elif event['event'] == 'state':
-                            try:
-                                msg = event['data']
-                                id = msg['id']
-                            except:
-                                LOGGER.error(f'bad event data {event}')
-                                id = 'bad'
-                            finally:
-                                LOGGER.info(f"event:state: {id}")
-                                if id == 'light-light':
-                                    self.setRatgdoLight(msg)
-                                elif id == 'cover-door':
-                                    self.setRatgdoDoor(msg)
-                                elif id == 'binary_sensor-motor':
-                                    self.setRatgdoMotor(msg)
-                                elif id == 'binary_sensor-motion':
-                                    self.setRatgdoMotion(msg)
-                                elif id == 'lock-lock_remotes':
-                                    self.setRatgdoLock(msg)
-                                elif id == 'binary_sensor-obstruction': 
-                                    self.setRatgdoObstruct(msg)
-                                else:
-                                    LOGGER.warn(f'event:state - NO ACTION - {id}')
-                            self.ratgdo_event.remove(event)
-                        elif event['event'] == 'error':
-                            LOGGER.info('event:error')
-                            self.ratgdo_event.remove(event)
-                        elif event['event'] == 'log':
-                            LOGGER.info('event:log')
-                            self.ratgdo_event.remove(event)
-                            if 'Rebooting...' in event['data']:
-                                LOGGER.warn('API Rebooting...')
-                                break
-                        elif event['event'] == 'other':
-                            LOGGER.info('event:other')
-                            self.ratgdo_event.remove(event)
-                        else:
-                            LOGGER.error(f'event - NONE FOUND - <{event}>')
-                            self.ratgdo_event.remove(event)
-                    except:
-                        LOGGER.error("event error")
-                        break
             LOGGER.error('Dropped out of getRatgdoEvents')
             
     def sseEvent(self):
-        x = self.sseEvents
-        event = {}
-        if True:
-            LOGGER.debug(f'eIN:')
-            i = next(x)
-            LOGGER.debug(f'eOUT: {i}')
-            if i == None:
-                event = {}
-            else:
-                if 'event' in i:
-                    event = i
-                    LOGGER.debug(f'dIN:')
-                    i = next(x)
-                    LOGGER.debug(f'dOUT: {i}')
-                    if i == None:
-                        LOGGER.debug(f'sseEvent: Data = None')
-                        event = dict(event = event, data = None)
-                        return None
-                    if 'data' in i:
-                        # LOGGER.debug(f'sseEvent: Data in i = {i}')
-                        if type(i) == str:
-                            i = dict(data = i.replace('data','').replace(': ', ''))
-                        try:
-                            event = event | i
-                        except:
-                            event = dict(event = 'error', data = i['data'])
-                    else:
-                        LOGGER.debug(f'sseEvent: {event}')
-                        event = dict(event = event, data = str(i))
-                else:
-                    event = dict(event = 'other', data = str(i))
-        LOGGER.debug(f'sseEvent: {event}')
-        return event
-    
-    def sseProcess(self):
-        if True:
-            for i in self.sseInit():
-                if i == None:
-                    break
-                for ii in i:
-                    try:
-                        # ii = ii.encode(encoding='utf-8').decode()
-                        ii = ii.replace('\x1b[0;36m[D]', '')
-                        ii = ii.replace('\x1b[0m', '')
-                        ii = re.sub(r'\[.{3,8}:[0-9]{3}\]:', '', ii)
-                        ii = re.sub(r'Setting:', '', ii)
-                        ii = re.sub(r',"color_mode.*$', '}', ii)
-                        yield yaml.full_load(ii)
-                    except yaml.YAMLError as exc:
-                        if hasattr(exc, 'problem_mark'):
-                            err = f'  parser says\n {str(exc.problem_mark)}\n  {str(exc.problem)} '
-                            if exc.context != None:
-                                LOGGER.debug(err + str(exc.context))
-                            else:
-                                LOGGER.debug(err)
-                        else:
-                            LOGGER.error("other error while parsing yaml")
-                        LOGGER.debug(f"raw:{ii}")
-                        yield ii
-                    except Exception as ex:
-                        LOGGER.error(f"{ex} raw:{ii}")
-                        yield ii
-            LOGGER.error('Dropped out of Process')
-            time.sleep(5)
-                    
-    def sseInit(self):
-        """ connect and pull from the ratgdo stream of events """
-        self.ratgdo_event = []
-        # url = f"http://{self.ratgdo}{EVENTS}"
-        url = f"http://10.0.1.41{EVENTS}"
-        cs = 10
-        LOGGER.info(f"url: {url}")
+        success = False
+        url = f"http://{self.ratgdo}{EVENTS}"
         try:
-            yy = ['']
-            timer = 0
-            with requests.get(url, stream=True, timeout=30) as res:
-                for chunk in res.iter_content(chunk_size=cs):
-                    if chunk == -1:
-                        return
-                    chunk = chunk.decode('UTF-8')
-                    xx = chunk.splitlines()
-                    if yy[0] != '':
-                        xx[0] = yy[0] + xx[0]
-                    yy = xx
-                    if len(xx) > 1:
-                        yy = [xx[-1]]
-                        del xx[-1]
-                    elif len(xx) == 1 and len(xx[0]) >= cs:
-                        if xx[0].count('}') == 1:
-                            yy = ['']
+            LOGGER.debug(f"GET: {url}")
+            s = requests.Session()
+            e = {}
+            with s.get(url,headers=None, stream=True, timeout=3) as gateway_sse:
+                for val in gateway_sse.iter_lines():
+                    dval = val.decode('utf-8')
+                    LOGGER.debug(f"raw:{dval}")
+                    if val:                            
+                        if e:
+                            try:
+                                i = dict(event = e, data = dval.replace('data: ',''))
+                            except:
+                                i = dict(event = e, data = 'error')
+                            self.ratgdo_event.append(i)
+                            success = True
+                            e = None
                         else:
-                            timer += 1
-                            # LOGGER.debug(f'timerCounter: {timer}')
-                            if timer > 1:
-                                LOGGER.error('timer break')
-                                yield xx
-                            else:
-                                timer = 0
+                            if 'event: ' in dval:
+                                e = dval.replace('event: ','')
                                 continue
-                    else:
-                        yy = ['']
-                    yield xx
-            LOGGER.error('stream done')
-        except Exception as ex:
-            LOGGER.error(ex)
-            
+                            else:
+                                i = (dict(event = dval, data = None))
+                                self.ratgdo_event.append(i)
+                                success = True
+        except requests.exceptions.Timeout:
+            LOGGER.debug(f"see timeout")
+        except requests.exceptions.RequestException as e:
+            LOGGER.debug(f"sse other error: {e}")
+        return success
+
+# return ratgdo_event (not self)
+# call with self.ratgdo_event = self.sseEvent()
+
+        # event = {}
+        # if True:
+        #     if i == None:
+        #         event = {}
+        #     else:
+        #         if 'event' in i:
+        #             event = i
+        #             LOGGER.debug(f'dIN:')
+        #             i = next(x)
+        #             LOGGER.debug(f'dOUT: {i}')
+        #             if i == None:
+        #                 LOGGER.debug(f'sseEvent: Data = None')
+        #                 event = dict(event = event, data = None)
+        #                 return None
+        #             if 'data' in i:
+        #                 # LOGGER.debug(f'sseEvent: Data in i = {i}')
+        #                 if type(i) == str:
+        #                     i = dict(data = i.replace('data','').replace(': ', ''))
+        #                 try:
+        #                     event = event | i
+        #                 except:
+        #                     event = dict(event = 'error', data = i['data'])
+        #             else:
+        #                 LOGGER.debug(f'sseEvent: {event}')
+        #                 event = dict(event = event, data = str(i))
+        #         else:
+        #             event = dict(event = 'other', data = str(i))
+        # LOGGER.debug(f'sseEvent: {event}')
+        # return event
+                                   
     def ltOn(self, command = None):
         LOGGER.debug(f'command:{command}')
         self.light = 1

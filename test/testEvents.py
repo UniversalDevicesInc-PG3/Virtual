@@ -27,49 +27,43 @@ TURN_ON = "/turn_on"
 TURN_OFF = "/turn_off"
 TOGGLE = "/toggle"
 
-URL_EVENTS = 'http://{g}/events'
-gateway = RATGDO
-
+url = f"http://{RATGDO}{EVENTS}"
+ratgdo_event = []
 try:
-    if False:
-        with open('/Users/stephenjenkins/Projects/txt.json', 'r') as file:
-            data = file.read().splitlines()
-    else:
-        sse = []
-        url = URL_EVENTS.format(g=gateway)
-        for n in range(10):
-            try:
-                print(f"GET: {url}")
-                s = requests.Session()
-                state = False
-                with s.get(url,headers=None, stream=True, timeout=3) as gateway_sse:
-                    for val in gateway_sse.iter_lines():
-                        dval = val.decode('utf-8')
-                        print(f"dval:{dval}")                        
-                        if val:                            
-                            if 'event: state' in dval:
-                                print(f"{dval} == True")
-                                state = True
-                                continue
-                            if state:
-                                state = False
-                                i = dict(data = dval.replace('data: ',''))
-                                print(f"!! == {i}")
-                                try:
-                                    sse.append(json.loads(i['data']))
-                                    print(f"success:{sse}")
-                                except:
-                                    print(f"noadd:{val}")
-                                    pass
-            except requests.exceptions.Timeout:
-                print(f"see timeout error")
-            except requests.exceptions.RequestException as e:
-                print(f"sse error: {e}")
-
-        print(sse)
-        print("Done.")
+    print(f"GET: {url}")
+    s = requests.Session()
+    e = {}
+    with s.get(url,headers=None, stream=True, timeout=3) as gateway_sse:
+        for val in gateway_sse.iter_lines():
+            dval = val.decode('utf-8')
+            print(f"raw:{dval}")
+            if val:                            
+                if e:
+                    try:
+                        i = dict(event = e, data = dval.replace('data: ',''))
+                    except:
+                        i = dict(event = e, data = 'error')
+                    ratgdo_event.append(i)
+                    e = None
+                else:
+                    if 'event: ' in dval:
+                        e = dval.replace('event: ','')
+                        continue
+                    else:
+                        i = (dict(event = dval, data = None))
+                        ratgdo_event.append(i)                    
+except requests.exceptions.Timeout:
+    print(f"see timeout error")
+except requests.exceptions.RequestException as e:
+    print(f"sse error: {e}")
 except (KeyboardInterrupt, SystemExit):
     print(f"keyboard interupt")
 
+for val in ratgdo_event:
+    print(f"event: {val['event']}")
+    print(f"data: {val['data']}")
+    print()
 
+# return ratgdo_event (not self)
+# call with self.ratgdo_event = self.sseEvent()
 
