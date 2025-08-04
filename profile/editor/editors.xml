@@ -54,6 +54,9 @@
     <editor id="GCOMMAND">
         <range uom="25" subset="0,1,2,3,4" nls="GCOMMAND" />
     </editor>
+    <editor id="GMOTOR">
+        <range uom="2" subset="0,1" nls="GMOTOR" />
+    </editor>
     <editor id="GMOTION">
         <range uom="2" subset="0,1" nls="GMOTION" />
     </editor>

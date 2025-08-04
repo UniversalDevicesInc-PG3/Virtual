@@ -121,16 +121,19 @@ ST-GARAGE-GV4-NAME = Lock
 ST-GARAGE-GV5-NAME = Obstruction
 ST-GARAGE-GV6-NAME = UpdateTime
 ST-GARAGE-GV7-NAME = OpenTime
+ST-GARAGE-GV8-NAME = Motor
+ST-GARAGE-GV9-NAME = Position
 
 GLIGHT-0 = Off
 GLIGHT-1 = On
 GLIGHT-100 = On
 
 GDOOR-0 = Closed
-GDOOR-1 = Open
-GDOOR-2 = Opening
-GDOOR-3 = Stopped
-GDOOR-4 = Closing
+GDOOR-100 = Open
+GDOOR-101 = Unknown
+GDOOR-102 = Stopped
+GDOOR-103 = Closing
+GDOOR-104 = Opening
 
 GCOMMAND-0 = ---
 GCOMMAND-1 = Open
@@ -140,6 +143,9 @@ GCOMMAND-4 = Stop
 
 GMOTION-0 = Clear
 GMOTION-1 = Detected
+
+GMOTOR-0 = Off
+GMOTOR-1 = On
 
 GOBST-0 = Clear
 GOBST-1 = Obstructed

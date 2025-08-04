@@ -171,6 +171,8 @@
           <st id="GV0" editor="GLIGHT" />
           <st id="GV1" editor="GDOOR" />
           <st id="GV2" editor="GCOMMAND" />
+          <st id="GV8" editor="GMOTOR" />
+          <st id="GV9" editor="GDOOR" />
           <st id="GV3" editor="GMOTION" />
           <st id="GV4" editor="GLOCK" />
           <st id="GV5" editor="GOBST" />  

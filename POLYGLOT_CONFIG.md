@@ -12,7 +12,7 @@ Required for variable write access
 - generic
 - temperature     ... *Farenheit units*
 - temperaturec    ... *Celcius units*
-- temperaturecr   ... *raw no-units*
+- temperaturecr   ... *raw no-units DEPRECIATED AS SAME AS CELCIUS*
 - garage
 
 ## Example Configurations
@@ -46,7 +46,7 @@ Key (var ID)    Value (device type)
   82              {"type": "temperature", "name": "lake temperature"}
   85              {"id": "85", "type": "temperaturec", "name": "garden temp"}
   100             {"type": "temperaturecr", "name": "raw temp"}
-  200             {"type": "garage", "name": "garage door", "ratgdo": True}
+  200             {"type": "garage", "name": "garage door", "ratgdo": "True"}
 ```
 
 ### YAML Configuration
@@ -112,6 +112,10 @@ devices:
   doorId: 61
   commandT: 1
   commandId: 129
+  motorT: 1
+  motorId: 132
+  positionT: 1
+  positionId: 134
   motionT: 1
   motionId: 130
   lockT: 1

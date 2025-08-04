@@ -12,18 +12,34 @@ udi-Virtual-pg3 NodeServer/Plugin for EISY/Polisy
 
 """
 
-import udi_interface
+# std libraries
 import sys
+
+# external libraries
+import udi_interface
 
 LOGGER = udi_interface.LOGGER
 
-VERSION = '3.1.9'
+VERSION = '3.1.12'
 """
+3.1.12
+DONE rewrite sse events collection
+
+3.1.11
+DONE poll on longPoll, events sse
+DONE add motor, door position
+DONE update docs
+TODO Bonjour discovery is sometimes slow
+
+3.1.10
+DONE rewrite switch, dimmer, temp, tempc, garage
+DONE docs
+DONE move db files to subfolder
+
 3.1.9
 DONE Garage device read status directly from Ratgdo through ESPHome RESTapi
 DONE update docs for garage Ratgdo integration
 FIX  switch st uom from 2 True/False to 25 On/Off
-TODO Bonjour discovery is sometimes slow
 
 3.1.8
 DONE Garage device sends commands directly to Ratgdo through ESPHome RESTapi
@@ -52,7 +68,6 @@ DONE: ISY name changes based on updates to config / YAML / JSON
 DONE: YAML file option for configuration  
 DONE: JSON option for web based configuration  
 DONE: Discover button to update based on config updates  
-
 
 3.1.0
 DONE: move version history out of README to own file

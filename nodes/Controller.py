@@ -9,9 +9,10 @@ Controller class
 # std libraries
 import time
 import json
-import yaml
+import subprocess
 
 # external libraries
+import yaml
 import udi_interface
 
 # personal libraries
@@ -65,10 +66,6 @@ class Controller(udi_interface.Node):
         self.primary = primary
         self.address = address
         self.name = name
-        self.parseDelay = 0.1
-        self.pullError = False
-        self.pullDelay = 0.1
-
 
         self.n_queue = []
         self.last = 0.0
@@ -175,15 +172,12 @@ class Controller(udi_interface.Node):
         LOGGER.info('parmHandler Done...')
 
     def checkParams(self):
+        self.Notices.delete('config')
         params = self.Parameters
         self.devlist = []
         for key,val in params.items():
             a = key
-            if a == "parseDelay":
-                self.parseDelay = float(val)
-            elif a == "pullDelay":
-                self.pullDelay = float(val)
-            elif a.isdigit():
+            if a.isdigit():
                 if val in {'switch', 'temperature', 'temperaturec', 'temperaturecr', 'generic', 'dimmer'}:
                     name = str(val) + ' ' + str(key)
                     device = {'id': a, 'type': val, 'name': name}
@@ -202,6 +196,7 @@ class Controller(udi_interface.Node):
                         self.devlist.append(device)
                     except Exception as ex:
                         LOGGER.error(f"JSON parse exception: {ex} for  key: {a} the value: {val} created exeption: {ex}" )
+                        self.Notices['config'] = 'Bad configuration, please re-check.'
                         return False
             elif a == "devFile" or a == "devfile":
                 if val is not None:
@@ -229,7 +224,6 @@ class Controller(udi_interface.Node):
                     
         LOGGER.info('checkParams is complete')
         LOGGER.info(f'checkParams: self.devlist: {self.devlist}')
-        LOGGER.info('Pull Delay set to %s seconds, Parse Delay set to %s seconds', self.pullDelay, self.parseDelay)
         self.valid_configuration = True
         return True
 
@@ -269,18 +263,7 @@ class Controller(udi_interface.Node):
     """
     def handleLevelChange(self, level):
         LOGGER.info('New log level: {}'.format(level))
-
             
-    """
-    Called via the POLL event.  The POLL event is triggerd at
-    the intervals specified in the node server configuration. There
-    are two separate poll events, a long poll and a short poll. Which
-    one is indicated by the flag.  flag will hold the poll type either
-    'longPoll' or 'shortPoll'.
-
-    Use this if you want your node server to do something at fixed
-    intervals.
-    """
     def poll(self, flag):
         # pause updates when in discovery
         if self.discovery:
@@ -288,14 +271,12 @@ class Controller(udi_interface.Node):
         else:
             if 'longPoll' in flag:
                 LOGGER.debug('longPoll (controller)')
-                for node in self.poly.nodes():
-                    if node != self:
-                        node.getDataFromID()
-                    time.sleep(float(self.pullDelay))
+                self.heartbeat()
             else:
                 LOGGER.debug('shortPoll (controller)')
+
  
-    def query(self, command = None):
+    def query(self, command=None):
         """
         The query method will be called when the ISY attempts to query the
         status of the node directly.  You can do one of two things here.
@@ -304,12 +285,13 @@ class Controller(udi_interface.Node):
         device represented by the node and report back the current 
         status.
         """
+        LOGGER.debug(command)
         nodes = self.poly.getNodes()
         for node in nodes:
             nodes[node].reportDrivers()
 
     def updateProfile(self,command):
-        LOGGER.info('update profile')
+        LOGGER.info(f'update profile: {command}')
         st = self.poly.updateProfile()
         return st
 
@@ -318,6 +300,12 @@ class Controller(udi_interface.Node):
         Do shade and scene discovery here. Called from controller start method
         and from DISCOVER command received from ISY
         """
+        LOGGER.info(command)
+        try:
+            subprocess.call("rm db/*.db", shell=True)
+            LOGGER.info("db directory cleaned-up")
+        except Exception as e:
+            LOGGER.error(f"Database delete Error: {e}")
         self.checkParams()
         self.discoverNodes()
 
@@ -400,6 +388,7 @@ class Controller(udi_interface.Node):
         for node in nodes_get:
             if (node not in nodes_new):
                 LOGGER.info(f"need to delete node {node}")
+                node.deleteDB()
                 self.poly.delNode(node)
 
         self.discovery = False
@@ -441,13 +430,6 @@ class Controller(udi_interface.Node):
             self.reportCmd("DOF",2)
             self.hb = 0
 
-    def removeNoticesAll(self, command = None):
-        LOGGER.info('remove_notices_all: notices={}'.format(self.Notices))
-        # Remove all existing notices
-        self.Notices.clear()
-
-
-
     # Status that this node has. Should match the 'sts' section
     # of the nodedef file.
     drivers = [
@@ -459,6 +441,4 @@ class Controller(udi_interface.Node):
     commands = {
         'QUERY': query,
         'DISCOVER': discover,
-        'UPDATE_PROFILE': updateProfile,
-        'REMOVE_NOTICES_ALL': removeNoticesAll,
     }
