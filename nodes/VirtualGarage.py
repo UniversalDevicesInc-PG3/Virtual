@@ -505,13 +505,19 @@ class VirtualGarage(udi_interface.Node):
                     elif event['event'] == 'other':
                         LOGGER.info('event:other')
                         self.ratgdo_event.remove(event)
+                    elif event['event'] == 'id':
+                        LOGGER.info(f'event:id={event["data"]}')
+                        self.ratgdo_event.remove(event)
+                    elif event['event'] == 'retry':
+                        LOGGER.info('event:retry')
+                        self.ratgdo_event.remove(event)
                     else:
                         LOGGER.error(f'event - NONE FOUND - <{event}>')
                         self.ratgdo_event.remove(event)
                 except:
                     LOGGER.error("event parse error")
                     break
-            LOGGER.error('Dropped out of getRatgdoEvents')
+            LOGGER.info('Done processing getRatgdoEvents')
             
     def sseEvent(self):
         success = False
@@ -523,7 +529,7 @@ class VirtualGarage(udi_interface.Node):
             with s.get(url,headers=None, stream=True, timeout=3) as gateway_sse:
                 for val in gateway_sse.iter_lines():
                     dval = val.decode('utf-8')
-                    LOGGER.debug(f"raw decode:[{dval}]")
+                    #LOGGER.debug(f"raw decode:[{dval}]")
                     if val:                            
                         if e:
                             try:
@@ -540,7 +546,7 @@ class VirtualGarage(udi_interface.Node):
                             else:
                                 try:
                                     i = dict(event = dval.split(":")[0], data = dval.split(":")[1])
-                                    LOGGER.debug(f"raw dict:[{i}]")
+                                    #LOGGER.debug(f"raw dict:[{i}]")
                                     self.ratgdo_event.append(i)
                                     success = True
                                 except:
