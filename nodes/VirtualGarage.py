@@ -557,39 +557,6 @@ class VirtualGarage(udi_interface.Node):
             LOGGER.debug(f"sse other exception: {e}")
         return success
 
-# return ratgdo_event (not self)
-# call with self.ratgdo_event = self.sseEvent()
-
-        # event = {}
-        # if True:
-        #     if i == None:
-        #         event = {}
-        #     else:
-        #         if 'event' in i:
-        #             event = i
-        #             LOGGER.debug(f'dIN:')
-        #             i = next(x)
-        #             LOGGER.debug(f'dOUT: {i}')
-        #             if i == None:
-        #                 LOGGER.debug(f'sseEvent: Data = None')
-        #                 event = dict(event = event, data = None)
-        #                 return None
-        #             if 'data' in i:
-        #                 # LOGGER.debug(f'sseEvent: Data in i = {i}')
-        #                 if type(i) == str:
-        #                     i = dict(data = i.replace('data','').replace(': ', ''))
-        #                 try:
-        #                     event = event | i
-        #                 except:
-        #                     event = dict(event = 'error', data = i['data'])
-        #             else:
-        #                 LOGGER.debug(f'sseEvent: {event}')
-        #                 event = dict(event = event, data = str(i))
-        #         else:
-        #             event = dict(event = 'other', data = str(i))
-        # LOGGER.debug(f'sseEvent: {event}')
-        # return event
-                                   
     def ltOn(self, command = None):
         LOGGER.debug(f'command:{command}')
         self.light = 1
