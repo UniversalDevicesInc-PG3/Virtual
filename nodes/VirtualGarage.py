@@ -538,7 +538,7 @@ class VirtualGarage(udi_interface.Node):
                                 e = dval.replace('event: ','')
                                 continue
                             else:
-                                i: dict = {x.split(":")[0]: x.split(":")[1] for x in dval.split(", ")}
+                                i = {x.split(":")[0]: x.split(":")[1] for x in dval.split(", ")}
                                 i['data'] = None
                                 LOGGER.debug(f"raw dict:[{i}]")
                                 self.ratgdo_event.append(i)
