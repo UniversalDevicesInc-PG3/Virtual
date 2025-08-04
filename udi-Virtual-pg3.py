@@ -23,7 +23,7 @@ LOGGER = udi_interface.LOGGER
 VERSION = '3.1.12'
 """
 3.1.12
-TODO rewrite sse events collection
+DONE rewrite sse events collection
 
 3.1.11
 DONE poll on longPoll, events sse

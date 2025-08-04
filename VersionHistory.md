@@ -1,12 +1,40 @@
 # Version History
 
-## see udi-Virtual-pg3.py for current work
+#### see udi-Virtual-pg3.py for current work
 
-3.1.5
-      repair docs due to markdown2 issue
+3.1.12 \
+DONE rewrite sse events collection
 
-3.1.4
-      docs updated for garage
+3.1.11 \
+DONE poll on longPoll, events sse \
+DONE add motor, door position \
+DONE update docs \
+TODO Bonjour discovery is sometimes slow
+
+3.1.10 \
+DONE rewrite switch, dimmer, temp, tempc, garage \
+DONE docs \
+DONE move db files to subfolder
+
+3.1.9 \
+DONE Garage device read status directly from Ratgdo through ESPHome RESTapi \
+DONE update docs for garage Ratgdo integration \
+FIX  switch st uom from 2 True/False to 25 On/Off \
+
+3.1.8 \
+DONE Garage device sends commands directly to Ratgdo through ESPHome RESTapi \
+DONE Bonjour discovery of Ratgdo garage device
+
+3.1.7 \
+DONE Small refactors \
+DONE redo environment
+
+3.1.6 \
+FIX better solution to markdown2 issue
+
+3.1.5 repair docs due to markdown2 issue
+
+3.1.4 docs updated for garage
 
 3.1.3 new device 'garage' door (update to/from variables option)  
 
