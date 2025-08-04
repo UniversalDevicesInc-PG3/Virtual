@@ -509,7 +509,7 @@ class VirtualGarage(udi_interface.Node):
                         LOGGER.error(f'event - NONE FOUND - <{event}>')
                         self.ratgdo_event.remove(event)
                 except:
-                    LOGGER.error("event error")
+                    LOGGER.error("event parse error")
                     break
             LOGGER.error('Dropped out of getRatgdoEvents')
             
@@ -538,15 +538,17 @@ class VirtualGarage(udi_interface.Node):
                                 e = dval.replace('event: ','')
                                 continue
                             else:
-                                i = {x.split(":")[0]: x.split(":")[1] for x in dval.split(", ")}
-                                i['data'] = None
-                                LOGGER.debug(f"raw dict:[{i}]")
-                                self.ratgdo_event.append(i)
-                                success = True
+                                try:
+                                    i = dict(event = dval.split(":")[0], data = dval.split(":")[1])
+                                    LOGGER.debug(f"raw dict:[{i}]")
+                                    self.ratgdo_event.append(i)
+                                    success = True
+                                except:
+                                    LOGGER.error(f"raw dict parse error")
         except requests.exceptions.Timeout:
             LOGGER.debug(f"see timeout")
         except requests.exceptions.RequestException as e:
-            LOGGER.debug(f"sse other error: {e}")
+            LOGGER.debug(f"sse other exception: {e}")
         return success
 
 # return ratgdo_event (not self)
