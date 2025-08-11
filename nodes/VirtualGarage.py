@@ -163,7 +163,7 @@ class VirtualGarage(udi_interface.Node):
         self.obstructId = 0
 
         self.firstPass = True
-        self.updatingAll = 0
+        self.updatingAll = False
 
         self.bonjourCommand = None
         self.bonjourOn = False
@@ -204,8 +204,10 @@ class VirtualGarage(udi_interface.Node):
         if 'longPoll' in flag:
             LOGGER.info(f"POLLING: {flag} {self.name}")
             if self.ratgdo and self.ratgdoOK:
-                if self.ratgdo_do_poll:
+                if self.ratgdo_do_poll and not self.updatingAll:
+                    self.updatingAll = True
                     self.getRatgdoDirect()
+                    self.updatingAll = False
         else:
             if self.bonjourOnce and self.bonjourOn:
                 self.bonjourOnce = False
@@ -720,15 +722,16 @@ class VirtualGarage(udi_interface.Node):
             return False, {}
 
     def getRatgdoDirect(self):
+        self.updatingAll = True
         try:
             res = requests.get(f"http://{self.ratgdo}{LIGHT}")
             if not res.ok:
-                LOGGER.error(f"res.status_code = {res.status_code}")
+                LOGGER.error(f"LIGHT: res.status_code = {res.status_code}")
                 return False, {}
             else:
                 self.setRatgdoLight(res.json())
         except Exception as ex:
-            LOGGER.error(f"error: {ex}")
+            LOGGER.error(f"LIGHT error: {ex}")
             return False, {}
 
         time.sleep(.2)
@@ -736,12 +739,12 @@ class VirtualGarage(udi_interface.Node):
         try:
             res = requests.get(f"http://{self.ratgdo}{DOOR}")
             if not res.ok:
-                LOGGER.error(f"res.status_code = {res.status_code}")
+                LOGGER.error(f"DOOR: res.status_code = {res.status_code}")
                 return False, {}
             else:
                 self.setRatgdoDoor(res.json())
         except Exception as ex:
-            LOGGER.error(f"error: {ex}")
+            LOGGER.error(f"DOOR error: {ex}")
             return False, {}
 
         time.sleep(.2)
@@ -749,12 +752,12 @@ class VirtualGarage(udi_interface.Node):
         try:
             res = requests.get(f"http://{self.ratgdo}{MOTION}")
             if not res.ok:
-                LOGGER.error(f"res.status_code = {res.status_code}")
+                LOGGER.error(f"MOTION: res.status_code = {res.status_code}")
                 return False, {}
             else:
                 self.setRatgdoMotion(res.json())
         except Exception as ex:
-            LOGGER.error(f"error: {ex}")
+            LOGGER.error(f"MOTION error: {ex}")
             return False, {}
 
         time.sleep(.2)
@@ -762,12 +765,12 @@ class VirtualGarage(udi_interface.Node):
         try:
             res = requests.get(f"http://{self.ratgdo}{MOTOR}")
             if not res.ok:
-                LOGGER.error(f"res.status_code = {res.status_code}")
+                LOGGER.error(f"MOTOR: res.status_code = {res.status_code}")
                 return False, {}
             else:
                 self.setRatgdoMotor(res.json())
         except Exception as ex:
-            LOGGER.error(f"error: {ex}")
+            LOGGER.error(f"MOTOR error: {ex}")
             return False, {}
 
         time.sleep(.2)
@@ -775,12 +778,12 @@ class VirtualGarage(udi_interface.Node):
         try:
             res = requests.get(f"http://{self.ratgdo}{LOCK_REMOTES}")
             if not res.ok:
-                LOGGER.error(f"res.status_code = {res.status_code}")
+                LOGGER.error(f"LOCK_REMOTES: res.status_code = {res.status_code}")
                 return False, {}
             else:
                 self.setRatgdoLock(res.json())
         except Exception as ex:
-            LOGGER.error(f"error: {ex}")
+            LOGGER.error(f"LOCK_REMOTES error: {ex}")
             return False, {}
 
         time.sleep(.2)
@@ -788,15 +791,15 @@ class VirtualGarage(udi_interface.Node):
         try:
             res = requests.get(f"http://{self.ratgdo}{OBSTRUCT}")
             if not res.ok:
-                LOGGER.error(f"res.status_code = {res.status_code}")
+                LOGGER.error(f"OBSTRUCT: res.status_code = {res.status_code}")
                 return False, {}
             else:
                 self.setRatgdoObstruct(res.json())
         except Exception as ex:
-            LOGGER.error(f"error: {ex}")
+            LOGGER.error(f"OBSTRUCT error: {ex}")
             return False, {}
 
-        LOGGER.info('Ratgdo direct success')
+        LOGGER.info('getRatgdoDirect success!')
         return True
                                 
     def setRatgdoLight(self, _data):
