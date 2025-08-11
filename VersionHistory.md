@@ -2,6 +2,11 @@
 
 #### see udi-Virtual-pg3.py for current work
 
+3.1.13 \
+DONE prevent direct poll from re-running \
+DONE add notice if comms check fails \
+DONE clean-up & debug
+
 3.1.12 \
 DONE rewrite sse events collection
 

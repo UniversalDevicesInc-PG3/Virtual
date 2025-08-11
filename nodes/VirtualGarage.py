@@ -205,6 +205,7 @@ class VirtualGarage(udi_interface.Node):
             LOGGER.info(f"POLLING: {flag} {self.name}")
             if self.ratgdo and self.ratgdoOK:
                 if self.ratgdo_do_poll and not self.updatingAll:
+                    self.updatingAll = True
                     success = self.getRatgdoDirect()
                     LOGGER.info(f"getRadgdoDirect success = {success}")
                     self.updatingAll = False
@@ -432,11 +433,13 @@ class VirtualGarage(udi_interface.Node):
                 self.controller.Notices['ratgdo'] = error
             if res.json()['id'] == 'light-light':
                 LOGGER.info('RATGDO communications good!')
+                self.controller.Notices.delete('ratgdo')
                 self.ratgdoOK = True
                 return True
         except Exception as ex:
             LOGGER.error(f"error: {ex}")
         self.ratgdoOK = False
+        self.controller.Notices['ratgdo'] = "RATGDO deice communicatinos failure."
         return False
 
     def ratgdoPost(self, post):

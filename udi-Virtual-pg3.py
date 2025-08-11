@@ -20,8 +20,13 @@ import udi_interface
 
 LOGGER = udi_interface.LOGGER
 
-VERSION = '3.1.12'
+VERSION = '3.1.13'
 """
+3.1.13
+DONE prevent direct poll from re-running
+DONE add notice if comms check fails
+DONE clean-up & debug
+
 3.1.12
 DONE rewrite sse events collection
 
