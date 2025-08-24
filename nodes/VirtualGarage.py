@@ -566,6 +566,7 @@ class VirtualGarage(udi_interface.Node):
         LOGGER.debug(f'command:{command}')
         self.light = 1
         self.setDriver('GV0', self.light)
+        self.reportCmd("LT_ON", 2)
         if self.lightId > 0:
             self.pushTheValue(self.lightT, self.lightId, self.light)
         post = f"{self.ratgdo}{LIGHT}{TURN_ON}"
@@ -577,6 +578,7 @@ class VirtualGarage(udi_interface.Node):
         LOGGER.debug(f'command:{command}')
         self.light = 0
         self.setDriver('GV0', self.light)
+        self.reportCmd("LT_OFF", 2)
         if self.lightId > 0:
             self.pushTheValue(self.lightT, self.lightId, self.light)
         post = f"{self.ratgdo}{LIGHT}{TURN_OFF}"
@@ -597,29 +599,34 @@ class VirtualGarage(udi_interface.Node):
         self.dcommand = 1
         post = f"{self.ratgdo}{DOOR}{OPEN}"
         self.drCommand(post)
+        self.reportCmd("OPEN",25)
     
     def drClose(self, command = None):
         LOGGER.debug(f'command:{command}')
         self.dcommand = 2
         post = f"{self.ratgdo}{DOOR}{CLOSE}"
         self.drCommand(post)
+        self.reportCmd("CLOSE",25)
         
     def drTrigger(self, command = None):
         LOGGER.debug(f'command:{command}')
         self.dcommand = 3
         post = f"{self.ratgdo}{TRIGGER}"
         self.drCommand(post)
+        self.reportCmd("TRIGGER",25)
         
     def drStop(self, command = None):
         LOGGER.debug(f'command:{command}')
         self.dcommand = 4
         post = f"{self.ratgdo}{DOOR}{STOP}"
         self.drCommand(post)
+        self.reportCmd("CLOSE",25)
         
     def lkLock(self, command = None):
         LOGGER.debug(f'command:{command}')
         self.lock = 1
         self.setDriver('GV4', self.lock)
+        self.reportCmd("LOCK",2)
         if self.lockId > 0:
             self.pushTheValue(self.lockT, self.lockId, self.lock)
         post = f"{self.ratgdo}{LOCK_REMOTES}{LOCK}"
@@ -631,6 +638,7 @@ class VirtualGarage(udi_interface.Node):
         LOGGER.debug(f'command:{command}')
         self.lock = 0
         self.setDriver('GV4', self.lock)
+        self.reportCmd("UNLOCK",2)
         if self.lockId > 0:
             self.pushTheValue(self.lockT, self.lockId, self.lock)
         post = f"{self.ratgdo}{LOCK_REMOTES}{UNLOCK}"

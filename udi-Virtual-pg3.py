@@ -20,8 +20,11 @@ import udi_interface
 
 LOGGER = udi_interface.LOGGER
 
-VERSION = '3.1.13'
+VERSION = '3.1.14'
 """
+3.1.14
+DONE commands for switches, generic, dimmer, garage
+
 3.1.13
 DONE prevent direct poll from re-running
 DONE add notice if comms check fails

@@ -2,6 +2,9 @@
 
 #### see udi-Virtual-pg3.py for current work
 
+3.1.14 \
+DONE commands for switches, generic, dimmer, garage
+
 3.1.13 \
 DONE prevent direct poll from re-running \
 DONE add notice if comms check fails \

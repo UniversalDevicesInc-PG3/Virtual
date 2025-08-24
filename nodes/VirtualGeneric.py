@@ -141,12 +141,14 @@ class VirtualGeneric(udi_interface.Node):
     def setOn(self, command=None):
         LOGGER.debug(command)
         self.setDriver('ST', 100)
+        self.reportCmd("DON", 2)
         self.level = 100
         self.storeValues()
 
     def setOff(self, command=None):
         LOGGER.debug(command)
         self.setDriver('ST', 0)
+        self.reportCmd("DOF", 2)
         self.level = 0
         self.storeValues()
 
@@ -155,6 +157,7 @@ class VirtualGeneric(udi_interface.Node):
         _level = int(self.level) + 3
         if _level > 100: _level = 100
         self.setDriver('ST', _level)
+        self.reportCmd("BRT",2)
         self.level = _level
         self.storeValues()
 
@@ -163,6 +166,7 @@ class VirtualGeneric(udi_interface.Node):
         _level = int(self.level) - 3
         if _level < 0: _level = 0
         self.setDriver('ST', _level)
+        self.reportCmd("DIM",2)
         self.level = _level
         self.storeValues()
 
