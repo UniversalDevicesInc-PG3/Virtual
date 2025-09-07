@@ -147,22 +147,27 @@
     <nodeDef id="virtualgeneric" nls="vgeneric">
       <editors />
       <sts>
-        <st id="ST" editor="value" />
+        <st id="OL" editor="value" />
       </sts>
       <cmds>
 		<sends>
 		  <cmd id="DON" />
 		  <cmd id="DOF" />
+		  <cmd id="DFON" />
+		  <cmd id="DFOF" />
 		  <cmd id="BRT" />
 		  <cmd id="DIM" />
+		  <cmd id="OL" />
         <sends />
         <accepts>
           <cmd id="DON" />
           <cmd id="DOF" />
+		  <cmd id="DFON" />
+		  <cmd id="DFOF" />
           <cmd id="BRT" />
           <cmd id="DIM" />
-          <cmd id="setDim">
-            <p id="" editor="value" init="ST" />
+		  <cmd id="OL">
+			<p id="" editor="value" init="OL" />
           </cmd>
         </accepts>
       </cmds>

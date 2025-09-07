@@ -18,7 +18,7 @@ ST-vswitch-ST-NAME = Switch Status
 # virtualgeneric
 ND-virtualgeneric-NAME = Virtual Generic
 ND-virtualgeneric-ICON = Switch
-ST-vgeneric-ST-NAME = Level
+ST-vgeneric-OL-NAME = Level
 CMD-vgeneric-BRT-NAME = Brighten
 CMD-vgeneric-DIM-NAME = Dim
 CMD-vgeneric-setDim-NAME = Set Level

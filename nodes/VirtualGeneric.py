@@ -1,7 +1,7 @@
 """
 udi-Virtual-pg3 NodeServer/Plugin for EISY/Polisy
 
-(C) 2024 Stephen Jenkins
+(C) 2025 Stephen Jenkins
 
 VirtualGeneric class
 """
@@ -26,12 +26,15 @@ class VirtualGeneric(udi_interface.Node):
     and manipulated by then or else.
 
     Drivers & commands:
-    ST 0,1: is used to report ON/OFF status in the ISY
-    setOn: Sets the node to ON
-    setOFF: Sets the node to OFF
-    setLevelUp: Increase the level +3
-    setLevelDown: Decrease the level -3
-    setDim: Set the level to a percentage or value 0-100
+    ST,OL 0,1: is used to report ON/OFF status in the ISY
+    cmd_DON: Sets the node to ON, last level, with ramp
+    cmd_DOF: Sets the node to OFF, 0, with ramp
+    cmd_DFON: Sets the node to 100, fast
+    cmd_DFOF: Sets the node to 0, fast
+    cmd_BRT: Increase the level +3
+    cmd_DIM: Decrease the level -3
+    cmd_set_OL: Set the level to a percentage or value 0-100
+    
     Query: Is used to report status of the node
 
     Class Methods(generic):
@@ -70,6 +73,7 @@ class VirtualGeneric(udi_interface.Node):
         self.name = name
 
         self.level = 0 # create as zero
+        self.level_stored = 100 # create as zero
 
         self.poly.subscribe(self.poly.START, self.start, address)
         # self.poly.subscribe(self.poly.POLL, self.poll)
@@ -101,7 +105,7 @@ class VirtualGeneric(udi_interface.Node):
                 self.retrieveValues()
             else:
                 s = shelve.open(f"db/{_name}", writeback=False)
-                s[_key] = { 'switchStatus': self.level }
+                s[_key] = { 'switchStatus': self.level, 'switchStored': self.level_stored }
                 time.sleep(2)
                 s.close()
                 LOGGER.info("...file didn\'t exist, created successfully")
@@ -121,7 +125,7 @@ class VirtualGeneric(udi_interface.Node):
         _name = str(self.name).replace(" ","_")
         s = shelve.open(f"db/{_name}", writeback=False)
         try:
-            s[_key] = { 'switchStatus': self.level}
+            s[_key] = { 'switchStatus': self.level, 'switchStored': self.level_stored}
         finally:
             s.close()
         LOGGER.debug('Values Stored')
@@ -136,45 +140,67 @@ class VirtualGeneric(udi_interface.Node):
             s.close()
         LOGGER.info('Retrieving Values %s', existing)
         self.level = existing['switchStatus']
-        self.setDriver('ST', self.level)
+        self.level_stored = existing['switchStored']
+        self.setDriver('OL', self.level)
 
-    def setOn(self, command=None):
+    def cmd_DON(self, command=None):
         LOGGER.debug(command)
-        self.setDriver('ST', 100)
+        self.level = self.level_store
+        self.setDriver('OL', self.level)
         self.reportCmd("DON", 2)
-        self.level = 100
         self.storeValues()
 
-    def setOff(self, command=None):
+    def cmd_DOF(self, command=None):
         LOGGER.debug(command)
-        self.setDriver('ST', 0)
-        self.reportCmd("DOF", 2)
+        self.level_stored = int(self.level)
         self.level = 0
+        self.setDriver('OL', self.level)
+        self.reportCmd("DOF", 2)
         self.storeValues()
 
-    def setLevelUp(self, command=None):
+    def cmd_DFON(self, command=None):
         LOGGER.debug(command)
-        _level = int(self.level) + 3
-        if _level > 100: _level = 100
-        self.setDriver('ST', _level)
+        self.level = 100
+        self.setDriver('OL', self.level)
+        self.reportCmd("DFON", 2)
+        self.level_stored = int(self.level)
+        self.storeValues()
+
+    def cmd_DFOF(self, command=None):
+        LOGGER.debug(command)
+        self.level_stored = int(self.level)
+        self.level = 0
+        self.setDriver('OL', self.level)
+        self.reportCmd("DFOF", 2)
+        self.storeValues()
+
+    def cmd_BRT(self, command=None):
+        LOGGER.debug(command)
+        self.level = int(self.level) + 2
+        if self.level > 100: self.level = 100
+        self.level_stored = self.level
+        self.setDriver('OL', self.level)
         self.reportCmd("BRT",2)
-        self.level = _level
         self.storeValues()
 
-    def setLevelDown(self, command=None):
+    def cmd_DIM(self, command=None):
         LOGGER.debug(command)
-        _level = int(self.level) - 3
-        if _level < 0: _level = 0
-        self.setDriver('ST', _level)
+        self.level = int(self.level) - 2
+        if self.level < 0:
+            self.level = 0
+            self.level_stored = 100
+        else:
+            self.level_stored = self.level
+        self.setDriver('OL', self.level)
         self.reportCmd("DIM",2)
-        self.level = _level
         self.storeValues()
 
-    def setDim(self, command):
+    def cmd_set_OL(self, command):
         LOGGER.debug(command)
-        _level = int(command.get('value'))
-        self.setDriver('ST', _level)
-        self.level = _level
+        self.level = int(command.get('value'), 50)
+        self.level_store = self.level
+        self.setDriver('OL', self.level)
+        self.reportCmd("OL", value=self.level)
         self.storeValues()
 
     def query(self, command=None):
@@ -197,7 +223,7 @@ class VirtualGeneric(udi_interface.Node):
     UOM 2 is boolean so the ISY will display 'True/False'
     """
     drivers = [
-        {'driver': 'ST', 'value': 0, 'uom': 56, 'name': "Status"},
+        {'driver': 'OL', 'value': 0, 'uom': 56, 'name': "Level"},
     ]
 
     """
@@ -205,11 +231,13 @@ class VirtualGeneric(udi_interface.Node):
     this tells it which method to call. DON calls setOn, etc.
     """
     commands = {
-                    'DON': setOn,
-                    'DOF': setOff,
-                    'BRT': setLevelUp,
-                    'DIM': setLevelDown,
-                    'setDim': setDim,
+                    'DON': cmd_DON,
+                    'DOF': cmd_DOF,
+                    'DFON': cmd_DFON,
+                    'DFOF': cmd_DFOF,
+                    'BRT': cmd_BRT,
+                    'DIM': cmd_DIM,
+                    'OL': cmd_set_OL,
                     'QUERY': query,
                 }
 
