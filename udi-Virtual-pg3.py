@@ -20,8 +20,11 @@ import udi_interface
 
 LOGGER = udi_interface.LOGGER
 
-VERSION = '3.1.14'
+VERSION = '3.1.15'
 """
+3.1.15
+DONE sends commands for generic, dimmer
+
 3.1.14
 DONE commands for switches, generic, dimmer, garage
 
