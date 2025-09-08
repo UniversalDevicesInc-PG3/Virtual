@@ -223,9 +223,7 @@ class Controller(udi_interface.Node):
         Once all start-up parameters are done then set event.
         """
         if (self.handler_params_st and self.handler_typedparams_st and self.handler_typeddata_st):
-            self.discoverNodes()
-            if self.handler_discover_st:
-                self.all_handlers_st_event.set()
+            self.all_handlers_st_event.set()
 
 
     def checkParams(self):
