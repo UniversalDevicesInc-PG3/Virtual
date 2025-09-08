@@ -60,6 +60,8 @@ class Controller(udi_interface.Node):
         we exist!
         """
         super().__init__(polyglot, primary, address, name)
+        # importand flags, timers, vars
+        self.hb = 0 # heartbeat
 
         # storage arrays & conditions
         self.n_queue = []
