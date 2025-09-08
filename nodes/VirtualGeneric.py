@@ -155,7 +155,6 @@ class VirtualGeneric(udi_interface.Node):
         self.level = 100
         self.setDriver('OL', self.level)
         self.reportCmd("DFON", 2)
-        self.level_stored = int(self.level)
         self.storeValues()
         LOGGER.info(f"{self.name}:{command}, level:{self.level}, level_stored:{self.level_stored}")
 
@@ -183,7 +182,7 @@ class VirtualGeneric(udi_interface.Node):
         self.level = int(self.level) - 2
         if self.level < 0:
             self.level = 0
-            self.level_stored = 100
+            self.level_stored = 10
         else:
             self.level_stored = self.level
         self.setDriver('OL', self.level)
