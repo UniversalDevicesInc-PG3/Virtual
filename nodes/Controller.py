@@ -1,15 +1,14 @@
 """
 udi-Virtual-pg3 NodeServer/Plugin for EISY/Polisy
 
-(C) 2024 Stephen Jenkins
+(C) 2025 Stephen Jenkins
 
 Controller class
 """
 
 # std libraries
-import time
-import json
-import subprocess
+import time, json, subprocess
+from threading import Event, Condition
 
 # external libraries
 import yaml
@@ -62,115 +61,170 @@ class Controller(udi_interface.Node):
         """
         super().__init__(polyglot, primary, address, name)
 
-        self.poly = polyglot
-        self.primary = primary
-        self.address = address
-        self.name = name
-
+        # storage arrays & conditions
         self.n_queue = []
+        self.queue_condition = Condition()
         self.last = 0.0
-        self.no_update = False
-        self.discovery = False
-        self.valid_configuration = False
-        self.parmDone = False
 
-        # Create data storage classes to hold specific data that we need
-        # to interact with.  
+        # Events
+        self.ready_event = Event()
+        self.all_handlers_st_event = Event()
+        self.stop_sse_client_event = Event()
+
+        # startup completion flags
+        self.handler_params_st = None
+        self.handler_typedparams_st = None
+        self.handler_typeddata_st = None
+        self.handler_discover_st = None
+
+        # Create data storage classes
         self.Parameters = Custom(polyglot, 'customparams')
         self.Notices = Custom(polyglot, 'notices')
         self.TypedParameters = Custom(polyglot, 'customtypedparams')
         self.TypedData = Custom(polyglot, 'customtypeddata')
 
         # Subscribe to various events from the Interface class.
-        #
         # The START event is unique in that you can subscribe to 
         # the start event for each node you define.
 
-        self.poly.subscribe(self.poly.START, self.start, address)
-        self.poly.subscribe(self.poly.LOGLEVEL, self.handleLevelChange)
-        self.poly.subscribe(self.poly.CUSTOMPARAMS, self.parameterHandler)
+        self.poly.subscribe(self.poly.START,             self.start, address)
+        self.poly.subscribe(self.poly.POLL,              self.poll)
+        self.poly.subscribe(self.poly.LOGLEVEL,          self.handleLevelChange)
+        self.poly.subscribe(self.poly.CUSTOMPARAMS,      self.parameterHandler)
+        self.poly.subscribe(self.poly.STOP,              self.stop)
+        self.poly.subscribe(self.poly.DISCOVER,          self.discover)
+        self.poly.subscribe(self.poly.CUSTOMTYPEDDATA,   self.typedDataHandler)
         self.poly.subscribe(self.poly.CUSTOMTYPEDPARAMS, self.typedParameterHandler)
-        self.poly.subscribe(self.poly.CUSTOMTYPEDDATA, self.typedDataHandler)
-        self.poly.subscribe(self.poly.POLL, self.poll)
-        self.poly.subscribe(self.poly.STOP, self.stop)
-        self.poly.subscribe(self.poly.DISCOVER, self.discover)
-        self.poly.subscribe(self.poly.ADDNODEDONE, self.node_queue)
+        self.poly.subscribe(self.poly.ADDNODEDONE,       self.node_queue)
 
         # Tell the interface we have subscribed to all the events we need.
         # Once we call ready(), the interface will start publishing data.
         self.poly.ready()
 
         # Tell the interface we exist.  
-        self.poly.addNode(self)
+        self.poly.addNode(self, conn_status='ST')
 
+
+    def start(self):
+        """
+        Called by handler during startup.
+        """
+        LOGGER.info(f"Virtual Devices PG3 NodeServer {self.poly.serverdata['version']}")
+        self.Notices.clear()
+        self.Notices['hello'] = 'Start-up'
+        self.setDriver('ST', 1, report = True, force = True)
+
+        self.last = 0.0
+        # Send the profile files to the ISY if neccessary or version changed.
+        self.poly.updateProfile()
+
+        # Send the default custom parameters documentation file to Polyglot
+        self.poly.setCustomParamsDoc()
+
+        # Initializing a heartbeat
+        self.heartbeat()
+
+        # Wait for all handlers to finish
+        LOGGER.warning(f'Waiting for all handlers to complete...')
+        self.Notices['waiting'] = 'Waiting on valid configuration'
+        self.all_handlers_st_event.wait(timeout=60)
+        if not self.all_handlers_st_event.is_set():
+            LOGGER.error("Timed out waiting for handlers to startup")
+            self.setDriver('ST', 2) # start-up failed
+            return        
+
+        # Wait for discovery
+        self.discoverNodes()
+        while not self.handler_discover_st:
+            time.sleep(1)
+
+        self.Notices.delete('waiting')        
+        LOGGER.info('Started Virtual Device NodeServer v%s', self.poly.serverdata)
+        self.query()
+
+        # signal to the nodes, its ok to start
+        self.ready_event.set()
+
+        # clear inital start-up message
+        if self.Notices.get('hello'):
+            self.Notices.delete('hello')
+        
+        LOGGER.info(f'exit {self.name}')
+
+
+    def node_queue(self, data):
         '''
         node_queue() and wait_for_node_event() create a simple way to wait
         for a node to be created.  The nodeAdd() API call is asynchronous and
         will return before the node is fully created. Using this, we can wait
         until it is fully created before we try to use it.
         '''
-    def node_queue(self, data):
-        self.n_queue.append(data['address'])
+        address = data.get('address')
+        if address:
+            with self.queue_condition:
+                self.n_queue.append(address)
+                self.queue_condition.notify()
+                
 
     def wait_for_node_done(self):
-        while len(self.n_queue) == 0:
-            time.sleep(0.1)
-        self.n_queue.pop()
+        with self.queue_condition:
+            while not self.n_queue:
+                self.queue_condition.wait(timeout = 0.2)
+            self.n_queue.pop()
+            
 
-    def start(self):
-        self.Notices['hello'] = 'Start-up'
-        self.setDriver('ST', 1, report = True, force = True)
-
-        self.last = 0.0
-        # Send the profile files to the ISY if neccessary. The profile version
-        # number will be checked and compared. If it has changed since the last
-        # start, the new files will be sent.
-        self.poly.updateProfile()
-
-        # Send the default custom parameters documentation file to Polyglot
-        # for display in the dashboard.
-        self.poly.setCustomParamsDoc()
-
-        # Initializing a heartbeat is an example of something you'd want
-        # to do during start.  Note that it is not required to have a
-        # heartbeat in your node server
-        self.heartbeat(True)
-
-        while self.valid_configuration is False:
-            LOGGER.info('Start: Waiting on valid configuration')
-            self.Notices['waiting'] = 'Waiting on valid configuration'
-            time.sleep(5)
-        self.Notices.delete('waiting')
-
-        while not self.parmDone:
-            LOGGER.info("Start: Waiting on first Discovery Completion")
-            time.sleep(1)
-
-        LOGGER.info('Started Virtual Device NodeServer v%s', self.poly.serverdata)
-        self.query()
-        self.Notices.delete('hello')
-
-    """
-    Called via the CUSTOMPARAMS event. When the user enters or
-    updates Custom Parameters via the dashboard. The full list of
-    parameters will be sent to your node server via this event.
-
-    Here we're loading them into our local storage so that we may
-    use them as needed.
-
-    New or changed parameters are marked so that you may trigger
-    other actions when the user changes or adds a parameter.
-
-    NOTE: Be carefull to not change parameters here. Changing
-    parameters will result in a new event, causing an infinite loop.
-    """
     def parameterHandler(self, params):
-        self.Parameters.load(params)
+        """
+        Called via the CUSTOMPARAMS event. When the user enters or
+        updates Custom Parameters via the dashboard.
+        """
         LOGGER.info('parmHandler: Loading parameters now')
-        if self.checkParams():
-            self.discoverNodes()
-            self.parmDone = True
+        self.Parameters.load(params)
+        while not self.checkParams():
+            time.sleep(2)
+        self._handler_params_st = True
         LOGGER.info('parmHandler Done...')
+        self.check_handlers()
+        
+
+    def typedParameterHandler(self, params):
+        """
+        Called via the CUSTOMTYPEDPARAMS event. This event is sent When
+        the Custom Typed Parameters are created.  See the checkParams()
+        below.  Generally, this event can be ignored.
+        """
+        LOGGER.debug('Loading typed parameters now')
+        self.TypedParameters.load(params)
+        LOGGER.debug(params)
+        self.handler_typedparams_st = True
+        self.check_handlers()
+
+
+    def typedDataHandler(self, data):
+        """
+        Called via the CUSTOMTYPEDDATA event. This event is sent when
+        the user enters or updates Custom Typed Parameters via the dashboard.
+        'params' will be the full list of parameters entered by the user.
+        """
+        LOGGER.debug('Loading typed data now')
+        if data is None:
+            LOGGER.warning("No custom data")
+        else:
+            self.TypedData.load(data)
+        LOGGER.debug(f'Loaded typed data {data}')
+        self.handler_typeddata_st = True
+        self.check_handlers()
+        
+
+    def check_handlers(self):
+        """
+        Once all start-up parameters are done then set event.
+        """
+        if (self.handler_params_st and self.handler_typedparams_st and self.handler_typeddata_st):
+            self.discoverNodes()
+            if self.handler_discover_st:
+                self.all_handlers_st_event.set()
+
 
     def checkParams(self):
         self.Notices.delete('config')
@@ -225,40 +279,9 @@ class Controller(udi_interface.Node):
                     
         LOGGER.info('checkParams is complete')
         LOGGER.info(f'checkParams: self.devlist: {self.devlist}')
-        self.valid_configuration = True
         return True
 
         
-    """
-    Called via the CUSTOMTYPEDPARAMS event. This event is sent When
-    the Custom Typed Parameters are created.  See the checkParams()
-    below.  Generally, this event can be ignored.
-
-    Here we're re-load the parameters into our local storage.
-    The local storage should be considered read-only while processing
-    them here as changing them will cause the event to be sent again,
-    creating an infinite loop.
-    """
-    def typedParameterHandler(self, params):
-        self.TypedParameters.load(params)
-        LOGGER.debug('Loading typed parameters now')
-        LOGGER.debug(params)
-
-    """
-    Called via the CUSTOMTYPEDDATA event. This event is sent when
-    the user enters or updates Custom Typed Parameters via the dashboard.
-    'params' will be the full list of parameters entered by the user.
-
-    Here we're loading them into our local storage so that we may
-    use them as needed.  The local storage should be considered 
-    read-only while processing them here as changing them will
-    cause the event to be sent again, creating an infinite loop.
-    """
-    def typedDataHandler(self, params):
-        self.TypedData.load(params)
-        LOGGER.debug('Loading typed data now')
-        LOGGER.debug(params)
-
     """
     Called via the LOGLEVEL event.
     """
@@ -266,35 +289,36 @@ class Controller(udi_interface.Node):
         LOGGER.info('New log level: {}'.format(level))
             
     def poll(self, flag):
-        # pause updates when in discovery
-        if self.discovery:
-            LOGGER.info('Skipping poll while in Discovery')
-        else:
-            if 'longPoll' in flag:
-                LOGGER.debug('longPoll (controller)')
-                self.heartbeat()
-            else:
-                LOGGER.debug('shortPoll (controller)')
+        # no updates until node is through start-up
+        if not self.ready_event:
+            LOGGER.error(f"Node not ready yet, exiting")
+            return
 
- 
-    def query(self, command=None):
+        if 'longPoll' in flag:
+            LOGGER.debug('longPoll (controller)')
+            self.heartbeat()
+
+            
+    def query(self, command = None):
         """
-        The query method will be called when the ISY attempts to query the
-        status of the node directly.  You can do one of two things here.
-        You can send the values currently held by Polyglot back to the
-        ISY by calling reportDriver() or you can actually query the 
-        device represented by the node and report back the current 
-        status.
+        Query all nodes from the gateway.
         """
-        LOGGER.debug(command)
+        LOGGER.info(f"Enter {command}")
         nodes = self.poly.getNodes()
         for node in nodes:
             nodes[node].reportDrivers()
+        LOGGER.debug(f"Exit")
 
-    def updateProfile(self,command):
-        LOGGER.info(f'update profile: {command}')
+
+    def updateProfile(self,command = None):
+        """
+        Update the profile.
+        """
+        LOGGER.info(f"Enter {command}")
         st = self.poly.updateProfile()
+        LOGGER.debug(f"Exit")
         return st
+
 
     def discover(self, command = None):
         """
@@ -309,13 +333,10 @@ class Controller(udi_interface.Node):
             LOGGER.error(f"Database delete Error: {e}")
         self.checkParams()
         self.discoverNodes()
+        
 
     def discoverNodes(self):
-        if self.discovery:
-            LOGGER.info('Discover already running.')
-            return
-
-        self.discovery = True
+        self.handler_discover_st = False
         LOGGER.info("In Discovery...")
 
         nodes = self.poly.getNodes()
@@ -392,11 +413,12 @@ class Controller(udi_interface.Node):
                 node.deleteDB()
                 self.poly.delNode(node)
 
-        self.discovery = False
         if nodes_get == nodes_new:
-            LOGGER.error('Discovery NO NEW activity')
+            LOGGER.warning('Discovery NO NEW activity')
+        self.handler_discover_st = True
         LOGGER.info('Discovery complete.')
 
+        
     def delete(self):
         """
         This is called by Polyglot upon deletion of the NodeServer. If the
@@ -406,6 +428,7 @@ class Controller(udi_interface.Node):
         self.setDriver('ST', 0, report = True, force = True)
         LOGGER.info('bye bye ... deleted.')
 
+        
     def stop(self):
         """
         This is called by Polyglot when the node server is stopped.  You have
@@ -413,30 +436,27 @@ class Controller(udi_interface.Node):
         other shutdown type tasks.
         """
         self.setDriver('ST', 0, report = True, force = True)
+        self.Notices.clear()
         LOGGER.info('NodeServer stopped.')
+        
 
-    def heartbeat(self,init=False):
+    def heartbeat(self):
         """
-        This is a heartbeat function.  It uses the
-        long poll interval to alternately send a ON and OFF command back to
-        the ISY.  Programs on the ISY can then monitor this and take action
-        when the heartbeat fails to update.
+        Heartbeat function uses the long poll interval to alternately send a ON and OFF
+        command back to the ISY.  Programs on the ISY can then monitor this.
         """
-        LOGGER.debug('heartbeat: init={}'.format(init))
-        if init is not False:
-            self.hb = init
-        LOGGER.debug('heartbeat: hb={}'.format(self.hb))
-        if self.hb == 0:
-            self.reportCmd("DON",2)
-            self.hb = 1
-        else:
-            self.reportCmd("DOF",2)
-            self.hb = 0
+        LOGGER.debug(f'heartbeat: hb={self.hb}')
+        command = "DOF" if self.hb else "DON"
+        self.reportCmd(command, 2)
+        self.hb = not self.hb
+        LOGGER.debug("Exit")
+        
 
     # Status that this node has. Should match the 'sts' section
     # of the nodedef file.
     drivers = [
-        {'driver': 'ST', 'value': 1, 'uom': 2, 'name': "Controller Status"},
+        {'driver': 'ST', 'value': 1, 'uom': 25, 'name': "Controller Status"},
+        {'driver': 'GV0', 'value': 0, 'uom': 107, 'name': "NumberOfNodes"},
     ]
     
     # Commands that this node can handle.  Should match the
@@ -444,4 +464,5 @@ class Controller(udi_interface.Node):
     commands = {
         'QUERY': query,
         'DISCOVER': discover,
+        'UPDATE_PROFILE': updateProfile,
     }

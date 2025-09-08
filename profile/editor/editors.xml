@@ -1,6 +1,11 @@
 
 <editors>
-    <!-- Boolean -->
+	<editor id="CTD">
+		<range uom="25" subset="0,1,2" nls="CTD" />
+	</editor>
+	<editor id="ID">
+	  <range uom="107" min="0" max="9999"/>
+	</editor>
     <editor id="bool">
         <range uom="2" subset="0,1" />
     </editor>

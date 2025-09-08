@@ -8,7 +8,7 @@ It is a plugin for making virtual devices for use on Polyglot for EISY/Polisy
 
 udi-Virtual-pg3 NodeServer/Plugin for EISY/Polisy
 
-(C) 2024 Stephen Jenkins
+(C) 2025 Stephen Jenkins
 
 """
 
@@ -24,7 +24,8 @@ VERSION = '3.1.16'
 """
 3.1.16
 DONE fix controller ST "status" on at start, off at stop / delete, "control" still heartbeat
-DONE garage send CMDs, motor, motion, obstruction
+DONE garage send CMDs, motor, motion, obstruction ; get naming consistent
+DONE standardize startup sequence
 
 3.1.15
 DONE generic, dimmer, change ST to OL, memory of level for DON, DFON/DFOF, command

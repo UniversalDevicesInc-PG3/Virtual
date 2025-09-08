@@ -9,6 +9,10 @@ CMD-ctl-REMOVE_NOTICES_ALL-NAME = Remove All Notices
 CMD-ctl-REMOVE_NOTICE_TEST-NAME = Remove Notice Test
 ST-ctl-ST-NAME = NodeServer Online
 
+# ctd
+CTD-0 = Disconnected
+CTD-1 = Connected
+CTD-2 = Failed
 
 # virtualswitch
 ND-virtualswitch-NAME = Virtual Switch
@@ -81,7 +85,6 @@ CMD-vtempc-setAction2id-NAME = Action 2 Var ID
 CMD-vtempc-setAction2type-NAME = Action 2 Var Type
 CMD-vtempc-setRawToPrec-NAME = Convert Raw to Prec
 CMD-vtempc-setFtoC-NAME = Convert F to C
-
 
 ON_OFF-0 = Off
 ON_OFF-1 = On
