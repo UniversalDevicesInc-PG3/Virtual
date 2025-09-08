@@ -197,7 +197,7 @@ class VirtualGeneric(udi_interface.Node):
 
     def cmd_set_OL(self, command):
         LOGGER.debug(command)
-        self.level = int(command.get('value'), 50)
+        self.level = int(command.get('value'))
         self.level_store = self.level
         self.setDriver('OL', self.level)
         self.reportCmd("OL", value=self.level)
