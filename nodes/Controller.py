@@ -119,6 +119,7 @@ class Controller(udi_interface.Node):
 
     def start(self):
         self.Notices['hello'] = 'Start-up'
+        self.setDriver('ST', 1, report = True, force = True)
 
         self.last = 0.0
         # Send the profile files to the ISY if neccessary. The profile version
@@ -402,6 +403,7 @@ class Controller(udi_interface.Node):
         process is co-resident and controlled by Polyglot, it will be
         terminiated within 5 seconds of receiving this message.
         """
+        self.setDriver('ST', 0, report = True, force = True)
         LOGGER.info('bye bye ... deleted.')
 
     def stop(self):
@@ -410,6 +412,7 @@ class Controller(udi_interface.Node):
         the opportunity here to cleanly disconnect from your device or do
         other shutdown type tasks.
         """
+        self.setDriver('ST', 0, report = True, force = True)
         LOGGER.info('NodeServer stopped.')
 
     def heartbeat(self,init=False):
