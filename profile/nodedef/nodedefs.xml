@@ -158,7 +158,7 @@
 		  <cmd id="BRT" />
 		  <cmd id="DIM" />
 		  <cmd id="OL" />
-        <sends />
+        </sends>
         <accepts>
           <cmd id="DON" />
           <cmd id="DOF" />

@@ -23,7 +23,7 @@ LOGGER = udi_interface.LOGGER
 VERSION = '3.1.15'
 """
 3.1.15
-DONE sends commands for generic, dimmer
+DONE generic, dimmer, change ST to OL, memory of level for DON, DFON/DFOF, command
 
 3.1.14
 DONE commands for switches, generic, dimmer, garage
