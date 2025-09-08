@@ -213,7 +213,8 @@
             <cmd id="TRIGGER" />
             <cmd id="STOP" />
             <cmd id="LOCK" />
-            <cmd id="UNLOCK" />
+			<cmd id="UNLOCK" />
+            <cmd id="QUERY" />
             <cmd id="resetStats" />
           </accepts>
         </cmds>
