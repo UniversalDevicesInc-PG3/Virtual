@@ -184,7 +184,7 @@ class Controller(udi_interface.Node):
         self.Parameters.load(params)
         while not self.checkParams():
             time.sleep(2)
-        self._handler_params_st = True
+        self.handler_params_st = True
         LOGGER.info('parmHandler Done...')
         self.check_handlers()
         
