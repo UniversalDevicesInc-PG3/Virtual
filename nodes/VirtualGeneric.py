@@ -135,7 +135,10 @@ class VirtualGeneric(udi_interface.Node):
 
     def cmd_DON(self, command=None):
         LOGGER.debug(command)
-        self.level = self.level_stored
+        if self.level_stored > 0:
+            self.level = self.level_stored
+        else:
+            self.level = 100
         self.setDriver('OL', self.level)
         self.reportCmd("DON", 2)
         self.storeValues()
@@ -143,7 +146,8 @@ class VirtualGeneric(udi_interface.Node):
 
     def cmd_DOF(self, command=None):
         LOGGER.debug(command)
-        self.level_stored = int(self.level)
+        if self.level != 100:
+            self.level_stored = self.level
         self.level = 0
         self.setDriver('OL', self.level)
         self.reportCmd("DOF", 2)
@@ -160,7 +164,8 @@ class VirtualGeneric(udi_interface.Node):
 
     def cmd_DFOF(self, command=None):
         LOGGER.debug(command)
-        self.level_stored = int(self.level)
+        if self.level != 100:
+            self.level_stored = self.level
         self.level = 0
         self.setDriver('OL', self.level)
         self.reportCmd("DFOF", 2)
@@ -180,7 +185,7 @@ class VirtualGeneric(udi_interface.Node):
     def cmd_DIM(self, command=None):
         LOGGER.debug(command)
         self.level = int(self.level) - 2
-        if self.level < 0:
+        if self.level <= 0:
             self.level = 0
             self.level_stored = 10
         else:
@@ -193,7 +198,10 @@ class VirtualGeneric(udi_interface.Node):
     def cmd_set_OL(self, command):
         LOGGER.debug(command)
         self.level = int(command.get('value'))
-        self.level_stored = self.level
+        if self.level != 0:
+            self.level_stored = self.level
+        else:
+            self.level_stored = 10
         self.setDriver('OL', self.level)
         self.reportCmd("OL", value=self.level)
         self.storeValues()
