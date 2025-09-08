@@ -37,16 +37,6 @@ class VirtualGeneric(udi_interface.Node):
     
     Query: Is used to report status of the node
 
-    Class Methods(generic):
-    setDriver('ST', 1, report = True, force = False):
-        This sets the driver 'ST' to 1. If report is False we do not report
-        it to Polyglot/ISY. If force is True, we send a report even if the
-        value hasn't changed.
-    reportDriver(driver, force): report the driver value to Polyglot/ISY if
-        it has changed.  if force is true, send regardless.
-    reportDrivers(): Forces a full update of all drivers to Polyglot/ISY.
-    query(): Called when ISY sends a query request to Polyglot for this
-        specific node
     """
     def __init__(self, polyglot, primary, address, name):
         """ Sent by the Controller class node.
@@ -99,16 +89,16 @@ class VirtualGeneric(udi_interface.Node):
             _key = 'key' + str(self.address)
             _name = str(self.name).replace(" ","_")
             _file = f"db/{_name}.db"
-            LOGGER.info(f'Checking to see existence of db file: {_file}')
+            LOGGER.info(f'{self.name}: Checking to see existence of db file: {_file}')
             if os.path.exists(_file):
-                LOGGER.info('...file exists')
+                LOGGER.info(f'{self.name}:...file exists')
                 self.retrieveValues()
             else:
                 s = shelve.open(f"db/{_name}", writeback=False)
                 s[_key] = { 'switchStatus': self.level, 'switchStored': self.level_stored }
                 time.sleep(2)
                 s.close()
-                LOGGER.info("...file didn\'t exist, created successfully")
+                LOGGER.info(f"{self.name}:...file didn\'t exist, created successfully")
         except Exception as ex:
                 LOGGER.error(f"createDBfile error: {ex}")
 
@@ -117,7 +107,7 @@ class VirtualGeneric(udi_interface.Node):
         _name = str(self.name).replace(" ","_")
         _file = f"db/{_name}.db"
         if os.path.exists(_file):
-            LOGGER.debug(f'Deleting db: {_file}')
+            LOGGER.info(f'{self.name}: Deleting db: {_file}')
             subprocess.run(["rm", _file])
 
     def storeValues(self):
@@ -138,17 +128,18 @@ class VirtualGeneric(udi_interface.Node):
             existing = s[_key]
         finally:
             s.close()
-        LOGGER.info('Retrieving Values %s', existing)
+        LOGGER.info(f"{self.name}: Retrieving Values:{existing}")
         self.level = existing['switchStatus']
         self.level_stored = existing['switchStored']
         self.setDriver('OL', self.level)
 
     def cmd_DON(self, command=None):
         LOGGER.debug(command)
-        self.level = self.level_store
+        self.level = self.level_stored
         self.setDriver('OL', self.level)
         self.reportCmd("DON", 2)
         self.storeValues()
+        LOGGER.info(f"{self.name}:{command}, level:{self.level}, level_stored:{self.level_stored}")
 
     def cmd_DOF(self, command=None):
         LOGGER.debug(command)
@@ -157,6 +148,7 @@ class VirtualGeneric(udi_interface.Node):
         self.setDriver('OL', self.level)
         self.reportCmd("DOF", 2)
         self.storeValues()
+        LOGGER.info(f"{self.name}:{command}, level:{self.level}, level_stored:{self.level_stored}")
 
     def cmd_DFON(self, command=None):
         LOGGER.debug(command)
@@ -165,6 +157,7 @@ class VirtualGeneric(udi_interface.Node):
         self.reportCmd("DFON", 2)
         self.level_stored = int(self.level)
         self.storeValues()
+        LOGGER.info(f"{self.name}:{command}, level:{self.level}, level_stored:{self.level_stored}")
 
     def cmd_DFOF(self, command=None):
         LOGGER.debug(command)
@@ -173,6 +166,7 @@ class VirtualGeneric(udi_interface.Node):
         self.setDriver('OL', self.level)
         self.reportCmd("DFOF", 2)
         self.storeValues()
+        LOGGER.info(f"{self.name}:{command}, level:{self.level}, level_stored:{self.level_stored}")
 
     def cmd_BRT(self, command=None):
         LOGGER.debug(command)
@@ -182,6 +176,7 @@ class VirtualGeneric(udi_interface.Node):
         self.setDriver('OL', self.level)
         self.reportCmd("BRT",2)
         self.storeValues()
+        LOGGER.info(f"{self.name}:{command}, level:{self.level}, level_stored:{self.level_stored}")
 
     def cmd_DIM(self, command=None):
         LOGGER.debug(command)
@@ -194,14 +189,16 @@ class VirtualGeneric(udi_interface.Node):
         self.setDriver('OL', self.level)
         self.reportCmd("DIM",2)
         self.storeValues()
+        LOGGER.info(f"{self.name}:{command}, level:{self.level}, level_stored:{self.level_stored}")
 
     def cmd_set_OL(self, command):
         LOGGER.debug(command)
         self.level = int(command.get('value'))
-        self.level_store = self.level
+        self.level_stored = self.level
         self.setDriver('OL', self.level)
         self.reportCmd("OL", value=self.level)
         self.storeValues()
+        LOGGER.info(f"{self.name}:{command}, level:{self.level}, level_stored:{self.level_stored}")
 
     def query(self, command=None):
         """
