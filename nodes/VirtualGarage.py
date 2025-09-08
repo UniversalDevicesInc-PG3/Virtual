@@ -857,16 +857,20 @@ class VirtualGarage(udi_interface.Node):
         LOGGER.debug(f"id: {_data['id']}, value: {_data['value']}, state: {state}")
         if state == 'ON':
             self.motor = 1
+            self.reportCmd('MOTORON',2)
         elif state =='OFF':
             self.motor = 0
+            self.reportCmd('MOTOROFF',2)
 
     def setRatgdoMotion(self, _data):
         state = _data['state']
         LOGGER.debug(f"id: {_data['id']}, value: {_data['value']}, state: {state}")
         if state == 'ON':
             self.motion = 1
+            self.reportCmd('MOTION',2)
         elif state =='OFF':
             self.motion = 0
+            self.reportCmd('NOMOTION',2)
 
     def setRatgdoLock(self, _data):
         state = _data['state']
@@ -881,8 +885,10 @@ class VirtualGarage(udi_interface.Node):
         LOGGER.debug(f"id: {_data['id']}, value: {_data['value']}, state: {state}")
         if state == 'ON':
             self.obstruct = 1
+            self.reportCmd('OBSTRUCTION',2)
         elif state == 'OFF':
             self.obstruct = 0
+            self.reportCmd('NOOBSTRUCTION',2)
                                 
     def updateISY(self):
         _currentTime = time.time()

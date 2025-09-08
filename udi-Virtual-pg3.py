@@ -20,8 +20,12 @@ import udi_interface
 
 LOGGER = udi_interface.LOGGER
 
-VERSION = '3.1.15'
+VERSION = '3.1.16'
 """
+3.1.16
+DONE fix controller ST "status" on at start, off at stop / delete, "control" still heartbeat
+DONE garage send CMDs, motor, motion, obstruction
+
 3.1.15
 DONE generic, dimmer, change ST to OL, memory of level for DON, DFON/DFOF, command
 

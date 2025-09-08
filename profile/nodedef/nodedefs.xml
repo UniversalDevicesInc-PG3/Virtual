@@ -196,7 +196,13 @@
             <cmd id="TRIGGER" />
             <cmd id="STOP" />
             <cmd id="LOCK" />
-            <cmd id="UNLOCK" />
+			<cmd id="UNLOCK" />
+            <cmd id="MOTORON" />
+			<cmd id="MOTOROFF" />
+			<cmd id="MOTION" />
+			<cmd id="NOMOTION" />
+			<cmd id="OBSTRUCTION" />
+			<cmd id="NOOBSTRUCTION" />
             <cmd id="resetStats" />
           </sends>
           <accepts>
