@@ -27,6 +27,7 @@ DONE fix controller ST "status" on at start, off at stop / delete, "control" sti
 DONE garage send CMDs, motor, motion, obstruction ; get naming consistent
 DONE standardize startup sequence
 DONE rewrite checkParams, Discovery
+DONE add NumberOfNodes
 
 3.1.15
 DONE generic, dimmer, change ST to OL, memory of level for DON, DFON/DFOF, command
