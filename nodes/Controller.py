@@ -9,6 +9,7 @@ Controller class
 # std libraries
 import time, json, subprocess
 from threading import Event, Condition
+from typing import Dict, Any, List
 
 # external libraries
 import yaml
@@ -226,60 +227,146 @@ class Controller(udi_interface.Node):
             self.all_handlers_st_event.set()
 
 
-    def checkParams(self):
+    def _handle_json_device(self, key: str, val: str) -> Dict[str, Any] | None:
+        """Parses a JSON device configuration, handling ID logic."""
+        try:
+            device = json.loads(val)
+            if not isinstance(device, dict):
+                raise TypeError("JSON content must be a dictionary.")
+
+            if "id" not in device:
+                device["id"] = key
+                LOGGER.debug(f"no id: inserting id: {key} into device: {device}")
+            elif device["id"] != key:
+                device["id"] = key
+                LOGGER.error(f"error id: {key} != deviceID: {device['id']}; fixed device: {device}")
+
+            return device
+        except (json.JSONDecodeError, TypeError) as ex:
+            LOGGER.error(f"JSON parse error for key '{key}' with value '{val}': {ex}")
+            return None
+
+
+    def _handle_file_devices(self, filename: str) -> List[Dict[str, Any]] | None:
+        """Loads and returns devices from a YAML file."""
+        try:
+            with open(filename, 'r') as f:
+                dev_yaml = yaml.safe_load(f)
+
+            if "devices" not in dev_yaml:
+                LOGGER.error(f"Manual discovery file '{filename}' is missing 'devices' section.")
+                return None
+
+            LOGGER.info(f"File '{filename}' loaded successfully.")
+            return dev_yaml["devices"]
+        except FileNotFoundError as ex:
+            LOGGER.error(f"checkParams: Failed to open {filename}: {ex}")
+            return None
+        except yaml.YAMLError as ex:
+            LOGGER.error(f"checkParams: Failed to parse YAML content in {filename}: {ex}")
+            return None
+
+
+    def checkParams(self) -> bool:
+        """
+        Checks and processes device parameters from `self.Parameters`.
+        """
         self.Notices.delete('config')
-        params = self.Parameters
         self.devlist = []
-        for key,val in params.items():
-            a = key
-            if a.isdigit():
-                if val in {'switch', 'temperature', 'temperaturec', 'temperaturecr', 'generic', 'dimmer'}:
-                    name = str(val) + ' ' + str(key)
-                    device = {'id': a, 'type': val, 'name': name}
-                    self.devlist.append(device)
-                elif val is not None:
-                    try:
-                        device = {}
-                        device = json.loads(val)
-                        LOGGER.debug(f'json device before loads: {device}, type: {type(device)}')
-                        if "id" not in device:
-                            device["id"] = a
-                            LOGGER.debug(f'no id: inserting id: {a} into device: {device}')
-                        if device["id"] != a:
-                            device["id"] = a
-                            LOGGER.error(f"error id: {a} != deviceID: {device['id']} fixed device: {device}")
-                        self.devlist.append(device)
-                    except Exception as ex:
-                        LOGGER.error(f"JSON parse exception: {ex} for  key: {a} the value: {val} created exeption: {ex}" )
-                        self.Notices['config'] = 'Bad configuration, please re-check.'
-                        return False
-            elif a == "devFile" or a == "devfile":
-                if val is not None:
-                    try:
-                        f = open(val)
-                    except Exception as ex:
-                        LOGGER.error(f"CheckParams: Failed to open {val}: {ex}")
-                        return False
-                    try:
-                        dev_yaml = yaml.safe_load(f.read())  # upload devfile into data
-                        f.close()
-                    except Exception as ex:
-                        LOGGER.error(f"checkParams: Failed to parse {val} content: {ex}")
-                        return False
-                    if "devices" not in dev_yaml:
-                        LOGGER.error(f"checkParams: Manual discovery file {val} is missing devices section")
-                        return False
-                    self.devlist.extend(dev_yaml["devices"])  # transfer devfile into devlist
-                    LOGGER.info(f'file: {val} with content: {dev_yaml} transferred into self.devlist')
+        has_error = False
+
+        for key, val in self.Parameters.items():
+            if not key.isdigit():
+                if key in ["devFile", "devfile"]:
+                    if val:
+                        devices_from_file = self._handle_file_devices(val)
+                        if devices_from_file is not None:
+                            self.devlist.extend(devices_from_file)
+                        else:
+                            has_error = True
+                    else:
+                        LOGGER.error('checkParams: devFile missing filename')
+                        has_error = True
                 else:
-                    LOGGER.error('checkParams: devFile missing filename')
-                    return False
-            else:
-                LOGGER.error(f'unknown keyfield: {a}')
-                    
+                    LOGGER.error(f"unknown keyfield: '{key}'")
+                    has_error = True
+                continue
+
+            if val in {'switch', 'temperature', 'temperaturec', 'temperaturecr', 'generic', 'dimmer'}:
+                name = f"{val} {key}"
+                device = {'id': key, 'type': val, 'name': name}
+                self.devlist.append(device)
+            elif val:
+                json_device = self._handle_json_device(key, val)
+                if json_device:
+                    self.devlist.append(json_device)
+                else:
+                    has_error = True
+
+        if has_error:
+            self.Notices['config'] = 'Bad configuration, please re-check.'
+            LOGGER.info('checkParams finished with errors.')
+            return False
+
         LOGGER.info('checkParams is complete')
         LOGGER.info(f'checkParams: self.devlist: {self.devlist}')
         return True
+
+
+    # def checkParams(self):
+    #     self.Notices.delete('config')
+    #     params = self.Parameters
+    #     self.devlist = []
+    #     for key,val in params.items():
+    #         a = key
+    #         if a.isdigit():
+    #             if val in {'switch', 'temperature', 'temperaturec', 'temperaturecr', 'generic', 'dimmer'}:
+    #                 name = str(val) + ' ' + str(key)
+    #                 device = {'id': a, 'type': val, 'name': name}
+    #                 self.devlist.append(device)
+    #             elif val is not None:
+    #                 try:
+    #                     device = {}
+    #                     device = json.loads(val)
+    #                     LOGGER.debug(f'json device before loads: {device}, type: {type(device)}')
+    #                     if "id" not in device:
+    #                         device["id"] = a
+    #                         LOGGER.debug(f'no id: inserting id: {a} into device: {device}')
+    #                     if device["id"] != a:
+    #                         device["id"] = a
+    #                         LOGGER.error(f"error id: {a} != deviceID: {device['id']} fixed device: {device}")
+    #                     self.devlist.append(device)
+    #                 except Exception as ex:
+    #                     LOGGER.error(f"JSON parse exception: {ex} for  key: {a} the value: {val} created exeption: {ex}" )
+    #                     self.Notices['config'] = 'Bad configuration, please re-check.'
+    #                     return False
+    #         elif a == "devFile" or a == "devfile":
+    #             if val is not None:
+    #                 try:
+    #                     f = open(val)
+    #                 except Exception as ex:
+    #                     LOGGER.error(f"CheckParams: Failed to open {val}: {ex}")
+    #                     return False
+    #                 try:
+    #                     dev_yaml = yaml.safe_load(f.read())  # upload devfile into data
+    #                     f.close()
+    #                 except Exception as ex:
+    #                     LOGGER.error(f"checkParams: Failed to parse {val} content: {ex}")
+    #                     return False
+    #                 if "devices" not in dev_yaml:
+    #                     LOGGER.error(f"checkParams: Manual discovery file {val} is missing devices section")
+    #                     return False
+    #                 self.devlist.extend(dev_yaml["devices"])  # transfer devfile into devlist
+    #                 LOGGER.info(f'file: {val} with content: {dev_yaml} transferred into self.devlist')
+    #             else:
+    #                 LOGGER.error('checkParams: devFile missing filename')
+    #                 return False
+    #         else:
+    #             LOGGER.error(f'unknown keyfield: {a}')
+    #                 
+    #     LOGGER.info('checkParams is complete')
+    #     LOGGER.info(f'checkParams: self.devlist: {self.devlist}')
+    #     return True
 
         
     """
