@@ -6,10 +6,7 @@ udi-Virtual-pg3 NodeServer/Plugin for EISY/Polisy
 VirtualGeneric class
 """
 # std libraries
-import time
-import os.path
-import shelve
-import subprocess
+import os.path, shelve
 
 #external libraries
 import udi_interface
@@ -69,8 +66,14 @@ class VirtualGeneric(udi_interface.Node):
         # self.poly.subscribe(self.poly.POLL, self.poll)
 
     def start(self):
-        """ START event subscription above """
-        self.createDBfile()
+        """
+        Start node and retrieve persistent data
+        """
+        # wait for controller start ready
+        self.controller.ready_event.wait()
+        
+        # get persistent data from polyglot or depreciated: old db file, then delete db file
+        self.load_persistent_data()
         
     # poll NOT required in this node, keeping as comment for easy debugging
     """
@@ -81,58 +84,80 @@ class VirtualGeneric(udi_interface.Node):
             LOGGER.debug(f"shortPoll {self.name}")
     """
 
-    def createDBfile(self):
-        """
-        DB file is used to store switch status across ISY & Polyglot reboots.
-        """
-        try:
-            _key = 'key' + str(self.address)
-            _name = str(self.name).replace(" ","_")
-            _file = f"db/{_name}.db"
-            LOGGER.info(f'{self.name}: Checking to see existence of db file: {_file}')
-            if os.path.exists(_file):
-                LOGGER.info(f'{self.name}:...file exists')
-                self.retrieveValues()
-            else:
-                s = shelve.open(f"db/{_name}", writeback=False)
-                s[_key] = { 'switchStatus': self.level, 'switchStored': self.level_stored }
-                time.sleep(2)
-                s.close()
-                LOGGER.info(f"{self.name}:...file didn\'t exist, created successfully")
-        except Exception as ex:
-                LOGGER.error(f"createDBfile error: {ex}")
 
-    def deleteDB(self):
-        """ Called from Controller when node is deleted """
+    def _checkDBfile_and_migrate(self):
+        """
+        Checks for the deprecated DB file, migrates data to Polyglot's
+        persistent storage, and then deletes the old file.
+        This helper function is called by load_persistent_data once during startup.
+        """
         _name = str(self.name).replace(" ","_")
-        _file = f"db/{_name}.db"
-        if os.path.exists(_file):
-            LOGGER.info(f'{self.name}: Deleting db: {_file}')
-            subprocess.run(["rm", _file])
+        old_file_path = os.path.join("db", f"{_name}.db")
+
+        if not os.path.exists(old_file_path):
+            LOGGER.info(f'[{self.name}] No old DB file found at: {old_file_path}')
+            return False, None
+
+        LOGGER.info(f'[{self.name}] Old DB file found, migrating data...')
+
+        _key = 'key' + str(self.address)
+        try:
+            with shelve.open(os.path.join("db", _name), flag='r') as s:
+                existing_data = s.get(_key)
+        except Exception as ex:
+            LOGGER.error(f"[{self.name}] Error opening or reading old shelve DB: {ex}")
+            return False, None
+
+        if existing_data:
+            # Delete the old file after successful read
+            try:
+                LOGGER.info(f'[{self.name}] Deleting old DB file: {old_file_path}')
+                os.remove(old_file_path)
+            except OSError as ex:
+                LOGGER.error(f"[{self.name}] Error deleting old DB file: {ex}")
+
+        return True, existing_data
+    
+
+    def load_persistent_data(self):
+        """
+        Load state from Polyglot persistence or migrate from old DB file.
+        """
+        # Try to load from new persistence format first
+        data = self.controller.Data.get(self.name)
+
+        if data:
+            self.level = data.get('switchStatus', 0)
+            self.level_stored = data.get('switchStored', 0)
+            LOGGER.info(f"switch:{self.name}, Loaded from persistence: level={self.level}, stored={self.level_stored}")
+        else:
+            LOGGER.info(f"switch:{self.name}, No persistent data found. Checking for old DB file...")
+            is_migrated, old_data = self._checkDBfile_and_migrate()
+            if is_migrated and old_data:
+                self.level = old_data.get('switchStatus', 0)
+                self.level_stored = old_data.get('switchStored', 0)
+                # Store the migrated data in the new persistence format
+                self.storeValues()
+                LOGGER.info(f"switch:{self.name}, Migrated from old DB file. level={self.level}, stored={self.level_stored}")
+            else:
+                LOGGER.info(f"switch:{self.name}, No old DB file found.")
+                # Set initial values if no data exists
+                self.level = 0
+                self.level_stored = 0
+                
 
     def storeValues(self):
-        _key = 'key' + str(self.address)
-        _name = str(self.name).replace(" ","_")
-        s = shelve.open(f"db/{_name}", writeback=False)
-        try:
-            s[_key] = { 'switchStatus': self.level, 'switchStored': self.level_stored}
-        finally:
-            s.close()
-        LOGGER.debug('Values Stored')
-        
-    def retrieveValues(self):
-        _key = 'key' + str(self.address)
-        _name = str(self.name).replace(" ","_")
-        s = shelve.open(f"db/{_name}", writeback=False)
-        try:
-            existing = s[_key]
-        finally:
-            s.close()
-        LOGGER.info(f"{self.name}: Retrieving Values:{existing}")
-        self.level = existing['switchStatus']
-        self.level_stored = existing['switchStored']
-        self.setDriver('OL', self.level)
+        """
+        Store persistent data to Polyglot Data structure.
+        """
+        data_to_store = {
+            'switchStatus': self.level,
+            'switchStored': self.level_stored
+        }
+        self.controller.Data[self.name] = data_to_store
+        LOGGER.debug(f'Values stored for {self.name}: {data_to_store}')
 
+             
     def cmd_DON(self, command=None):
         LOGGER.debug(command)
         if self.level_stored > 0:

@@ -16,11 +16,12 @@ import yaml
 import udi_interface
 
 # personal libraries
-from nodes import VirtualSwitch
-from nodes import VirtualTemp
-from nodes import VirtualTempC
-from nodes import VirtualGeneric
-from nodes import VirtualGarage
+from utils.node_funcs import get_valid_node_name # not using  get_valid_node_address as id's seem to behave
+
+
+# Nodes
+from nodes import *
+
 
 """
 Some shortcuts for udi interface components
@@ -318,7 +319,7 @@ class Controller(udi_interface.Node):
                 continue
 
             if val in {'switch', 'temperature', 'temperaturec', 'temperaturecr', 'generic', 'dimmer'}:
-                name = f"{val} {key}"
+                name = get_valid_node_name(f"{val} {key}")
                 device = {'id': key, 'type': val, 'name': name}
                 self.devlist.append(device)
             elif val:
@@ -398,7 +399,7 @@ class Controller(udi_interface.Node):
         """
         if 'name' in dev:
             return dev['name']
-        return f"{dev['type']} {dev['id']}"
+        return get_valid_node_name(f"{dev['type']} {dev['id']}")
 
     
     def discoverNodes(self):
@@ -440,7 +441,6 @@ class Controller(udi_interface.Node):
         for node_id in nodes_to_delete:
             LOGGER.info(f"Deleting old node with id: '{node_id}'")
             self.poly.delNode(node_id) # Using delNode with id
-            # Note: polyglot API handles deleteDB().
 
         if not nodes_to_delete and not (new_nodes_ids - current_nodes_ids):
             LOGGER.warning('Discovery NO NEW activity')
