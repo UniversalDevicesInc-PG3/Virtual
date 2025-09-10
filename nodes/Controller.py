@@ -75,6 +75,7 @@ class Controller(udi_interface.Node):
         super().__init__(polyglot, primary, address, name)
         # importand flags, timers, vars
         self.hb = 0 # heartbeat
+        self.numNodes = 0
 
         # storage arrays & conditions
         self.n_queue = []
@@ -88,15 +89,17 @@ class Controller(udi_interface.Node):
 
         # startup completion flags
         self.handler_params_st = None
+        self.handler_data_st = None
         self.handler_typedparams_st = None
         self.handler_typeddata_st = None
         self.handler_discover_st = None
 
         # Create data storage classes
-        self.Parameters = Custom(polyglot, 'customparams')
-        self.Notices = Custom(polyglot, 'notices')
+        self.Notices         = Custom(polyglot, 'notices')
+        self.Parameters      = Custom(polyglot, 'customparams')
+        self.Data            = Custom(self.poly, 'customdata')
         self.TypedParameters = Custom(polyglot, 'customtypedparams')
-        self.TypedData = Custom(polyglot, 'customtypeddata')
+        self.TypedData       = Custom(polyglot, 'customtypeddata')
 
         # Subscribe to various events from the Interface class.
         # The START event is unique in that you can subscribe to 
@@ -106,6 +109,7 @@ class Controller(udi_interface.Node):
         self.poly.subscribe(self.poly.POLL,              self.poll)
         self.poly.subscribe(self.poly.LOGLEVEL,          self.handleLevelChange)
         self.poly.subscribe(self.poly.CUSTOMPARAMS,      self.parameterHandler)
+        self.poly.subscribe(self.poly.CUSTOMDATA,        self.dataHandler)
         self.poly.subscribe(self.poly.STOP,              self.stop)
         self.poly.subscribe(self.poly.DISCOVER,          self.discover)
         self.poly.subscribe(self.poly.CUSTOMTYPEDDATA,   self.typedDataHandler)
@@ -188,6 +192,16 @@ class Controller(udi_interface.Node):
             self.n_queue.pop()
             
 
+    def dataHandler(self,data):
+        LOGGER.debug(f'enter: Loading data {data}')
+        if data is None:
+            LOGGER.warning("No custom data")
+        else:
+            self.Data.load(data)
+        self.handler_data_st = True
+        self.check_handlers()
+
+
     def parameterHandler(self, params):
         """
         Called via the CUSTOMPARAMS event. When the user enters or
@@ -233,7 +247,8 @@ class Controller(udi_interface.Node):
         """
         Once all start-up parameters are done then set event.
         """
-        if (self.handler_params_st and self.handler_typedparams_st and self.handler_typeddata_st):
+        if (self.handler_params_st and self.handler_data_st and
+            self.handler_typedparams_st and self.handler_typeddata_st):
             self.all_handlers_st_event.set()
 
 
@@ -430,6 +445,8 @@ class Controller(udi_interface.Node):
         if not nodes_to_delete and not (new_nodes_ids - current_nodes_ids):
             LOGGER.warning('Discovery NO NEW activity')
 
+        self.numNodes = len(new_nodes_ids)
+        self.setDriver('GV0', self.numNodes)        
         self.handler_discover_st = True
         LOGGER.info('Discovery complete.')
 
