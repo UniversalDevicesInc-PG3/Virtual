@@ -311,71 +311,19 @@ class Controller(udi_interface.Node):
         LOGGER.info('checkParams is complete')
         LOGGER.info(f'checkParams: self.devlist: {self.devlist}')
         return True
-
-
-    # def checkParams(self):
-    #     self.Notices.delete('config')
-    #     params = self.Parameters
-    #     self.devlist = []
-    #     for key,val in params.items():
-    #         a = key
-    #         if a.isdigit():
-    #             if val in {'switch', 'temperature', 'temperaturec', 'temperaturecr', 'generic', 'dimmer'}:
-    #                 name = str(val) + ' ' + str(key)
-    #                 device = {'id': a, 'type': val, 'name': name}
-    #                 self.devlist.append(device)
-    #             elif val is not None:
-    #                 try:
-    #                     device = {}
-    #                     device = json.loads(val)
-    #                     LOGGER.debug(f'json device before loads: {device}, type: {type(device)}')
-    #                     if "id" not in device:
-    #                         device["id"] = a
-    #                         LOGGER.debug(f'no id: inserting id: {a} into device: {device}')
-    #                     if device["id"] != a:
-    #                         device["id"] = a
-    #                         LOGGER.error(f"error id: {a} != deviceID: {device['id']} fixed device: {device}")
-    #                     self.devlist.append(device)
-    #                 except Exception as ex:
-    #                     LOGGER.error(f"JSON parse exception: {ex} for  key: {a} the value: {val} created exeption: {ex}" )
-    #                     self.Notices['config'] = 'Bad configuration, please re-check.'
-    #                     return False
-    #         elif a == "devFile" or a == "devfile":
-    #             if val is not None:
-    #                 try:
-    #                     f = open(val)
-    #                 except Exception as ex:
-    #                     LOGGER.error(f"CheckParams: Failed to open {val}: {ex}")
-    #                     return False
-    #                 try:
-    #                     dev_yaml = yaml.safe_load(f.read())  # upload devfile into data
-    #                     f.close()
-    #                 except Exception as ex:
-    #                     LOGGER.error(f"checkParams: Failed to parse {val} content: {ex}")
-    #                     return False
-    #                 if "devices" not in dev_yaml:
-    #                     LOGGER.error(f"checkParams: Manual discovery file {val} is missing devices section")
-    #                     return False
-    #                 self.devlist.extend(dev_yaml["devices"])  # transfer devfile into devlist
-    #                 LOGGER.info(f'file: {val} with content: {dev_yaml} transferred into self.devlist')
-    #             else:
-    #                 LOGGER.error('checkParams: devFile missing filename')
-    #                 return False
-    #         else:
-    #             LOGGER.error(f'unknown keyfield: {a}')
-    #                 
-    #     LOGGER.info('checkParams is complete')
-    #     LOGGER.info(f'checkParams: self.devlist: {self.devlist}')
-    #     return True
+    
+        
+    def handleLevelChange(self, level):
+        """
+        Called via the LOGLEVEL event.
+        """
+        LOGGER.info('New log level: {}'.format(level))
 
         
-    """
-    Called via the LOGLEVEL event.
-    """
-    def handleLevelChange(self, level):
-        LOGGER.info('New log level: {}'.format(level))
-            
     def poll(self, flag):
+        """
+        Short & Long polling, only heartbeat in Controller
+        """
         # no updates until node is through start-up
         if not self.ready_event:
             LOGGER.error(f"Node not ready yet, exiting")
@@ -422,88 +370,157 @@ class Controller(udi_interface.Node):
         self.discoverNodes()
         
 
+    # Map device types to their respective node classes
+    _DEVICE_TYPE_TO_NODE_CLASS = {
+        'switch': VirtualSwitch,
+        'temperature': VirtualTemp,
+        'temperaturec': VirtualTempC,
+        'temperaturecr': VirtualTempC,
+        'generic': VirtualGeneric,
+        'dimmer': VirtualGeneric,
+        'garage': VirtualGarage,
+    }
+
+    
+    def _get_node_name(self, dev: Dict[str, Any]) -> str:
+        """
+        Helper to get the node name from a device definition.
+        """
+        if 'name' in dev:
+            return dev['name']
+        return f"{dev['type']} {dev['id']}"
+
+    
     def discoverNodes(self):
+        """
+        Discovers, adds, updates, and removes nodes based on the device list.
+        """
         self.handler_discover_st = False
         LOGGER.info("In Discovery...")
 
-        nodes = self.poly.getNodes()
-        LOGGER.debug(f"current nodes = {nodes}")
-        nodes_old = []
-        for node in nodes:
-            LOGGER.debug(f"current node = {node}")
-            if node != self.id:
-                nodes_old.append(node)
+        current_nodes_ids = {node for node in self.poly.getNodes() if node != self.id}
+        new_nodes_ids = set()
 
-        nodes_new = []
+        # Step 1: Add or update new nodes
         for dev in self.devlist:
-            if ("id" not in dev or "type" not in dev):
-                LOGGER.error("Invalid device definition: {json.dumps(dev)}")
+            if "id" not in dev or "type" not in dev:
+                LOGGER.error(f"Invalid device definition: {json.dumps(dev)}")
                 continue
-            type = str(dev["type"])
-            id = str(dev["id"])
-            if "name" in dev:
-                name = dev["name"]
-            else:
-                name = type + ' ' + id
-            nodeExists = self.poly.getNode(id)
-            if type == "switch":
-                if not nodeExists:
-                    self.poly.addNode(VirtualSwitch(self.poly, self.address, id, name))
-                    self.wait_for_node_done()
-                else:
-                    if nodeExists.name != type + " " + id:
-                        nodeExists.rename(name)
-            elif type == 'temperature':
-                if not self.poly.getNode(id):
-                    self.poly.addNode(VirtualTemp(self.poly, self.address, id, name))
-                    self.wait_for_node_done()
-                else:
-                    if nodeExists.name != type + " " + id:
-                        nodeExists.rename(name)
-            elif type == 'temperaturec' or type == 'temperaturecr':
-                if not self.poly.getNode(id):
-                    self.poly.addNode(VirtualTempC(self.poly, self.address, id, name))
-                    self.wait_for_node_done()
-                else:
-                    if nodeExists.name != type + " " + id:
-                        nodeExists.rename(name)
-            elif type == 'generic' or type == 'dimmer':
-                if not self.poly.getNode(id):
-                    self.poly.addNode(VirtualGeneric(self.poly, self.address, id, name))
-                    self.wait_for_node_done()
-                else:
-                    if nodeExists.name != type + " " + id:
-                        nodeExists.rename(name)
-            elif type == 'garage':
-                if not self.poly.getNode(id):
-                    self.poly.addNode(VirtualGarage(self.poly, self.address, id, name))
-                    self.wait_for_node_done()
-                else:
-                    if nodeExists.name != type + " " + id:
-                        nodeExists.rename(name)
-            else:
-                LOGGER.error(f"Device type {type} is not yet supported")
+
+            dev_id = str(dev["id"])
+            dev_type = str(dev["type"])
+            node_name = self._get_node_name(dev)
+
+            node_class = self._DEVICE_TYPE_TO_NODE_CLASS.get(dev_type)
+            if not node_class:
+                LOGGER.error(f"Device type '{dev_type}' is not yet supported.")
                 continue
-            nodes_new.append(id)
 
-        # remove nodes which do not exist in gateway
-        nodes = self.poly.getNodesFromDb()
-        LOGGER.info(f"db nodes = {nodes}")
-        nodes = self.poly.getNodes()
-        nodes_get = {key: nodes[key] for key in nodes if key != self.id}
-        LOGGER.info(f"old nodes = {nodes_old}")
-        LOGGER.info(f"new nodes = {nodes_new}")
-        LOGGER.info(f"pre-delete nodes = {nodes_get}")
-        for node in nodes_get:
-            if (node not in nodes_new):
-                LOGGER.info(f"need to delete node {node}")
-                node.deleteDB()
-                self.poly.delNode(node)
+            node_exists = self.poly.getNode(dev_id)
+            if not node_exists:
+                self.poly.addNode(node_class(self.poly, self.address, dev_id, node_name))
+                self.wait_for_node_done()
+            elif node_exists.name != node_name:
+                node_exists.rename(node_name)
 
-        if nodes_get == nodes_new:
+            new_nodes_ids.add(dev_id)
+
+        # Step 2: Remove old nodes
+        nodes_to_delete = current_nodes_ids - new_nodes_ids
+        for node_id in nodes_to_delete:
+            LOGGER.info(f"Deleting old node with id: '{node_id}'")
+            self.poly.delNode(node_id) # Using delNode with id
+            # Note: polyglot API handles deleteDB().
+
+        if not nodes_to_delete and not (new_nodes_ids - current_nodes_ids):
             LOGGER.warning('Discovery NO NEW activity')
+
         self.handler_discover_st = True
         LOGGER.info('Discovery complete.')
+
+        
+    # def discoverNodes(self):
+    #     self.handler_discover_st = False
+    #     LOGGER.info("In Discovery...")
+
+#         nodes = self.poly.getNodes()
+    #     LOGGER.debug(f"current nodes = {nodes}")
+    #     nodes_old = []
+    #     for node in nodes:
+    #         LOGGER.debug(f"current node = {node}")
+    #         if node != self.id:
+    #             nodes_old.append(node)
+
+#         nodes_new = []
+    #     for dev in self.devlist:
+    #         if ("id" not in dev or "type" not in dev):
+    #             LOGGER.error("Invalid device definition: {json.dumps(dev)}")
+    #             continue
+    #         type = str(dev["type"])
+    #         id = str(dev["id"])
+    #         if "name" in dev:
+    #             name = dev["name"]
+    #         else:
+    #             name = type + ' ' + id
+    #         nodeExists = self.poly.getNode(id)
+    #         if type == "switch":
+    #             if not nodeExists:
+    #                 self.poly.addNode(VirtualSwitch(self.poly, self.address, id, name))
+    #                 self.wait_for_node_done()
+    #             else:
+    #                 if nodeExists.name != type + " " + id:
+    #                     nodeExists.rename(name)
+    #         elif type == 'temperature':
+    #             if not self.poly.getNode(id):
+    #                 self.poly.addNode(VirtualTemp(self.poly, self.address, id, name))
+    #                 self.wait_for_node_done()
+    #             else:
+    #                 if nodeExists.name != type + " " + id:
+    #                     nodeExists.rename(name)
+    #         elif type == 'temperaturec' or type == 'temperaturecr':
+    #             if not self.poly.getNode(id):
+    #                 self.poly.addNode(VirtualTempC(self.poly, self.address, id, name))
+    #                 self.wait_for_node_done()
+    #             else:
+    #                 if nodeExists.name != type + " " + id:
+    #                     nodeExists.rename(name)
+    #         elif type == 'generic' or type == 'dimmer':
+    #             if not self.poly.getNode(id):
+    #                 self.poly.addNode(VirtualGeneric(self.poly, self.address, id, name))
+    #                 self.wait_for_node_done()
+    #             else:
+    #                 if nodeExists.name != type + " " + id:
+    #                     nodeExists.rename(name)
+    #         elif type == 'garage':
+    #             if not self.poly.getNode(id):
+    #                 self.poly.addNode(VirtualGarage(self.poly, self.address, id, name))
+    #                 self.wait_for_node_done()
+    #             else:
+    #                 if nodeExists.name != type + " " + id:
+    #                     nodeExists.rename(name)
+    #         else:
+    #             LOGGER.error(f"Device type {type} is not yet supported")
+    #             continue
+    #         nodes_new.append(id)
+
+#         # remove nodes which do not exist in gateway
+    #     nodes = self.poly.getNodesFromDb()
+    #     LOGGER.info(f"db nodes = {nodes}")
+    #     nodes = self.poly.getNodes()
+    #     nodes_get = {key: nodes[key] for key in nodes if key != self.id}
+    #     LOGGER.info(f"old nodes = {nodes_old}")
+    #     LOGGER.info(f"new nodes = {nodes_new}")
+    #     LOGGER.info(f"pre-delete nodes = {nodes_get}")
+    #     for node in nodes_get:
+    #         if (node not in nodes_new):
+    #             LOGGER.info(f"need to delete node {node}")
+    #             node.deleteDB()
+    #             self.poly.delNode(node)
+
+#         if nodes_get == nodes_new:
+    #         LOGGER.warning('Discovery NO NEW activity')
+    #     self.handler_discover_st = True
+    #     LOGGER.info('Discovery complete.')
 
         
     def delete(self):
