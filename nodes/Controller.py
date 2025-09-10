@@ -149,7 +149,7 @@ class Controller(udi_interface.Node):
             return        
 
         # Wait for discovery
-        self.discoverNodes()
+        self.discover()
         while not self.handler_discover_st:
             time.sleep(1)
 
@@ -195,8 +195,6 @@ class Controller(udi_interface.Node):
         """
         LOGGER.info('parmHandler: Loading parameters now')
         self.Parameters.load(params)
-        while not self.checkParams():
-            time.sleep(2)
         self.handler_params_st = True
         LOGGER.info('parmHandler Done...')
         self.check_handlers()
@@ -369,17 +367,14 @@ class Controller(udi_interface.Node):
 
     def discover(self, command = None):
         """
-        Do shade and scene discovery here. Called from controller start method
-        and from DISCOVER command received from ISY
+        Call node discovery here. Called from controller start method
+        and from DISCOVER command received from ISY.
+        Calls checkParams, so can be used after update of devFile or config
         """
         LOGGER.info(command)
-        try:
-            subprocess.call("rm db/*.db", shell=True)
-            LOGGER.info("db directory cleaned-up")
-        except Exception as e:
-            LOGGER.error(f"Database delete Error: {e}")
         self.checkParams()
         self.discoverNodes()
+        LOGGER.debug("Exit")
         
 
     def _get_node_name(self, dev: Dict[str, Any]) -> str:
@@ -439,22 +434,24 @@ class Controller(udi_interface.Node):
         LOGGER.info('Discovery complete.')
 
         
-    def delete(self):
+    def delete(self, command = None):
         """
         This is called by Polyglot upon deletion of the NodeServer. If the
         process is co-resident and controlled by Polyglot, it will be
         terminiated within 5 seconds of receiving this message.
         """
+        LOGGER.info(command)
         self.setDriver('ST', 0, report = True, force = True)
         LOGGER.info('bye bye ... deleted.')
 
         
-    def stop(self):
+    def stop(self, command = None):
         """
         This is called by Polyglot when the node server is stopped.  You have
         the opportunity here to cleanly disconnect from your device or do
         other shutdown type tasks.
         """
+        LOGGER.info(command)
         self.setDriver('ST', 0, report = True, force = True)
         self.Notices.clear()
         LOGGER.info('NodeServer stopped.')
