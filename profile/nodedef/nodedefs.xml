@@ -33,6 +33,7 @@
           <accepts>
             <cmd id="DON" />
             <cmd id="DOF" />
+            <cmd id="TOGGLE" />
           </accepts>
         </cmds>
     </nodeDef>

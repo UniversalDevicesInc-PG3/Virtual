@@ -21,9 +21,9 @@ class VirtualSwitch(udi_interface.Node):
     id = 'virtualswitch'
 
     """ This class represents a simple virtual switch / relay / light.
-    This device can be made a part of a scene to provide easy indication
-    for the scene.  It can also be used as control or status in a program
-    and manipulated by then or else.
+    This device can be made a controller/responder as part of a scene to
+    provide easy indication or control.  It can also be used as control
+    or status in a program and manipulated by then or else.
 
     Drivers & commands:
     ST 0,1: is used to report ON/OFF status in the ISY
@@ -42,6 +42,7 @@ class VirtualSwitch(udi_interface.Node):
     query(): Called when ISY sends a query request to Polyglot for this
         specific node.
     """
+    
     def __init__(self, polyglot, primary, address, name):
         """ Sent by the Controller class node.
         :param polyglot: Reference to the Interface class
@@ -54,7 +55,9 @@ class VirtualSwitch(udi_interface.Node):
 
         subscribes:
         START: used to create/check/load DB file
-        POLL: not needed as no timed updates for this node
+        
+        NOTE: POLL: not needed as no timed updates for this node
+        
         Controller node calls:
           self.deleteDB() when ISY deletes the node or discovers it gone
         """
@@ -72,12 +75,16 @@ class VirtualSwitch(udi_interface.Node):
         # self.poly.subscribe(self.poly.POLL, self.poll)
 
     def start(self):
-        """ START event subscription above """
+        """
+        Get off the ground and retrieve persistence data or create persistence db for node.
+        """
+        LOGGER.info(f'start: switch:{self.name}')
         self.createDBfile()
+        LOGGER.info('started switch:{self.name}')
         
-    # poll NOT required in this node, keeping as comment for easy debugging
     """
     def poll(self, flag):
+    # poll NOT required in this node, keeping as comment for easy debugging
         if 'longPoll' in flag:
             LOGGER.debug(f"longPoll {self.name}")
         else:
@@ -87,12 +94,14 @@ class VirtualSwitch(udi_interface.Node):
     def createDBfile(self):
         """
         DB file is used to store switch status across ISY & Polyglot reboots.
+        This function either retrieves or creates the db file with current status.
         """
+        LOGGER.debug('start')
         try:
             _key = 'key' + str(self.address)
             _name = str(self.name).replace(" ","_")
             _file = f"db/{_name}.db"
-            LOGGER.info(f'Checking to see existence of db file: {_file}')
+            LOGGER.info(f'switch: {self.name}, checking for db file: {_file}')
             if os.path.exists(_file):
                 LOGGER.info('...file exists')
                 self.retrieveValues()
@@ -101,19 +110,30 @@ class VirtualSwitch(udi_interface.Node):
                 s[_key] = { 'switchStatus': self.switchStatus }
                 time.sleep(2)
                 s.close()
-                LOGGER.info("...file didn\'t exist, created successfully")
+                LOGGER.info(f"switch:{self.name} file created")
         except Exception as ex:
-                LOGGER.error(f"createDBfile error: {ex}")
+                LOGGER.error(f"switch:{self.name} createDBfile error: {ex}", exc_info=True)
+        LOGGER.debug('Exit')
+                
 
     def deleteDB(self):
-        """ Called from Controller when node is deleted """
+        """
+        Called from Controller when node is deleted to keep things tidy.
+        """
+        LOGGER.debug('start')
         _name = str(self.name).replace(" ","_")
         _file = f"db/{_name}.db"
         if os.path.exists(_file):
             LOGGER.debug(f'Deleting db: {_file}')
             subprocess.run(["rm", _file])
-
+        LOGGER.debug('Exit')
+        
+                
     def storeValues(self):
+        """
+        Called when status changes to store to db file for persistence.
+        """
+        LOGGER.debug('start')
         _key = 'key' + str(self.address)
         _name = str(self.name).replace(" ","_")
         s = shelve.open(f"db/{_name}", writeback=False)
@@ -121,9 +141,13 @@ class VirtualSwitch(udi_interface.Node):
             s[_key] = { 'switchStatus': self.switchStatus}
         finally:
             s.close()
-        LOGGER.debug('Values Stored')
+        LOGGER.debug("Exit")
+        
         
     def retrieveValues(self):
+        """
+        Pull from db file and set switchStatus for persistence.
+        """
         _key = 'key' + str(self.address)
         _name = str(self.name).replace(" ","_")
         s = shelve.open(f"db/{_name}", writeback=False)
@@ -134,20 +158,44 @@ class VirtualSwitch(udi_interface.Node):
         LOGGER.info('Retrieving Values %s', existing)
         self.switchStatus = existing['switchStatus']
         self.setDriver('ST', self.switchStatus)
+        LOGGER.debug("Exit")
 
+        
     def setOn(self, command=None):
-        LOGGER.debug(command)
+        """
+        Turn the driver on, report cmd DON, store values in db for persistence.
+        """
+        LOGGER.info(command)
         self.setDriver('ST', 1)
         self.reportCmd("DON", 2)
         self.switchStatus = 1
         self.storeValues()
+        LOGGER.debug("Exit")
 
+        
     def setOff(self, command=None):
-        LOGGER.debug(command)
+        """
+        Turn the driver off, report cmd DOF, store values in db for persistence.
+        """
+        LOGGER.info(command)
         self.setDriver('ST', 0)
         self.reportCmd("DOF", 2)
         self.switchStatus = 0
         self.storeValues()
+        LOGGER.debug("Exit")
+
+        
+    def toggle(self, command=None):
+        """
+        Toggle the driver, report cmd DON/DOF as appropriate, store values in db for persistence.
+        """
+        LOGGER.info(command)
+        if self.switchStatus:
+            self.setOff()
+        else:
+            self.setOn()                
+        LOGGER.debug("Exit")
+
 
     def query(self, command=None):
         """
@@ -155,11 +203,15 @@ class VirtualSwitch(udi_interface.Node):
         the parent class, so you don't need to override this method unless
         there is a need.
         """
-        LOGGER.debug(command)
+        LOGGER.info(command)
         self.reportDrivers()
+        LOGGER.debug("Exit")
+        
 
+    hint = '0x01020700'
+    # home, controller, scene controller
     # Hints See: https://github.com/UniversalDevicesInc/hints
-    hint = '0x01020c00'
+    
     
     """
     This is an array of dictionary items containing the variable names(drivers)
@@ -178,6 +230,7 @@ class VirtualSwitch(udi_interface.Node):
     commands = {
                     'DON': setOn,
                     'DOF': setOff,
+                    'TOGGLE': toggle,
                     'QUERY': query,
                 }
 

@@ -18,6 +18,9 @@ CTD-2 = Failed
 ND-virtualswitch-NAME = Virtual Switch
 ND-virtualswitch-ICON = Switch
 ST-vswitch-ST-NAME = Switch Status
+CMD-vswitch-DON-NAME = ON
+CMD-vswitch-DOF-NAME = OFF
+CMD-vswitch-TOGGLE-NAME = TOGGLE
 
 # virtualgeneric
 ND-virtualgeneric-NAME = Virtual Generic
