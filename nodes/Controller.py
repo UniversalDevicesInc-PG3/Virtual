@@ -7,7 +7,7 @@ Controller class
 """
 
 # std libraries
-import time, json, subprocess
+import time, json
 from threading import Event, Condition
 from typing import Dict, Any, List
 

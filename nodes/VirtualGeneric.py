@@ -146,7 +146,7 @@ class VirtualGeneric(udi_interface.Node):
 
     def cmd_DOF(self, command=None):
         LOGGER.debug(command)
-        if self.level != 100:
+        if self.level not in [0, 100]:
             self.level_stored = self.level
         self.level = 0
         self.setDriver('OL', self.level)
@@ -164,7 +164,7 @@ class VirtualGeneric(udi_interface.Node):
 
     def cmd_DFOF(self, command=None):
         LOGGER.debug(command)
-        if self.level != 100:
+        if self.level not in [0, 100]:
             self.level_stored = self.level
         self.level = 0
         self.setDriver('OL', self.level)
