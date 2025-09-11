@@ -135,6 +135,7 @@ class VirtualGeneric(udi_interface.Node):
                 # Set initial values if no data exists
                 self.level = 0
                 self.level_stored = 0
+        self.setDriver('OL', self.level)
                 
 
     def storeValues(self):

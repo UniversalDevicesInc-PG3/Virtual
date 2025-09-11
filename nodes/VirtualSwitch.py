@@ -140,6 +140,7 @@ class VirtualSwitch(udi_interface.Node):
                 LOGGER.info(f"{self.name}, No old DB file found.")
                 # Set initial values if no data exists
                 self.switchStatus = 0
+        self.setDriver('ST', self.switchStatus)
 
 
     def storeValues(self):
