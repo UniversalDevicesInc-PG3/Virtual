@@ -127,17 +127,17 @@ class VirtualSwitch(udi_interface.Node):
 
         if data:
             self.switchStatus = data.get('switchStatus', 0)
-            LOGGER.info(f"switch:{self.name}, Loaded from persistence: status={self.switchStatus}")
+            LOGGER.info(f"{self.name}, Loaded from persistence: status={self.switchStatus}")
         else:
-            LOGGER.info(f"switch:{self.name}, No persistent data found. Checking for old DB file...")
+            LOGGER.info(f"{self.name}, No persistent data found. Checking for old DB file...")
             is_migrated, old_data = self._checkDBfile_and_migrate()
             if is_migrated and old_data:
                 self.switchStatus = old_data.get('switchStatus', 0)
                 # Store the migrated data in the new persistence format
                 self.storeValues()
-                LOGGER.info(f"switch:{self.name}, Migrated from old DB file. status={self.switchStatus}")
+                LOGGER.info(f"{self.name}, Migrated from old DB file. status={self.switchStatus}")
             else:
-                LOGGER.info(f"switch:{self.name}, No old DB file found.")
+                LOGGER.info(f"{self.name}, No old DB file found.")
                 # Set initial values if no data exists
                 self.switchStatus = 0
 

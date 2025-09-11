@@ -120,7 +120,7 @@ class VirtualGeneric(udi_interface.Node):
         if data:
             self.level = data.get('switchStatus', 0)
             self.level_stored = data.get('switchStored', 0)
-            LOGGER.info(f"switch:{self.name}, Loaded from persistence: level={self.level}, stored={self.level_stored}")
+            LOGGER.info(f"{self.name}, Loaded from persistence: level={self.level}, stored={self.level_stored}")
         else:
             LOGGER.info(f"switch:{self.name}, No persistent data found. Checking for old DB file...")
             is_migrated, old_data = self._checkDBfile_and_migrate()
@@ -129,9 +129,9 @@ class VirtualGeneric(udi_interface.Node):
                 self.level_stored = old_data.get('switchStored', 0)
                 # Store the migrated data in the new persistence format
                 self.storeValues()
-                LOGGER.info(f"switch:{self.name}, Migrated from old DB file. level={self.level}, stored={self.level_stored}")
+                LOGGER.info(f"{self.name}, Migrated from old DB file. level={self.level}, stored={self.level_stored}")
             else:
-                LOGGER.info(f"switch:{self.name}, No old DB file found.")
+                LOGGER.info(f"{self.name}, No old DB file found.")
                 # Set initial values if no data exists
                 self.level = 0
                 self.level_stored = 0
