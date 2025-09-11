@@ -6,10 +6,7 @@ udi-Virtual-pg3 NodeServer/Plugin for EISY/Polisy
 VirtualSwitch class
 """
 # std libraries
-import time
-import os.path
-import shelve
-import subprocess
+import os.path, shelve
 
 # external libraries
 import udi_interface
@@ -72,103 +69,98 @@ class VirtualSwitch(udi_interface.Node):
         self.switchStatus = 0 # create as OFF
 
         self.poly.subscribe(self.poly.START, self.start, address)
-        # self.poly.subscribe(self.poly.POLL, self.poll)
+
 
     def start(self):
         """
-        Get off the ground and retrieve persistence data or create persistence db for node.
+        Start node and retrieve persistent data
         """
         LOGGER.info(f'start: switch:{self.name}')
-        self.createDBfile()
-        LOGGER.info('started switch:{self.name}')
+
+        # wait for controller start ready
+        self.controller.ready_event.wait()
+
+        # get persistent data from polyglot or depreciated: old db file, then delete db file
+        self.load_persistent_data()
         
-    """
-    def poll(self, flag):
-    # poll NOT required in this node, keeping as comment for easy debugging
-        if 'longPoll' in flag:
-            LOGGER.debug(f"longPoll {self.name}")
-        else:
-            LOGGER.debug(f"shortPoll {self.name}")
-    """
 
-    def createDBfile(self):
+    def _checkDBfile_and_migrate(self):
         """
-        DB file is used to store switch status across ISY & Polyglot reboots.
-        This function either retrieves or creates the db file with current status.
+        Checks for the deprecated DB file, migrates data to Polyglot's
+        persistent storage, and then deletes the old file.
+        This helper function is called by load_persistent_data once during startup.
         """
-        LOGGER.debug('start')
-        try:
-            _key = 'key' + str(self.address)
-            _name = str(self.name).replace(" ","_")
-            _file = f"db/{_name}.db"
-            LOGGER.info(f'switch: {self.name}, checking for db file: {_file}')
-            if os.path.exists(_file):
-                LOGGER.info('...file exists')
-                self.retrieveValues()
-            else:
-                s = shelve.open(f"db/{_name}", writeback=False)
-                s[_key] = { 'switchStatus': self.switchStatus }
-                time.sleep(2)
-                s.close()
-                LOGGER.info(f"switch:{self.name} file created")
-        except Exception as ex:
-                LOGGER.error(f"switch:{self.name} createDBfile error: {ex}", exc_info=True)
-        LOGGER.debug('Exit')
-                
-
-    def deleteDB(self):
-        """
-        Called from Controller when node is deleted to keep things tidy.
-        """
-        LOGGER.debug('start')
         _name = str(self.name).replace(" ","_")
-        _file = f"db/{_name}.db"
-        if os.path.exists(_file):
-            LOGGER.debug(f'Deleting db: {_file}')
-            subprocess.run(["rm", _file])
-        LOGGER.debug('Exit')
-        
-                
+        old_file_path = os.path.join("db", f"{_name}.db")
+
+        if not os.path.exists(old_file_path):
+            LOGGER.info(f'[{self.name}] No old DB file found at: {old_file_path}')
+            return False, None
+
+        LOGGER.info(f'[{self.name}] Old DB file found, migrating data...')
+
+        _key = 'key' + str(self.address)
+        try:
+            with shelve.open(os.path.join("db", _name), flag='r') as s:
+                existing_data = s.get(_key)
+        except Exception as ex:
+            LOGGER.error(f"[{self.name}] Error opening or reading old shelve DB: {ex}")
+            return False, None
+
+        if existing_data:
+            # Delete the old file after successful read
+            try:
+                LOGGER.info(f'[{self.name}] Deleting old DB file: {old_file_path}')
+                os.remove(old_file_path)
+            except OSError as ex:
+                LOGGER.error(f"[{self.name}] Error deleting old DB file: {ex}")
+
+        return True, existing_data
+
+
+    def load_persistent_data(self):
+        """
+        Load state from Polyglot persistence or migrate from old DB file.
+        """
+        # Try to load from new persistence format first
+        data = self.controller.Data.get(self.name)
+
+        if data:
+            self.switchStatus = data.get('switchStatus', 0)
+            LOGGER.info(f"switch:{self.name}, Loaded from persistence: status={self.switchStatus}")
+        else:
+            LOGGER.info(f"switch:{self.name}, No persistent data found. Checking for old DB file...")
+            is_migrated, old_data = self._checkDBfile_and_migrate()
+            if is_migrated and old_data:
+                self.switchStatus = old_data.get('switchStatus', 0)
+                # Store the migrated data in the new persistence format
+                self.storeValues()
+                LOGGER.info(f"switch:{self.name}, Migrated from old DB file. status={self.switchStatus}")
+            else:
+                LOGGER.info(f"switch:{self.name}, No old DB file found.")
+                # Set initial values if no data exists
+                self.switchStatus = 0
+
+
     def storeValues(self):
         """
-        Called when status changes to store to db file for persistence.
+        Store persistent data to Polyglot Data structure.
         """
-        LOGGER.debug('start')
-        _key = 'key' + str(self.address)
-        _name = str(self.name).replace(" ","_")
-        s = shelve.open(f"db/{_name}", writeback=False)
-        try:
-            s[_key] = { 'switchStatus': self.switchStatus}
-        finally:
-            s.close()
-        LOGGER.debug("Exit")
+        data_to_store = {
+            'switchStatus': self.switchStatus
+        }
+        self.controller.Data[self.name] = data_to_store
+        LOGGER.debug(f'Values stored for {self.name}: {data_to_store}')
         
-        
-    def retrieveValues(self):
-        """
-        Pull from db file and set switchStatus for persistence.
-        """
-        _key = 'key' + str(self.address)
-        _name = str(self.name).replace(" ","_")
-        s = shelve.open(f"db/{_name}", writeback=False)
-        try:
-            existing = s[_key]
-        finally:
-            s.close()
-        LOGGER.info('Retrieving Values %s', existing)
-        self.switchStatus = existing['switchStatus']
-        self.setDriver('ST', self.switchStatus)
-        LOGGER.debug("Exit")
-
         
     def setOn(self, command=None):
         """
         Turn the driver on, report cmd DON, store values in db for persistence.
         """
-        LOGGER.info(command)
+        LOGGER.info(f"{self.name}, {command}")
+        self.switchStatus = 1
         self.setDriver('ST', 1)
         self.reportCmd("DON", 2)
-        self.switchStatus = 1
         self.storeValues()
         LOGGER.debug("Exit")
 
@@ -177,7 +169,7 @@ class VirtualSwitch(udi_interface.Node):
         """
         Turn the driver off, report cmd DOF, store values in db for persistence.
         """
-        LOGGER.info(command)
+        LOGGER.info(f"{self.name}, {command}")
         self.setDriver('ST', 0)
         self.reportCmd("DOF", 2)
         self.switchStatus = 0
@@ -189,7 +181,7 @@ class VirtualSwitch(udi_interface.Node):
         """
         Toggle the driver, report cmd DON/DOF as appropriate, store values in db for persistence.
         """
-        LOGGER.info(command)
+        LOGGER.info(f"{self.name}, {command}")
         if self.switchStatus:
             self.setOff()
         else:
@@ -203,7 +195,7 @@ class VirtualSwitch(udi_interface.Node):
         the parent class, so you don't need to override this method unless
         there is a need.
         """
-        LOGGER.info(command)
+        LOGGER.info(f"{self.name}, {command}")
         self.reportDrivers()
         LOGGER.debug("Exit")
         
