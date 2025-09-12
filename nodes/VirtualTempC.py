@@ -6,10 +6,7 @@ udi-Virtual-pg3 NodeServer/Plugin for EISY/Polisy
 VirtualTempC class
 """
 # std libraries
-import time
-import os.path
-import shelve
-import subprocess
+import time, os.path, shelve
 from xml.dom.minidom import parseString
 
 # external libraries
@@ -18,13 +15,11 @@ import udi_interface
 # constants
 LOGGER = udi_interface.LOGGER
 ISY = udi_interface.ISY
-
 TYPELIST = ['/set/2/',  #1
             '/init/2/', #2
             '/set/1/',  #3
             'init/1/'   #4
            ]
-
 GETLIST = [' ',
            '/2/',
            '/2/',
@@ -118,8 +113,8 @@ class VirtualTempC(udi_interface.Node):
         self.lowTemp = None
         self.previousHigh = None
         self.previousLow = None
-        self.prevAvgTemp = 0
-        self.currentAvgTemp = 0
+        self.prevAvgTemp = 0.0
+        self.currentAvgTemp = 0.0
         self.action1 = 0
         self.action1id = 0
         self.action1type = 0
@@ -134,163 +129,197 @@ class VirtualTempC(udi_interface.Node):
         self.poly.subscribe(self.poly.POLL, self.poll)
 
     def start(self):
-        """ START event subscription above """
+        """
+        Start node and retrieve persistent data
+        """
+        LOGGER.info(f'start: switch:{self.name}')
+
+        # wait for controller start ready
+        self.controller.ready_event.wait()
+
+        # get persistent data from polyglot or depreciated: old db file, then delete db file
+        self.load_persistent_data()
+
         self.isy = ISY(self.poly)
         self.lastUpdateTime = time.time()
         self.setDriver('GV2', 0.0)
-        self.createDBfile()
+        
         
     def poll(self, flag):
         """ POLL event subscription above """
-        if 'longPoll' in flag:
-            LOGGER.debug(f"longPoll {self.name}")
-        else:
+        if 'shortPoll' in flag:
             LOGGER.debug(f"shortPoll {self.name}")
             self.update()
+            
 
-    def createDBfile(self):
-       """
-       DB file is used to store switch status across ISY & Polyglot reboots.
-       """
-       try:
-           _key = 'key' + str(self.address)
-           _name = str(self.name).replace(" ","_")
-           _file = f"db/{_name}.db"
-           LOGGER.info(f'Checking to see existence of db file: {_file}')
-           if os.path.exists(_file):
-               LOGGER.info('...file exists')
-               self.retrieveValues()
-           else:
-               s = shelve.open(f"db/{_name}", writeback=False)
-               s[_key] = { 'created': 'yes'}
-               time.sleep(2)
-               s.close()
-               LOGGER.info("...file didn\'t exist, created successfully")
-               self.resetStats()
-       except Exception as ex:
-               LOGGER.error(f"createDBfile error: {ex}")
-
-    def deleteDB(self, command=None):
-        """ Called from Controller when node is deleted """
-        LOGGER.debug(f"deleteDB, {self.name} {command}")
+    def _checkDBfile_and_migrate(self):
+        """
+        Checks for the deprecated DB file, migrates data to Polyglot's
+        persistent storage, and then deletes the old file.
+        This helper function is called by load_persistent_data once during startup.
+        """
         _name = str(self.name).replace(" ","_")
-        _file = f"db/{_name}.db"
-        if os.path.exists(_file):
-            LOGGER.info(f'Deleting db: {_file}')
-            subprocess.run(["rm", _file])
+        old_file_path = os.path.join("db", f"{_name}.db")
+
+        if not os.path.exists(old_file_path):
+            LOGGER.info(f'[{self.name}] No old DB file found at: {old_file_path}')
+            return False, None
+
+        LOGGER.info(f'[{self.name}] Old DB file found, migrating data...')
+
+        _key = 'key' + str(self.address)
+        try:
+            with shelve.open(os.path.join("db", _name), flag='r') as s:
+                existing_data = s.get(_key)
+        except Exception as ex:
+            LOGGER.error(f"[{self.name}] Error opening or reading old shelve DB: {ex}")
+            return False, None
+
+        if existing_data:
+            # Delete the old file after successful read
+            try:
+                LOGGER.info(f'[{self.name}] Deleting old DB file: {old_file_path}')
+                os.remove(old_file_path)
+            except OSError as ex:
+                LOGGER.error(f"[{self.name}] Error deleting old DB file: {ex}")
+
+        return True, existing_data
+
+
+    def load_persistent_data(self):
+        """
+        Load state from Polyglot persistence or migrate from old DB file.
+        """
+        # Try to load from new persistence format first
+        data = self.controller.Data.get(self.name)
+
+        if data:
+            self.switchStatus = data.get('switchStatus', 0)
+            LOGGER.info(f"{self.name}, Loaded from persistence: status={self.switchStatus}")
+        else:
+            LOGGER.info(f"{self.name}, No persistent data found. Checking for old DB file...")
+            is_migrated, old_data = self._checkDBfile_and_migrate()
+            if is_migrated and old_data:
+                self.prevVal = old_data.get('prevVal', 0)
+                self.tempVal = old_data.get('tempVal', 0)
+                self.highTemp = old_data.get('highTemp', 0)
+                self.lowTemp = old_data.get('lowTemp', 0)
+                self.previousHigh = old_data.get('previousHigh', 0)
+                self.previousLow = old_data.get('previousLow', 0)
+                self.prevAvgTemp = old_data.get('prevAvgTemp', 0)
+                self.currentAvgTemp = old_data.get('currentAvgTemp', 0)
+                self.action1 = old_data.get('action1', 0)
+                self.action1id = old_data.get('action1id', 0)
+                self.action1type = old_data.get('action1type', 0)
+                self.action2 = old_data.get('action2', 0) 
+                self.action2id = old_data.get('action2id', 0)
+                self.action2type = old_data.get('action2type', 0)
+                self.RtoPrec = old_data.get('RtoPrec', 0)
+                self.FtoC = old_data.get('FtoC', 0)
+                # Store the migrated data in the new persistence format
+                self.storeValues()
+                LOGGER.info(f"{self.name}, Migrated from old DB file. status={self.switchStatus}")
+            else:
+                LOGGER.info(f"{self.name}, No old DB file found.")
+                # Set initial values if no data exists
+                self.switchStatus = 0
+        self.setDriver('ST', self.tempVal)
+        self.setDriver('GV1', self.prevVal)
+        self.setDriver('GV3', self.highTemp)
+        self.setDriver('GV4', self.lowTemp)
+        self.setDriver('GV5', self.currentAvgTemp)
+        self.setDriver('GV6', self.action1)
+        self.setDriver('GV8', self.action1id)
+        self.setDriver('GV7', self.action1type)
+        self.setDriver('GV9', self.action2)
+        self.setDriver('GV11', self.action2id)
+        self.setDriver('GV10', self.action2type)
+        self.setDriver('GV12', self.RtoPrec)
+        self.setDriver('GV13', self.FtoC)
+
 
     def storeValues(self):
-        _key = 'key' + str(self.address)
-        _name = str(self.name).replace(" ","_")
-        s = shelve.open(f"db/{_name}", writeback=False)
-        try:
-            s[_key] = { 'action1': self.action1,
-                        'action1type': self.action1type,
-                        'action1id': self.action1id,
-                        'action2': self.action2,
-                        'action2type': self.action2type,
-                        'action2id': self.action2id,
-                        'RtoPrec': self.RtoPrec,
-                        'FtoC': self.FtoC,
-                        'prevVal': self.prevVal,
-                        'tempVal': self.tempVal,
-                        'highTemp': self.highTemp,
-                        'lowTemp': self.lowTemp,
-                        'previousHigh': self.previousHigh,
-                        'previousLow': self.previousLow,
-                        'prevAvgTemp': self.prevAvgTemp,
-                        'currentAvgTemp': self.currentAvgTemp,
-                       }
-        finally:
-            s.close()
-        LOGGER.debug('Values Stored')
+        """
+        Store persistent data to Polyglot Data structure.
+        """
+        data_to_store = {
+            'action1': self.action1,
+            'action1type': self.action1type,
+            'action1id': self.action1id,
+            'action2': self.action2,
+            'action2type': self.action2type,
+            'action2id': self.action2id,
+            'RtoPrec': self.RtoPrec,
+            'FtoC': self.FtoC,
+            'prevVal': self.prevVal,
+            'tempVal': self.tempVal,
+            'highTemp': self.highTemp,
+            'lowTemp': self.lowTemp,
+            'previousHigh': self.previousHigh,
+            'previousLow': self.previousLow,
+            'prevAvgTemp': self.prevAvgTemp,
+            'currentAvgTemp': self.currentAvgTemp,
+           }
+        self.controller.Data[self.name] = data_to_store
+        LOGGER.debug(f'Values stored for {self.name}: {data_to_store}')
 
-    def retrieveValues(self):
-        _key = 'key' + str(self.address)
-        _name = str(self.name).replace(" ","_")
-        s = shelve.open(f"db/{_name}", writeback=False)
-        try:
-            existing = s[_key]
-        finally:
-            s.close()
-        LOGGER.info('Retrieving Values %s', existing)
-        self.prevVal = existing['prevVal']
-        self.setDriver('GV1', self.prevVal)
-        self.tempVal = existing['tempVal']
-        self.setDriver('ST', self.tempVal)
-        self.highTemp = existing['highTemp']
-        self.setDriver('GV3', self.highTemp)
-        self.lowTemp = existing['lowTemp']
-        self.setDriver('GV4', self.lowTemp)
-        self.previousHigh = existing['previousHigh']
-        self.previousLow = existing['previousLow']
-        self.prevAvgTemp = existing['prevAvgTemp']
-        self.currentAvgTemp = existing['currentAvgTemp']
-        self.setDriver('GV5', self.currentAvgTemp)
-        self.action1 = existing['action1']
-        self.setDriver('GV6', self.action1)
-        self.action1id = existing['action1id']
-        self.setDriver('GV8', self.action1id)
-        self.action1type = existing['action1type']
-        self.setDriver('GV7', self.action1type)
-        self.action2 = existing['action2'] 
-        self.setDriver('GV9', self.action2)
-        self.action2id = existing['action2id']
-        self.setDriver('GV11', self.action2id)
-        self.action2type = existing['action2type']
-        self.setDriver('GV10', self.action2type)
-        self.RtoPrec = existing['RtoPrec']
-        self.setDriver('GV12', self.RtoPrec)
-        self.FtoC = existing['FtoC']
-        self.setDriver('GV13', self.FtoC)
 
     def setAction1(self, command):
         self.action1 = int(command.get('value'))
         self.setDriver('GV6', self.action1)
         self.storeValues()
+        
 
     def setAction1id(self, command):
         self.action1id = int(command.get('value'))
         self.setDriver('GV8', self.action1id)
         self.storeValues()
+        
 
     def setAction1type(self, command):
         self.action1type = int(command.get('value'))
         self.setDriver('GV7', self.action1type)
         self.storeValues()
+        
 
     def setAction2(self, command):
         self.action2 = int(command.get('value'))
         self.setDriver('GV9', self.action2)
         self.storeValues()
+        
 
     def setAction2id(self, command):
         self.action2id = int(command.get('value'))
         self.setDriver('GV11', self.action2id)
         self.storeValues()
+        
 
     def setAction2type(self, command):
         self.action2type = int(command.get('value'))
         self.setDriver('GV10', self.action2type)
         self.storeValues()
+        
 
     def setFtoC(self, command):
         self.FtoC = int(command.get('value'))
         self.setDriver('GV13', self.FtoC)
         self.resetStats(1)
         self.storeValues()
+        
 
     def setRawToPrec(self, command):
         self.RtoPrec = int(command.get('value'))
         self.setDriver('GV12', self.RtoPrec)
         self.resetStats(1)
         self.storeValues()
+        
 
     def pushTheValue(self, command1, command2):
         _type = str(command1)
         _id = str(command2)
         LOGGER.info(f'Pushing to ISY /rest/vars/{_type}{_id}/{self.tempVal}')
         self.isy.cmd(f'/rest/vars/{_type}{_id}/{self.tempVal}')
+        
 
     def pullFromID(self, command1, command2):
         _type = str(command1)
@@ -326,6 +355,7 @@ class VirtualTempC(udi_interface.Node):
                 if self.tempVal not in [_testValRtoP, _testValFtoC, _testValRtoPandFtoC, _newTemp]:
                     self.setTemp({'cmd': 'data', 'value': _newTemp})
             self.pullError = False
+            
 
     def setTemp(self, command):
         LOGGER.debug(command)
@@ -356,6 +386,7 @@ class VirtualTempC(udi_interface.Node):
             _type = TYPELIST[(self.action2type - 1)]
             self.pushTheValue(_type, self.action2id)
             LOGGER.info('Action 2 Pushing')
+            
 
     def checkHighLow(self, command):
         LOGGER.info(f"{command}, low:{self.lowTemp}, high:{self.highTemp}")
@@ -380,6 +411,7 @@ class VirtualTempC(udi_interface.Node):
                 self.prevAvgTemp = self.currentAvgTemp
                 self.currentAvgTemp = round(((self.highTemp + self.lowTemp) / 2), 1)
                 self.setDriver('GV5', self.currentAvgTemp)
+                
 
     def resetStats(self, command=None):
         LOGGER.info(f'Resetting Stats: {command}')
@@ -395,6 +427,7 @@ class VirtualTempC(udi_interface.Node):
         self.setDriver('GV4', 0)
         self.setDriver('ST', 0)
         self.storeValues()
+        
 
     def update(self):
         """ called by Node shortPoll """
@@ -408,6 +441,7 @@ class VirtualTempC(udi_interface.Node):
         if self.action2 == 2:
             self.pullFromID(GETLIST[self.action2type], self.action2id)
             
+            
     def query(self, command=None):
         """
         Called by ISY to report all drivers for this node. This is done in
@@ -420,6 +454,7 @@ class VirtualTempC(udi_interface.Node):
 
     # Hints See: https://github.com/UniversalDevicesInc/hints
     #hint = [1,2,3,4]
+    
     
     """
     This is an array of dictionary items containing the variable names(drivers)
@@ -459,7 +494,6 @@ class VirtualTempC(udi_interface.Node):
         'setFtoC': setFtoC,
         'setRawToPrec': setRawToPrec,
         'resetStats': resetStats,
-        'deleteDB': deleteDB,
                 }
 
 
