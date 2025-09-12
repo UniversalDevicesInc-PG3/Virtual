@@ -194,8 +194,23 @@ class VirtualTempC(udi_interface.Node):
         data = self.controller.Data.get(self.name)
 
         if data:
-            self.switchStatus = data.get('switchStatus', 0)
-            LOGGER.info(f"{self.name}, Loaded from persistence: status={self.switchStatus}")
+            self.prevVal = data.get('prevVal', 0)
+            self.tempVal = data.get('tempVal', 0)
+            self.highTemp = data.get('highTemp', 0)
+            self.lowTemp = data.get('lowTemp', 0)
+            self.previousHigh = data.get('previousHigh', 0)
+            self.previousLow = data.get('previousLow', 0)
+            self.prevAvgTemp = data.get('prevAvgTemp', 0)
+            self.currentAvgTemp = data.get('currentAvgTemp', 0)
+            self.action1 = data.get('action1', 0)
+            self.action1id = data.get('action1id', 0)
+            self.action1type = data.get('action1type', 0)
+            self.action2 = data.get('action2', 0) 
+            self.action2id = data.get('action2id', 0)
+            self.action2type = data.get('action2type', 0)
+            self.RtoPrec = data.get('RtoPrec', 0)
+            self.FtoC = data.get('FtoC', 0)
+            LOGGER.info(f"{self.name}, Loaded from persistence")
         else:
             LOGGER.info(f"{self.name}, No persistent data found. Checking for old DB file...")
             is_migrated, old_data = self._checkDBfile_and_migrate()
@@ -218,7 +233,7 @@ class VirtualTempC(udi_interface.Node):
                 self.FtoC = old_data.get('FtoC', 0)
                 # Store the migrated data in the new persistence format
                 self.storeValues()
-                LOGGER.info(f"{self.name}, Migrated from old DB file. status={self.switchStatus}")
+                LOGGER.info(f"{self.name}, Migrated from old DB file.")
             else:
                 LOGGER.info(f"{self.name}, No old DB file found.")
                 # Set initial values if no data exists
