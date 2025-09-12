@@ -194,8 +194,8 @@ class VirtualTempC(udi_interface.Node):
         data = self.controller.Data.get(self.name)
 
         if data:
-            self.prevVal = data.get('prevVal', 0)
             self.tempVal = data.get('tempVal', 0)
+            self.prevVal = data.get('prevVal', 0)
             self.highTemp = data.get('highTemp', 0)
             self.lowTemp = data.get('lowTemp', 0)
             self.previousHigh = data.get('previousHigh', 0)
@@ -215,8 +215,8 @@ class VirtualTempC(udi_interface.Node):
             LOGGER.info(f"{self.name}, No persistent data found. Checking for old DB file...")
             is_migrated, old_data = self._checkDBfile_and_migrate()
             if is_migrated and old_data:
-                self.prevVal = old_data.get('prevVal', 0)
                 self.tempVal = old_data.get('tempVal', 0)
+                self.prevVal = old_data.get('prevVal', 0)
                 self.highTemp = old_data.get('highTemp', 0)
                 self.lowTemp = old_data.get('lowTemp', 0)
                 self.previousHigh = old_data.get('previousHigh', 0)
@@ -231,13 +231,12 @@ class VirtualTempC(udi_interface.Node):
                 self.action2type = old_data.get('action2type', 0)
                 self.RtoPrec = old_data.get('RtoPrec', 0)
                 self.FtoC = old_data.get('FtoC', 0)
-                # Store the migrated data in the new persistence format
-                self.storeValues()
                 LOGGER.info(f"{self.name}, Migrated from old DB file.")
             else:
                 LOGGER.info(f"{self.name}, No old DB file found.")
-                # Set initial values if no data exists
-                self.switchStatus = 0
+        # Store the migrated data in the new persistence format
+        self.storeValues()
+        # Initial setting of ISY
         self.setDriver('ST', self.tempVal)
         self.setDriver('GV1', self.prevVal)
         self.setDriver('GV3', self.highTemp)
