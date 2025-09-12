@@ -127,14 +127,12 @@ class VirtualGeneric(udi_interface.Node):
             if is_migrated and old_data:
                 self.level = old_data.get('switchStatus', 0)
                 self.level_stored = old_data.get('switchStored', 0)
-                # Store the migrated data in the new persistence format
-                self.storeValues()
                 LOGGER.info(f"{self.name}, Migrated from old DB file. level={self.level}, stored={self.level_stored}")
             else:
                 LOGGER.info(f"{self.name}, No old DB file found.")
-                # Set initial values if no data exists
-                self.level = 0
-                self.level_stored = 0
+        # Store the migrated data in the new persistence format
+        self.storeValues()
+        # Initial setting of ISY
         self.setDriver('OL', self.level)
                 
 

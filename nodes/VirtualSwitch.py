@@ -133,13 +133,12 @@ class VirtualSwitch(udi_interface.Node):
             is_migrated, old_data = self._checkDBfile_and_migrate()
             if is_migrated and old_data:
                 self.switchStatus = old_data.get('switchStatus', 0)
-                # Store the migrated data in the new persistence format
-                self.storeValues()
                 LOGGER.info(f"{self.name}, Migrated from old DB file. status={self.switchStatus}")
             else:
                 LOGGER.info(f"{self.name}, No old DB file found.")
-                # Set initial values if no data exists
-                self.switchStatus = 0
+        # Store the migrated data in the new persistence format
+        self.storeValues()
+        # Initial of ISY
         self.setDriver('ST', self.switchStatus)
 
 
