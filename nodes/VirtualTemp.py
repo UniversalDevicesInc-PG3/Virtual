@@ -430,6 +430,7 @@ class VirtualTemp(udi_interface.Node):
         current_val= self.pull_from_id(var_type, var_id, UPDATE = False)
 
         # only write if required
+        LOGGER.info(f"curr_val:{current_val}, val:{value}")
         if current_val != value:        
             # Build canonical path without double slashes
             path = f"/rest/vars/{tag_to_set}/{getlist_segment}/{vid}/{value}"
