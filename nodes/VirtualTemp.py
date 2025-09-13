@@ -423,7 +423,7 @@ class VirtualTemp(udi_interface.Node):
             return
 
         # Build canonical path without double slashes
-        path = f"/rest/vars{tag_to_set}{getlist_segment}/{value}"
+        path = f"/rest/vars/{tag_to_set}/{getlist_segment}/{value}"
         LOGGER.info("Pushing to ISY %s", path)
 
         try:
