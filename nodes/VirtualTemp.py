@@ -122,7 +122,6 @@ class VirtualTemp(udi_interface.Node):
         self._init_defaults(default_ovr)
 
         self.poly.subscribe(self.poly.START, self.start, address)
-        self.poly.subscribe(self.poly.POLL, self.poll)
         
 
     def start(self):
@@ -140,6 +139,7 @@ class VirtualTemp(udi_interface.Node):
         self.isy = ISY(self.poly)
         self.lastUpdateTime = time.time()
         self.setDriver('GV2', 0.0)
+        self.poly.subscribe(self.poly.POLL, self.poll)
         
 
     def _init_defaults(self, default_ovr: Optional[Dict[str, Any]] = None) -> None:
