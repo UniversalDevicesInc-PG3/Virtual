@@ -54,9 +54,10 @@ FIELDS: dict[str, FieldSpec] = {
     "action2id":       FieldSpec(driver="GV11", default=0),# 'GV11': variable id 2   
     "RtoPrec":         FieldSpec(driver="GV12", default=0),# 'GV12': raw to precision
     "CtoF":            FieldSpec(driver="GV13", default=0),# 'GV13': Fahrenheit to Celsius
+    "FtoC":            FieldSpec(driver="GV13", default=0),# 'GV13': Celsius to Fahrenheit
 }
 
-def _transform_value(raw: int, r_to_prec: int | bool, c_to_f: int | bool) -> float | int:
+def _transform_value(raw: int | float, r_to_prec: int | bool, c_to_f: int | bool, f_to_c: int | bool) -> float | int:
     """
     Transform raw value according to flags.
     r_to_prec: if truthy, treat raw as tenths (divide by 10).
@@ -67,6 +68,8 @@ def _transform_value(raw: int, r_to_prec: int | bool, c_to_f: int | bool) -> flo
         val = raw / 10  # becomes float
     if c_to_f:
         val = round(val * 1.8 + 32, 1)  # keep one decimal when converting to F
+    if f_to_c:
+        val = round((val -32) / 1.8, 1)  # keep one decimal when converting to C
     return val
 
 
@@ -84,6 +87,7 @@ class VirtualTemp(udi_interface.Node):
     'setAction[1,2]id'  : set Action 1,2 id
     'setAction[1,2]type': set Action 1,2 type
     'setCtoF'           : set Celsius to Fahrenheit
+    'setFtoC'           : set Fahrenheit to Celsius
     'setRawToPrec'      : set Raw To Precision
     'resetStats'        : reset Statistics
     """
@@ -349,6 +353,16 @@ class VirtualTemp(udi_interface.Node):
         self.store_values()
         
 
+    def set_f_to_c(self, command):
+        """
+        Based on program or admin console set f_to_c flag
+        """
+        self.FtoC = int(command.get('value'))
+        self.setDriver('GV13', self.FtoC)
+        self.reset_stats()
+        self.store_values()
+
+
     def set_raw_to_prec(self, command):
         """
         Based on program or admin console set raw_to_prec flac
@@ -466,7 +480,7 @@ class VirtualTemp(udi_interface.Node):
            return
 
        # Compute the transformed display value based on current flags
-       new_display = _transform_value(new_raw, getattr(self, "RtoPrec", 0), getattr(self, "CtoF", 0))
+       new_display = _transform_value(new_raw, getattr(self, "RtoPrec", 0), getattr(self, "CtoF", 0), getattr(self, "FtoC", 0))
 
        # Update only if changed versus the currently stored transformed value
        current = getattr(self, "tempVal", None)
@@ -490,12 +504,7 @@ class VirtualTemp(udi_interface.Node):
         self.tempVal = float(command.get('value'))
 
         if command.get('cmd') == 'data':
-            if self.RtoPrec == 1:
-                LOGGER.info('Converting from raw')
-                self.tempVal = round((self.tempVal / 10), 1)
-            if self.CtoF == 1:
-                LOGGER.info('converting C to F')
-                self.tempVal = round(((self.tempVal * 1.8) + 32), 1)
+            self.tempVal = _transform_value(self.tempVal, getattr(self, "RtoPrec", 0), getattr(self, "CtoF", 0), getattr(self, "FtoC", 0))
             
         self.setDriver('ST', self.tempVal)
         self.check_high_low(self.tempVal)
@@ -609,8 +618,38 @@ class VirtualTemp(udi_interface.Node):
         'setAction2id': set_action2_id,
         'setAction2type': set_action2_type,
         'setCtoF': set_c_to_f,
+        'setFtoC': set_f_to_c,
         'setRawToPrec': set_raw_to_prec,
         'resetStats': reset_stats,
                 }
 
+
+###############
+# Sub-classes #
+###############
+class VirtualTempC(VirtualTemp):
+    id = 'virtualtempc'
+
+    """
+    This is an array of dictionary items containing the variable names(drivers)
+    values and uoms(units of measure) from ISY. This is how ISY knows what kind
+    of variable to display. Check the UOM's in the WSDK for a complete list.
+    UOM 2 is boolean so the ISY will display 'True/False'
+    """
+    drivers = [
+               {'driver': 'ST', 'value': 0, 'uom': 4},   #current
+               {'driver': 'GV1', 'value': 0, 'uom': 4},  #previous
+               {'driver': 'GV2', 'value': 0, 'uom': 45},  #update time
+               {'driver': 'GV3', 'value': 0, 'uom': 4},  #high
+               {'driver': 'GV4', 'value': 0, 'uom': 4},  #low
+               {'driver': 'GV5', 'value': 0, 'uom': 4},  #avg high - low
+               {'driver': 'GV6', 'value': 0, 'uom': 25},  #action1 type
+               {'driver': 'GV7', 'value': 0, 'uom': 25},  #variable type
+               {'driver': 'GV8', 'value': 0, 'uom': 56},  #variable id
+               {'driver': 'GV9', 'value': 0, 'uom': 25},  #action 2
+               {'driver': 'GV10', 'value': 0, 'uom': 25}, #variable type
+               {'driver': 'GV11', 'value': 0, 'uom': 56}, #variable id
+               {'driver': 'GV12', 'value': 0, 'uom': 25}, #r to p
+               {'driver': 'GV13', 'value': 0, 'uom': 25}, #f to c
+              ]
 
