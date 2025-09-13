@@ -433,7 +433,7 @@ class VirtualTemp(udi_interface.Node):
         if current_val != value:        
             # Build canonical path without double slashes
             path = f"/rest/vars/{tag_to_set}/{getlist_segment}/{vid}/{value}"
-            LOGGER.info(f"Pushing cur:{current_val} new:{value} prec:(prec) path:{path}")
+            LOGGER.info(f"Pushing cur:{current_val} new:{value} path:{path}")
             try:
                 resp = self.isy.cmd(path)
                 # Optional: log response for diagnostics
@@ -510,6 +510,12 @@ class VirtualTemp(udi_interface.Node):
                 prec_div = int(prec_str.strip()) * 10
             else:
                 prec_div = 1
+
+            # Update only if UDATE == True & changed versus the currently stored transformed value
+            if UPDATE:
+                calc = new_raw / prec_div
+                LOGGER.info(f"NO UPDATE: raw:{new_raw}, prec:{prec_div}, calc{calc}")
+                return calc
             
         except ET.ParseError as exc:
             LOGGER.exception("Failed to parse XML for %s: %s", path, exc)
@@ -517,24 +523,22 @@ class VirtualTemp(udi_interface.Node):
         except ValueError as exc:
             LOGGER.exception("Value in <%s> is not an int for %s (val=%r): %s", tag_to_find, path, val_str, exc)
             return
+        except Exception as ex:
+            LOGGER.error(f"{self.name}: parse error {ex}", exc_info = True)
+            return
 
-        # Update only if UDATE == True & changed versus the currently stored transformed value
-        if UPDATE:
-            # Compute the transformed display value based on current flags
-            new_display = _transform_value(new_raw,
-                                          getattr(self, "RtoPrec", 0),
-                                          getattr(self, "CtoF", 0),
-                                          getattr(self, "FtoC", 0))
-        
-            current = getattr(self, "tempVal", None)
-            if current != new_display:
-                self.set_temp({"cmd": "data", "value": new_raw})
-                LOGGER.info("Updated value for var_type=%s var_id=%s from %r to %r", vtype_str, vid, current, new_display)
-            else:
-                LOGGER.debug("No change for var_type=%s var_id=%s (value %r)", vtype_str, vid, new_display)
+        # Compute the transformed display value based on current flags
+        new_display = _transform_value(new_raw,
+                                      getattr(self, "RtoPrec", 0),
+                                      getattr(self, "CtoF", 0),
+                                      getattr(self, "FtoC", 0))
+
+        current = getattr(self, "tempVal", None)
+        if current != new_display:
+            self.set_temp({"cmd": "data", "value": new_raw})
+            LOGGER.info("Updated value for var_type=%s var_id=%s from %r to %r", vtype_str, vid, current, new_display)
         else:
-            LOGGER.info(f"NO UPDATE: raw:{new_raw}, prec:{prec_div}")
-            return new_raw
+            LOGGER.debug("No change for var_type=%s var_id=%s (value %r)", vtype_str, vid, new_display)
             
 
     def set_temp(self, command):
