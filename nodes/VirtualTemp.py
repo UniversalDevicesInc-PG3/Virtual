@@ -19,10 +19,10 @@ import udi_interface
 LOGGER = udi_interface.LOGGER
 ISY = udi_interface.ISY
 
-# Dispatch map to select the correct tag AND GETLIST index based on var_type.
+# Dispatch map to select the correct tag and index based on var_type.
 # Using a dictionary for dispatch is more extensible and readable than a long if/elif chain.
 _VARIABLE_TYPE_MAP = {
-    # Key: ISY var_type, Value : (GETLIST_INDEX, XML_TAG, SET_TAG)
+    # Key: ISY var_type, Value : (INDEX, XML_TAG, SET_TAG)
     '1': ('/2/', 'val', 'set'),
     '2': ('/2/', 'init', 'init'),
     '3': ('/1/', 'val', 'set'),
@@ -375,9 +375,8 @@ class VirtualTemp(udi_interface.Node):
     def push_the_value(self, var_type: str | int, var_id: int | str) -> None:
         """
         Push self.tempVal to an ISY variable.
-        type_segment can be any of:
-          - '/set/2/', 'set/2', 'set/2/', '/init/1', etc. (as provided by TYPELIST)
-        var_id should be a positive integer.
+        var_type = 0-4
+        var_id should be a positive integer, within the bounds of defined ISY variables.
         """
         # Validate var_id
         try:
@@ -446,6 +445,12 @@ class VirtualTemp(udi_interface.Node):
         # Fetch
         try:
             resp = self.isy.cmd(path)
+        except RuntimeError as exc:
+            if 'ISY info not available' in str(exc):
+                LOGGER.info(f"{self.name}: ISY info not available on {path}")
+            else:
+                LOGGER.exception("RuntimeError on path {path}")
+            return
         except Exception as exc:
             LOGGER.exception("ISY command failed for %s: %s", path, exc)
             return
