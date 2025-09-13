@@ -23,12 +23,25 @@ TYPELIST = ['/set/2/',  #1
             '/set/1/',  #3
             'init/1/'   #4
            ]
-GETLIST = [' ',
-           '/2/',
-           '/2/',
-           '/1/',
-           '/1/'
-          ]
+
+# Dispatch map to select the correct tag AND GETLIST index based on var_type.
+# Using a dictionary for dispatch is more extensible and readable than a long if/elif chain.
+_VARIABLE_TYPE_MAP = {
+    # Key: ISY var_type, Value: (GETLIST_INDEX, XML_TAG)
+    '1': (3, 'val'),
+    '2': (1, 'init'),
+    '3': (3, 'val'),
+    '4': (1, 'init'),
+}
+
+# The GETLIST array should be defined somewhere accessible to this function.
+GETLIST = [
+    '',    # index 0 (unused)
+    '/2/', # index 1
+    '/2/', # index 2
+    '/1/', # index 3
+    '/1/'  # index 4
+]
 
 @dataclass(frozen=True)
 class FieldSpec:
@@ -178,9 +191,9 @@ class VirtualTemp(udi_interface.Node):
         else:
                 self.setDriver('GV2', 1440)
         if self.action1 == 2:
-                self.pull_from_id(GETLIST[self.action1type], self.action1id)
+                self.pull_from_id(self.action1type, self.action1id)
         if self.action2 == 2:
-                self.pull_from_id(GETLIST[self.action2type], self.action2id)
+                self.pull_from_id(self.action2type, self.action2id)
 
 
     def _apply_state(self, src: Dict[str, Any]) -> None:
@@ -424,72 +437,81 @@ class VirtualTemp(udi_interface.Node):
             LOGGER.debug("ISY push response for %s: %s", path, rtxt)
         except Exception as exc:
             LOGGER.exception("ISY push failed for %s: %s", path, exc)
-        
+
 
     def pull_from_id(self, var_type: int | str, var_id: int | str) -> None:
-       """
-       Pull a variable from ISY using GETLIST-style path segments (e.g., '/2/'),
-       parse the XML <val>, and update state if the transformed value changed.
-       """
-       # Normalize and validate var_id
-       try:
-           vid = int(var_id)
-       except (TypeError, ValueError):
-           LOGGER.error("Invalid var_id: %r", var_id)
-           return
+        """
+        Pull a variable from ISY using GETLIST-style path segments,
+        parse the XML, and update state if the transformed value changed.
+        """
+        try:
+            vid = int(var_id)
+        except (TypeError, ValueError):
+            LOGGER.error("Invalid var_id: %r", var_id)
+            return
 
-       if vid == 0:
-           LOGGER.debug("var_id is 0; skipping pull.")
-           return
+        if vid == 0:
+            LOGGER.debug("var_id is 0; skipping pull.")
+            return
 
-       # Normalize and validate var_type (expecting '/1/' or '/2/' from GETLIST)
-       vtype = str(var_type or "").strip()
-       
-       # Construct path exactly as your original logic did: "/rest/vars/get" + "/2/" + "123"
-       path = f"/rest/vars/get{vtype}{vid}"
+        vtype_str = str(var_type).strip()
 
-       # Fetch
-       try:
-           resp = self.isy.cmd(path)
-       except Exception as exc:
-           LOGGER.exception("ISY command failed for %s: %s", path, exc)
-           return
+        # Use dictionary dispatch to get both the GETLIST index and the XML tag.
+        try:
+            getlist_index, tag_to_find = _VARIABLE_TYPE_MAP[vtype_str]
+        except KeyError:
+            LOGGER.error("Invalid or unsupported var_type: %r", vtype_str)
+            return
 
-       # Normalize response to text for parsing/logging
-       text = resp.decode("utf-8", errors="replace") if isinstance(resp, (bytes, bytearray)) else str(resp)
-       LOGGER.debug("ISY response for %s: %s", path, text)
+        # Construct the path using the correct GETLIST segment.
+        try:
+            getlist_segment = GETLIST[getlist_index]
+        except IndexError:
+            LOGGER.error("Invalid GETLIST index %d for var_type %r", getlist_index, vtype_str)
+            return
 
-       # Parse XML <val> -> raw int
-       val_str: Optional[str] = None  # ensure bound even if parsing fails
-       try:
-           root = ET.fromstring(text)
-           LOGGER.info(f"root:{root}")
-           val_str = root.findtext(".//val")
-           if val_str is None:
-               LOGGER.error("No <val> element in ISY response for %s", path)
-               return
-           new_raw = int(val_str.strip())
-       except ET.ParseError as exc:
-           LOGGER.exception("Failed to parse XML for %s: %s", path, exc)
-           return
-       except ValueError as exc:
-           LOGGER.exception("Value in <val> is not an int for %s (val=%r): %s", path, val_str, exc)
-           return
+        path = f"/rest/vars/get{getlist_segment}{vid}"
 
-       # Compute the transformed display value based on current flags
-       new_display = _transform_value(new_raw,
+        # Fetch
+        try:
+            resp = self.isy.cmd(path)
+        except Exception as exc:
+            LOGGER.exception("ISY command failed for %s: %s", path, exc)
+            return
+
+        text = resp.decode("utf-8", errors="replace") if isinstance(resp, (bytes, bytearray)) else str(resp)
+        LOGGER.debug("ISY response for %s: %s", path, text)
+
+        # Parse XML based on the determined tag
+        val_str: Optional[str] = None
+        try:
+            root = ET.fromstring(text)
+            LOGGER.info(f"root:{root}")
+            val_str = root.findtext(f".//{tag_to_find}")
+            if val_str is None:
+                LOGGER.error("No <%s> element in ISY response for %s", tag_to_find, path)
+                return
+            new_raw = int(val_str.strip())
+        except ET.ParseError as exc:
+            LOGGER.exception("Failed to parse XML for %s: %s", path, exc)
+            return
+        except ValueError as exc:
+            LOGGER.exception("Value in <%s> is not an int for %s (val=%r): %s", tag_to_find, path, val_str, exc)
+            return
+
+        # Compute the transformed display value based on current flags
+        new_display = _transform_value(new_raw,
                                       getattr(self, "RtoPrec", 0),
                                       getattr(self, "CtoF", 0),
                                       getattr(self, "FtoC", 0))
 
-       # Update only if changed versus the currently stored transformed value
-       current = getattr(self, "tempVal", None)
-       if current != new_display:
-           # Preserve your behavior: set_temp expects the raw integer
-           self.set_temp({"cmd": "data", "value": new_raw})
-           LOGGER.info("Updated value for var_type=%s var_id=%s from %r to %r", vtype, vid, current, new_display)
-       else:
-           LOGGER.debug("No change for var_type=%s var_id=%s (value %r)", vtype, vid, new_display)
+        # Update only if changed versus the currently stored transformed value
+        current = getattr(self, "tempVal", None)
+        if current != new_display:
+            self.set_temp({"cmd": "data", "value": new_raw})
+            LOGGER.info("Updated value for var_type=%s var_id=%s from %r to %r", vtype_str, vid, current, new_display)
+        else:
+            LOGGER.debug("No change for var_type=%s var_id=%s (value %r)", vtype_str, vid, new_display)
             
 
     def set_temp(self, command):
