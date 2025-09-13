@@ -432,7 +432,7 @@ class VirtualTemp(udi_interface.Node):
         # only write if required
         if current_val != value:        
             # Build canonical path without double slashes
-            path = f"/rest/vars/{tag_to_set}/{getlist_segment}/{value}"
+            path = f"/rest/vars/{tag_to_set}/{getlist_segment}/{vid}/{value}"
             LOGGER.info("Pushing to ISY %s", path)
 
             try:
@@ -440,8 +440,14 @@ class VirtualTemp(udi_interface.Node):
                 # Optional: log response for diagnostics
                 rtxt = resp.decode("utf-8", errors="replace") if isinstance(resp, (bytes, bytearray)) else str(resp)
                 LOGGER.debug("ISY push response for %s: %s", path, rtxt)
+            except RuntimeError as exc:
+                if 'ISY info not available' in str(exc):
+                    LOGGER.info(f"{self.name}: ISY info not available on {path}")
+                else:
+                    LOGGER.exception("RuntimeError on path {path}")
+                return
             except Exception as exc:
-                LOGGER.exception("ISY push failed for %s: %s", path, exc)
+                LOGGER.exception("%s:, ISY push failed for %s: %s", self.name, path, exc)
 
 
     def pull_from_id(self, var_type: int | str, var_id: int | str, UPDATE = True) -> None | int | float:
@@ -481,7 +487,7 @@ class VirtualTemp(udi_interface.Node):
                 LOGGER.exception("RuntimeError on path {path}")
             return
         except Exception as exc:
-            LOGGER.exception("ISY command failed for %s: %s", path, exc)
+            LOGGER.exception("%s:, ISY push failed for %s: %s", self.name, path, exc)
             return
 
         text = resp.decode("utf-8", errors="replace") if isinstance(resp, (bytes, bytearray)) else str(resp)
