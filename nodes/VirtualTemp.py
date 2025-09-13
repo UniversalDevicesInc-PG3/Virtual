@@ -511,10 +511,10 @@ class VirtualTemp(udi_interface.Node):
                 prec_div = int(prec_str.strip()) * 10
                 if prec_div <= 0:
                     prec_div = 1
+            calc = new_raw / prec_div
 
             # Update only if UDATE == True & changed versus the currently stored transformed value
-            if UPDATE:
-                calc = new_raw / prec_div
+            if not UPDATE:
                 LOGGER.info(f"NO UPDATE: raw:{new_raw}, prec:{prec_div}, calc{calc}")
                 return calc
             
