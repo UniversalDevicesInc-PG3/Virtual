@@ -394,31 +394,14 @@ class VirtualTemp(udi_interface.Node):
             LOGGER.error("var_id must be positive, got: %s", vid)
             return
 
-        # Normalize and validate type_segment
-        # Expect tokens like ['set', '2'] or ['init', '1']
-        seg = str(type_segment or "").strip().strip("/")
-        tokens = [t for t in seg.split("/") if t]
-        if len(tokens) < 2:
-            LOGGER.error("Invalid type segment (expected 'set/2' or 'init/1'): %r", type_segment)
-            return
-
-        op, vtype = tokens[-2], tokens[-1]
-        if op not in ("set", "init") or vtype not in ("1", "2"):
-            LOGGER.error("Invalid op/type in segment: op=%r type=%r (segment=%r)", op, vtype, type_segment)
-            return
-
         # Validate value to push
         value = getattr(self, "tempVal", None)
         if value is None:
             LOGGER.error("tempVal is None; nothing to push for var_id=%s", vid)
             return
 
-        # Format value safely as a string; leave semantics unchanged
-        # Note: if you know vtype == '1' must be integer, consider: value_str = str(int(round(value)))
-        value_str = f"{value:.1f}" if isinstance(value, float) else str(value)
-
         # Build canonical path without double slashes
-        path = f"/rest/vars/{op}/{vtype}/{vid}/{value_str}"
+        path = f"/rest/vars{type_segment}{vid}/{value}"
         LOGGER.info("Pushing to ISY %s", path)
 
         try:
