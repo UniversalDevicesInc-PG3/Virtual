@@ -433,8 +433,7 @@ class VirtualTemp(udi_interface.Node):
         if current_val != value:        
             # Build canonical path without double slashes
             path = f"/rest/vars/{tag_to_set}/{getlist_segment}/{vid}/{value}"
-            LOGGER.info("Pushing to ISY %s", path)
-
+            LOGGER.info(f"Pushing cur:{current_val} new:{value} path:{path}")
             try:
                 resp = self.isy.cmd(path)
                 # Optional: log response for diagnostics
