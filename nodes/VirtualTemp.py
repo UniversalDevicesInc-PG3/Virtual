@@ -464,13 +464,12 @@ class VirtualTemp(udi_interface.Node):
             return
 
         text = resp.decode("utf-8", errors="replace") if isinstance(resp, (bytes, bytearray)) else str(resp)
-        LOGGER.debug("ISY response for %s: %s", path, text)
+        LOGGER.info("ISY response for %s: %s", path, text)
 
         # Parse XML based on the determined tag
         val_str: Optional[str] = None
         try:
             root = ET.fromstring(text)
-            LOGGER.info(f"root:{root}")
             val_str = root.findtext(f".//{tag_to_find}")
             if val_str is None:
                 LOGGER.error("No <%s> element in ISY response for %s", tag_to_find, path)

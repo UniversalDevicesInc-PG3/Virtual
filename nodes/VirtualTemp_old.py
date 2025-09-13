@@ -32,8 +32,8 @@ GETLIST = [' ',
            '/1/'
           ]
 
-class VirtualTemp(udi_interface.Node):
-    id = 'virtualtemp'
+class VirtualTemp_old(udi_interface.Node):
+    id = 'virtualtemp_old'
 
     """ This class represents a simple virtual temperature sensor.
     This device can be populated directly or from variables.
