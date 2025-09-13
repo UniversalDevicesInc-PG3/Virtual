@@ -28,20 +28,11 @@ TYPELIST = ['/set/2/',  #1
 # Using a dictionary for dispatch is more extensible and readable than a long if/elif chain.
 _VARIABLE_TYPE_MAP = {
     # Key: ISY var_type, Value: (GETLIST_INDEX, XML_TAG)
-    '1': (3, 'val'),
-    '2': (1, 'init'),
-    '3': (3, 'val'),
-    '4': (1, 'init'),
+    '1': ('/2/', 'val'),
+    '2': ('/2/', 'init'),
+    '3': ('/1/', 'val'),
+    '4': ('/1/', 'init'),
 }
-
-# The GETLIST array should be defined somewhere accessible to this function.
-GETLIST = [
-    '',    # index 0 (unused)
-    '/2/', # index 1
-    '/2/', # index 2
-    '/1/', # index 3
-    '/1/'  # index 4
-]
 
 @dataclass(frozen=True)
 class FieldSpec:
@@ -458,16 +449,9 @@ class VirtualTemp(udi_interface.Node):
 
         # Use dictionary dispatch to get both the GETLIST index and the XML tag.
         try:
-            getlist_index, tag_to_find = _VARIABLE_TYPE_MAP[vtype_str]
+            getlist_segment, tag_to_find = _VARIABLE_TYPE_MAP[vtype_str]
         except KeyError:
             LOGGER.error("Invalid or unsupported var_type: %r", vtype_str)
-            return
-
-        # Construct the path using the correct GETLIST segment.
-        try:
-            getlist_segment = GETLIST[getlist_index]
-        except IndexError:
-            LOGGER.error("Invalid GETLIST index %d for var_type %r", getlist_index, vtype_str)
             return
 
         path = f"/rest/vars/get{getlist_segment}{vid}"
