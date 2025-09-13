@@ -23,10 +23,10 @@ ISY = udi_interface.ISY
 # Using a dictionary for dispatch is more extensible and readable than a long if/elif chain.
 _VARIABLE_TYPE_MAP = {
     # Key: ISY var_type, Value : (INDEX, XML_TAG, SET_TAG)
-    '1': ('/2/', 'val', 'set'),
-    '2': ('/2/', 'init', 'init'),
-    '3': ('/1/', 'val', 'set'),
-    '4': ('/1/', 'init', 'init'),
+    '1': ('2', 'val', 'set'),
+    '2': ('2', 'init', 'init'),
+    '3': ('1', 'val', 'set'),
+    '4': ('1', 'init', 'init'),
 }
 
 @dataclass(frozen=True)
