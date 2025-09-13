@@ -431,7 +431,7 @@ class VirtualTemp(udi_interface.Node):
 
         # only write if required
         LOGGER.info(f"curr_val:{current_val}, val:{value}")
-        if current_val != value:        
+        if current_val != float(value):        
             # Build canonical path without double slashes
             path = f"/rest/vars/{tag_to_set}/{getlist_segment}/{vid}/{value}"
             LOGGER.info(f"Pushing cur:{current_val} new:{value} path:{path}")
