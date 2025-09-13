@@ -496,11 +496,20 @@ class VirtualTemp(udi_interface.Node):
         val_str: Optional[str] = None
         try:
             root = ET.fromstring(text)
+            # parse val or init
             val_str = root.findtext(f".//{tag_to_find}")
             if val_str is None:
                 LOGGER.error("No <%s> element in ISY response for %s", tag_to_find, path)
                 return
             new_raw = int(val_str.strip())
+
+            # parse prec            
+            prec_str = root.findtext(f".//prec")
+            if prec_str:
+                prec_div = int(prec_str.strip()) * 10
+            else:
+                prec_div = 1
+            
         except ET.ParseError as exc:
             LOGGER.exception("Failed to parse XML for %s: %s", path, exc)
             return
@@ -522,7 +531,7 @@ class VirtualTemp(udi_interface.Node):
                 LOGGER.info("Updated value for var_type=%s var_id=%s from %r to %r", vtype_str, vid, current, new_display)
             else:
                 LOGGER.debug("No change for var_type=%s var_id=%s (value %r)", vtype_str, vid, new_display)
-        return new_raw
+        return new_raw / prec_div
             
 
     def set_temp(self, command):
