@@ -137,12 +137,12 @@ class VirtualSwitch(udi_interface.Node):
             else:
                 LOGGER.info(f"{self.name}, No old DB file found.")
         # Store the migrated data in the new persistence format
-        self.storeValues()
+        self.store_values()
         # Initial of ISY
         self.setDriver('ST', self.switchStatus)
 
 
-    def storeValues(self):
+    def store_values(self):
         """
         Store persistent data to Polyglot Data structure.
         """
@@ -153,7 +153,7 @@ class VirtualSwitch(udi_interface.Node):
         LOGGER.debug(f'Values stored for {self.name}: {data_to_store}')
         
         
-    def setOn(self, command=None):
+    def set_on_cmd(self, command=None):
         """
         Turn the driver on, report cmd DON, store values in db for persistence.
         """
@@ -161,11 +161,11 @@ class VirtualSwitch(udi_interface.Node):
         self.switchStatus = 1
         self.setDriver('ST', 1)
         self.reportCmd("DON", 2)
-        self.storeValues()
+        self.store_values()
         LOGGER.debug("Exit")
 
         
-    def setOff(self, command=None):
+    def set_off_cmd(self, command=None):
         """
         Turn the driver off, report cmd DOF, store values in db for persistence.
         """
@@ -173,19 +173,19 @@ class VirtualSwitch(udi_interface.Node):
         self.setDriver('ST', 0)
         self.reportCmd("DOF", 2)
         self.switchStatus = 0
-        self.storeValues()
+        self.store_values()
         LOGGER.debug("Exit")
 
         
-    def toggle(self, command=None):
+    def toggle_cmd(self, command=None):
         """
         Toggle the driver, report cmd DON/DOF as appropriate, store values in db for persistence.
         """
         LOGGER.info(f"{self.name}, {command}")
         if self.switchStatus:
-            self.setOff()
+            self.set_off_cmd()
         else:
-            self.setOn()                
+            self.set_on_cmd()                
         LOGGER.debug("Exit")
 
 
@@ -220,9 +220,9 @@ class VirtualSwitch(udi_interface.Node):
     this tells it which method to call. DON calls setOn, etc.
     """
     commands = {
-                    'DON': setOn,
-                    'DOF': setOff,
-                    'TOGGLE': toggle,
+                    'DON': set_on_cmd,
+                    'DOF': set_off_cmd,
+                    'TOGGLE': toggle_cmd,
                     'QUERY': query,
                 }
 

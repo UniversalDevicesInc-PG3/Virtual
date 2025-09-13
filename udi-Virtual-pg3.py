@@ -31,8 +31,9 @@ DONE add NumberOfNodes
 DONE switch/generic/dimmer/temp(R/C): nodes use polyglot persistence, delete old db files
 DONE swtich cmd TOGGLE add
 DONE consolidate temp, tempC, tempRC into one module
-TODO refactor function naming
-TODO refactor garage, fix persistence, sse client
+DONE temp variable writing now with shortPoll (only upon change, considers precision)
+DONE refactor function naming
+TODO refactor garage, fix persistence, sse client, bring temp variable improvements
 
 3.1.15
 DONE generic, dimmer, change ST to OL, memory of level for DON, DFON/DFOF, command

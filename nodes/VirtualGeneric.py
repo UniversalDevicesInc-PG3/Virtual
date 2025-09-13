@@ -131,12 +131,12 @@ class VirtualGeneric(udi_interface.Node):
             else:
                 LOGGER.info(f"{self.name}, No old DB file found.")
         # Store the migrated data in the new persistence format
-        self.storeValues()
+        self.store_values()
         # Initial setting of ISY
         self.setDriver('OL', self.level)
                 
 
-    def storeValues(self):
+    def store_values(self):
         """
         Store persistent data to Polyglot Data structure.
         """
@@ -148,7 +148,7 @@ class VirtualGeneric(udi_interface.Node):
         LOGGER.debug(f'Values stored for {self.name}: {data_to_store}')
 
              
-    def cmd_DON(self, command=None):
+    def DON_cmd(self, command=None):
         LOGGER.info(f"{self.name}, {command}")
         if self.level_stored > 0:
             self.level = self.level_stored
@@ -156,53 +156,53 @@ class VirtualGeneric(udi_interface.Node):
             self.level = 100
         self.setDriver('OL', self.level)
         self.reportCmd("DON", 2)
-        self.storeValues()
+        self.store_values()
         LOGGER.debug("Exit")
 
 
-    def cmd_DOF(self, command=None):
+    def DOF_cmd(self, command=None):
         LOGGER.info(f"{self.name}, {command}")
         if self.level not in [0, 100]:
             self.level_stored = self.level
         self.level = 0
         self.setDriver('OL', self.level)
         self.reportCmd("DOF", 2)
-        self.storeValues()
+        self.store_values()
         LOGGER.debug("Exit")
 
 
-    def cmd_DFON(self, command=None):
+    def DFON_cmd(self, command=None):
         LOGGER.info(f"{self.name}, {command}")
         self.level = 100
         self.setDriver('OL', self.level)
         self.reportCmd("DFON", 2)
-        self.storeValues()
+        self.store_values()
         LOGGER.debug("Exit")
 
 
-    def cmd_DFOF(self, command=None):
+    def DFOF_cmd(self, command=None):
         LOGGER.info(f"{self.name}, {command}")
         if self.level not in [0, 100]:
             self.level_stored = self.level
         self.level = 0
         self.setDriver('OL', self.level)
         self.reportCmd("DFOF", 2)
-        self.storeValues()
+        self.store_values()
         LOGGER.debug("Exit")
 
 
-    def cmd_BRT(self, command=None):
+    def BRT_cmd(self, command=None):
         LOGGER.info(f"{self.name}, {command}")
         self.level = int(self.level) + 2
         if self.level > 100: self.level = 100
         self.level_stored = self.level
         self.setDriver('OL', self.level)
         self.reportCmd("BRT",2)
-        self.storeValues()
+        self.store_values()
         LOGGER.debug("Exit")
 
 
-    def cmd_DIM(self, command=None):
+    def DIM_cmd(self, command=None):
         LOGGER.info(f"{self.name}, {command}")
         self.level = int(self.level) - 2
         if self.level <= 0:
@@ -212,11 +212,11 @@ class VirtualGeneric(udi_interface.Node):
             self.level_stored = self.level
         self.setDriver('OL', self.level)
         self.reportCmd("DIM",2)
-        self.storeValues()
+        self.store_values()
         LOGGER.debug("Exit")
 
 
-    def cmd_set_OL(self, command):
+    def set_OL_cmd(self, command):
         LOGGER.info(f"{self.name}, {command}")
         self.level = int(command.get('value'))
         if self.level != 0:
@@ -225,7 +225,7 @@ class VirtualGeneric(udi_interface.Node):
             self.level_stored = 10
         self.setDriver('OL', self.level)
         self.reportCmd("OL", value=self.level)
-        self.storeValues()
+        self.store_values()
         LOGGER.debug("Exit")
 
 
@@ -260,13 +260,13 @@ class VirtualGeneric(udi_interface.Node):
     this tells it which method to call. DON calls setOn, etc.
     """
     commands = {
-                    'DON': cmd_DON,
-                    'DOF': cmd_DOF,
-                    'DFON': cmd_DFON,
-                    'DFOF': cmd_DFOF,
-                    'BRT': cmd_BRT,
-                    'DIM': cmd_DIM,
-                    'OL': cmd_set_OL,
+                    'DON': DON_cmd,
+                    'DOF': DOF_cmd,
+                    'DFON': DFON_cmd,
+                    'DFOF': DFOF_cmd,
+                    'BRT': BRT_cmd,
+                    'DIM': DIM_cmd,
+                    'OL': set_OL_cmd,
                     'QUERY': query,
                 }
 

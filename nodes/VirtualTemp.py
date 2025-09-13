@@ -292,7 +292,7 @@ class VirtualTemp(udi_interface.Node):
         LOGGER.debug("Values stored for %s: %s", self.name, data_to_store)
 
 
-    def set_action1(self, command):
+    def set_action1_cmd(self, command):
         """
         Based on program or admin console set action1
         """
@@ -303,7 +303,7 @@ class VirtualTemp(udi_interface.Node):
         LOGGER.debug('Exit')
         
 
-    def set_action1_id(self, command):
+    def set_action1_id_cmd(self, command):
         """
         Based on program or admin console set action1 id
         """
@@ -314,7 +314,7 @@ class VirtualTemp(udi_interface.Node):
         LOGGER.debug('Exit')
         
 
-    def set_action1_type(self, command):
+    def set_action1_type_cmd(self, command):
         """
         Based on program or admin console set action1 type
         """
@@ -325,7 +325,7 @@ class VirtualTemp(udi_interface.Node):
         LOGGER.debug('Exit')
         
 
-    def set_action2(self, command):
+    def set_action2_cmd(self, command):
         """
         Based on program or admin console set action2
         """
@@ -336,7 +336,7 @@ class VirtualTemp(udi_interface.Node):
         LOGGER.debug('Exit')
         
 
-    def set_action2_id(self, command):
+    def set_action2_id_cmd(self, command):
         """
         Based on program or admin console set action2 id
         """
@@ -347,7 +347,7 @@ class VirtualTemp(udi_interface.Node):
         LOGGER.debug('Exit')
         
 
-    def set_action2_type(self, command):
+    def set_action2_type_cmd(self, command):
         """
         Based on program or admin console set action2 type
         """
@@ -358,38 +358,38 @@ class VirtualTemp(udi_interface.Node):
         LOGGER.debug("Exit")
         
 
-    def set_c_to_f(self, command):
+    def set_c_to_f_cmd(self, command):
         """
         Based on program or admin console set c_to_f flag
         """
         LOGGER.info(f"{self.name}, {command}")
         self.CtoF = int(command.get('value'))
         self.setDriver('GV13', self.CtoF)
-        self.reset_stats()
+        self.reset_stats_cmd()
         self.store_values()
         LOGGER.debug("Exit")
         
 
-    def set_f_to_c(self, command):
+    def set_f_to_c_cmd(self, command):
         """
         Based on program or admin console set f_to_c flag
         """
         LOGGER.info(f"{self.name}, {command}")
         self.FtoC = int(command.get('value'))
         self.setDriver('GV13', self.FtoC)
-        self.reset_stats()
+        self.reset_stats_cmd()
         self.store_values()
         LOGGER.debug("Exit")
 
 
-    def set_raw_to_prec(self, command):
+    def set_raw_to_prec_cmd(self, command):
         """
         Based on program or admin console set raw_to_prec flac
         """
         LOGGER.info(f"{self.name}, {command}")
         self.RtoPrec = int(command.get('value'))
         self.setDriver('GV12', self.RtoPrec)
-        self.reset_stats()
+        self.reset_stats_cmd()
         self.store_values()
         LOGGER.debug('Exit')
         
@@ -536,13 +536,13 @@ class VirtualTemp(udi_interface.Node):
 
         current = getattr(self, "tempVal", None)
         if current != new_display:
-            self.set_temp({"cmd": "data", "value": new_raw})
+            self.set_temp_cmd({"cmd": "data", "value": new_raw})
             LOGGER.info("Updated value for var_type=%s var_id=%s from %r to %r", vtype_str, vid, current, new_display)
         else:
             LOGGER.debug("No change for var_type=%s var_id=%s (value %r)", vtype_str, vid, new_display)
             
 
-    def set_temp(self, command):
+    def set_temp_cmd(self, command):
         """
         Set temperature based on actions set-up.
         """
@@ -595,7 +595,7 @@ class VirtualTemp(udi_interface.Node):
         LOGGER.debug('Exit')
 
 
-    def reset_stats(self, command=None):
+    def reset_stats_cmd(self, command=None):
         """
         Command to reset stats for the device.
         """
@@ -656,17 +656,17 @@ class VirtualTemp(udi_interface.Node):
     this tells it which method to call. DON calls setOn, etc.
     """
     commands = {
-        'setTemp': set_temp,
-        'setAction1': set_action1,
-        'setAction1id': set_action1_id,
-        'setAction1type': set_action1_type,
-        'setAction2': set_action2,
-        'setAction2id': set_action2_id,
-        'setAction2type': set_action2_type,
-        'setCtoF': set_c_to_f,
-        'setFtoC': set_f_to_c,
-        'setRawToPrec': set_raw_to_prec,
-        'resetStats': reset_stats,
+        'setTemp': set_temp_cmd,
+        'setAction1': set_action1_cmd,
+        'setAction1id': set_action1_id_cmd,
+        'setAction1type': set_action1_type_cmd,
+        'setAction2': set_action2_cmd,
+        'setAction2id': set_action2_id_cmd,
+        'setAction2type': set_action2_type_cmd,
+        'setCtoF': set_c_to_f_cmd,
+        'setFtoC': set_f_to_c_cmd,
+        'setRawToPrec': set_raw_to_prec_cmd,
+        'resetStats': reset_stats_cmd,
                 }
 
 
