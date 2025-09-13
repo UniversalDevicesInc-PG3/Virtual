@@ -494,6 +494,7 @@ class VirtualTemp(udi_interface.Node):
 
         # Parse XML based on the determined tag
         val_str: Optional[str] = None
+        prec_str: Optional[str] = None
         try:
             root = ET.fromstring(text)
             # parse val or init
