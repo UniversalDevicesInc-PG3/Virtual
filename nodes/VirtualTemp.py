@@ -427,13 +427,13 @@ class VirtualTemp(udi_interface.Node):
             return
 
         # check if there is a change to write location
-        current_val = self.pull_from_id(var_type, var_id, UPDATE = False)
+        current_val= self.pull_from_id(var_type, var_id, UPDATE = False)
 
         # only write if required
         if current_val != value:        
             # Build canonical path without double slashes
             path = f"/rest/vars/{tag_to_set}/{getlist_segment}/{vid}/{value}"
-            LOGGER.info(f"Pushing cur:{current_val} new:{value} path:{path}")
+            LOGGER.info(f"Pushing cur:{current_val} new:{value} prec:(prec) path:{path}")
             try:
                 resp = self.isy.cmd(path)
                 # Optional: log response for diagnostics
@@ -449,7 +449,7 @@ class VirtualTemp(udi_interface.Node):
                 LOGGER.exception("%s:, ISY push failed for %s: %s", self.name, path, exc)
 
 
-    def pull_from_id(self, var_type: int | str, var_id: int | str, UPDATE = True) -> None | int | float:
+    def pull_from_id(self, var_type: int | str, var_id: int | str, UPDATE = True):
         """
         Pull a variable from ISY using path segments,
         parse the XML, and update state if the transformed value changed.
@@ -531,7 +531,9 @@ class VirtualTemp(udi_interface.Node):
                 LOGGER.info("Updated value for var_type=%s var_id=%s from %r to %r", vtype_str, vid, current, new_display)
             else:
                 LOGGER.debug("No change for var_type=%s var_id=%s (value %r)", vtype_str, vid, new_display)
-        return new_raw / prec_div
+        else:
+            LOGGER.info(f"NO UPDATE: raw:{new_raw}, prec:{prec_div}")
+            return new_raw
             
 
     def set_temp(self, command):
