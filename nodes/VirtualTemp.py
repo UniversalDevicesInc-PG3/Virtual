@@ -463,6 +463,7 @@ class VirtualTemp(udi_interface.Node):
        val_str: Optional[str] = None  # ensure bound even if parsing fails
        try:
            root = ET.fromstring(text)
+           LOGGER.info(f"root:{root}")
            val_str = root.findtext(".//val")
            if val_str is None:
                LOGGER.error("No <val> element in ISY response for %s", path)
