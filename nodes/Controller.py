@@ -160,7 +160,7 @@ class Controller(udi_interface.Node):
 
         self.Notices.delete('waiting')        
         LOGGER.info('Started Virtual Device NodeServer v%s', self.poly.serverdata)
-        self.query()
+        self.query(command = f"{self.name}: STARTUP")
 
         # signal to the nodes, its ok to start
         self.ready_event.set()

@@ -292,84 +292,102 @@ class VirtualTemp(udi_interface.Node):
         """
         Based on program or admin console set action1
         """
+        LOGGER.info(f"{self.name}, {command}")
         self.action1 = int(command.get('value'))
         self.setDriver('GV6', self.action1)
         self.store_values()
+        LOGGER.debug('Exit')
         
 
     def set_action1_id(self, command):
         """
         Based on program or admin console set action1 id
         """
+        LOGGER.info(f"{self.name}, {command}")
         self.action1id = int(command.get('value'))
         self.setDriver('GV8', self.action1id)
         self.store_values()
+        LOGGER.debug('Exit')
         
 
     def set_action1_type(self, command):
         """
         Based on program or admin console set action1 type
         """
+        LOGGER.info(f"{self.name}, {command}")
         self.action1type = int(command.get('value'))
         self.setDriver('GV7', self.action1type)
         self.store_values()
+        LOGGER.debug('Exit')
         
 
     def set_action2(self, command):
         """
         Based on program or admin console set action2
         """
+        LOGGER.info(f"{self.name}, {command}")
         self.action2 = int(command.get('value'))
         self.setDriver('GV9', self.action2)
         self.store_values()
+        LOGGER.debug('Exit')
         
 
     def set_action2_id(self, command):
         """
         Based on program or admin console set action2 id
         """
+        LOGGER.info(f"{self.name}, {command}")
         self.action2id = int(command.get('value'))
         self.setDriver('GV11', self.action2id)
         self.store_values()
+        LOGGER.debug('Exit')
         
 
     def set_action2_type(self, command):
         """
         Based on program or admin console set action2 type
         """
+        LOGGER.info(f"{self.name}, {command}")
         self.action2type = int(command.get('value'))
         self.setDriver('GV10', self.action2type)
         self.store_values()
+        LOGGER.debug("Exit")
         
 
     def set_c_to_f(self, command):
         """
         Based on program or admin console set c_to_f flag
         """
+        LOGGER.info(f"{self.name}, {command}")
         self.CtoF = int(command.get('value'))
         self.setDriver('GV13', self.CtoF)
         self.reset_stats()
         self.store_values()
+        LOGGER.debug("Exit")
         
 
     def set_f_to_c(self, command):
         """
         Based on program or admin console set f_to_c flag
         """
+        LOGGER.info(f"{self.name}, {command}")
         self.FtoC = int(command.get('value'))
         self.setDriver('GV13', self.FtoC)
         self.reset_stats()
         self.store_values()
+        LOGGER.debug("Exit")
 
 
     def set_raw_to_prec(self, command):
         """
         Based on program or admin console set raw_to_prec flac
         """
+        LOGGER.info(f"{self.name}, {command}")
         self.RtoPrec = int(command.get('value'))
         self.setDriver('GV12', self.RtoPrec)
         self.reset_stats()
         self.store_values()
+        LOGGER.debug('Exit')
         
 
     def push_the_value(self, var_type: str | int, var_id: int | str) -> None:
@@ -378,6 +396,7 @@ class VirtualTemp(udi_interface.Node):
         var_type = 0-4
         var_id should be a positive integer, within the bounds of defined ISY variables.
         """
+        LOGGER.debug(f"Push the value")
         # Validate var_id
         try:
             vid = int(var_id)
@@ -421,6 +440,7 @@ class VirtualTemp(udi_interface.Node):
         Pull a variable from ISY using GETLIST-style path segments,
         parse the XML, and update state if the transformed value changed.
         """
+        LOGGER.debug(f"Pull from ID")
         try:
             vid = int(var_id)
         except (TypeError, ValueError):
@@ -493,7 +513,7 @@ class VirtualTemp(udi_interface.Node):
         """
         Set temperature based on actions set-up.
         """
-        LOGGER.debug(command)
+        LOGGER.info(f"{self.name}, {command}")
         self.setDriver('GV2', 0.0)
         self.lastUpdateTime = time.time()
         self.prevVal = self.tempVal
@@ -547,13 +567,14 @@ class VirtualTemp(udi_interface.Node):
             self.prevAvgTemp = self.currentAvgTemp
             self.currentAvgTemp = round((self.highTemp + self.lowTemp) / 2, 1)
             self.setDriver('GV5', self.currentAvgTemp)
+        LOGGER.debug('Exit')
 
 
     def reset_stats(self, command=None):
         """
         Command to reset stats for the device.
         """
-        LOGGER.info(f'Resetting Stats: {command}')
+        LOGGER.info(f"{self.name}, {command}")
         self.lowTemp = None
         self.highTemp = None
         self.prevAvgTemp = 0
@@ -564,6 +585,7 @@ class VirtualTemp(udi_interface.Node):
         for driver in ['GV1', 'GV3', 'GV4', 'GV5', 'ST']:
             self.setDriver(driver, 0)
         self.store_values()
+        LOGGER.debug('Exit')
         
 
     def query(self, command=None):
@@ -572,8 +594,9 @@ class VirtualTemp(udi_interface.Node):
         the parent class, so you don't need to override this method unless
         there is a need.
         """
-        LOGGER.debug(command)
+        LOGGER.info(f"{self.name}, {command}")
         self.reportDrivers()
+        LOGGER.debug('Exit')
 
 
     # Hints See: https://github.com/UniversalDevicesInc/hints
