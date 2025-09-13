@@ -430,7 +430,6 @@ class VirtualTemp(udi_interface.Node):
         current_val= self.pull_from_id(var_type, var_id, UPDATE = False)
 
         # only write if required
-        LOGGER.info(f"curr_val:{current_val}, val:{value}")
         if current_val != float(value):        
             # Build canonical path without double slashes
             path = f"/rest/vars/{tag_to_set}/{getlist_segment}/{vid}/{value}"
@@ -516,7 +515,7 @@ class VirtualTemp(udi_interface.Node):
 
             # Update only if UDATE == True & changed versus the currently stored transformed value
             if not UPDATE:
-                LOGGER.info(f"NO UPDATE: raw:{new_raw}, prec:{prec_div}, calc{calc}")
+                LOGGER.debug(f"NO UPDATE: raw:{new_raw}, prec:{prec_div}, calc{calc}")
                 return calc
             
         except ET.ParseError as exc:
