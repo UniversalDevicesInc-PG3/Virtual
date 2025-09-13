@@ -1,13 +1,16 @@
 """
 udi-Virtual-pg3 NodeServer/Plugin for EISY/Polisy
 
-(C) 2024 Stephen Jenkins
+(C) 2025 Stephen Jenkins
 
 VirtualTemp class
 """
 # std libraries
-import time, os.path, shelve
-from xml.dom.minidom import parseString
+import time, shelve
+from typing import Any, Dict, Iterable, Optional, Tuple
+import xml.etree.ElementTree as ET
+from dataclasses import dataclass
+from pathlib import Path
 
 # external libraries
 import udi_interface
@@ -27,6 +30,46 @@ GETLIST = [' ',
            '/1/'
           ]
 
+@dataclass(frozen=True)
+class FieldSpec:
+    driver: Optional[str]  # e.g., "GV1" or None if not pushed to a driver
+    default: Any           # per-field default
+
+# Single source of truth for field names, driver codes, and defaults
+FIELDS: dict[str, FieldSpec] = {
+    "tempVal":         FieldSpec(driver="ST",  default=0.0), # 'ST'  : current temperature        
+    "prevVal":         FieldSpec(driver="GV1", default=0.0), # 'GV1' : previous temperature
+    "lastUpdateTime":  FieldSpec(driver="GV2", default=0.0), # 'GV2' : time since last update
+    "highTemp":        FieldSpec(driver="GV3", default=None), # 'GV3' : high temperature     
+    "lowTemp":         FieldSpec(driver="GV4", default=None), # 'GV4' : low temperature            
+    "previousHigh":    FieldSpec(driver=None,  default=None), # bucket for previous high
+    "previousLow":     FieldSpec(driver=None,  default=None), # bucket for previous low
+    "prevAvgTemp":     FieldSpec(driver=None,  default=0.0), # bucket for previous avg
+    "currentAvgTemp":  FieldSpec(driver="GV5", default=0.0), # 'GV5' : average of  high to low 
+    "action1":         FieldSpec(driver="GV6", default=0), # 'GV6' : action1 push to or pull from variable   
+    "action1type":     FieldSpec(driver="GV7", default=0), # 'GV7' : variable type integer or state
+    "action1id":       FieldSpec(driver="GV8", default=0), # 'GV8' : variable id
+    "action2":         FieldSpec(driver="GV9", default=0), # 'GV9' : action 2 push to or pull from variable  
+    "action2type":     FieldSpec(driver="GV10", default=0),# 'GV10': variable type 2 int or state, curr or init
+    "action2id":       FieldSpec(driver="GV11", default=0),# 'GV11': variable id 2   
+    "RtoPrec":         FieldSpec(driver="GV12", default=0),# 'GV12': raw to precision
+    "CtoF":            FieldSpec(driver="GV13", default=0),# 'GV13': Fahrenheit to Celsius
+}
+
+def _transform_value(raw: int, r_to_prec: int | bool, c_to_f: int | bool) -> float | int:
+    """
+    Transform raw value according to flags.
+    r_to_prec: if truthy, treat raw as tenths (divide by 10).
+    c_to_f: if truthy, convert Celsius to Fahrenheit and round to 1 decimal.
+    """
+    val: float | int = raw
+    if r_to_prec:
+        val = raw / 10  # becomes float
+    if c_to_f:
+        val = round(val * 1.8 + 32, 1)  # keep one decimal when converting to F
+    return val
+
+
 class VirtualTemp(udi_interface.Node):
     id = 'virtualtemp'
 
@@ -36,22 +79,6 @@ class VirtualTemp(udi_interface.Node):
     be sent to a variable or used directly.  Programs can use the data
     as well.
 
-    Drivers & commands:
-    'ST'  : current temperature        
-    'GV1' : previous temperature       
-    'GV2' : time since last update
-    'GV3' : high temperature           
-    'GV4' : low temperature            
-    'GV5' : average of  high to low 
-    'GV6' : action1 push to or pull from variable   
-    'GV7' : variable type integer or state
-    'GV8' : variable id
-    'GV9' : action 2 push to or pull from variable  
-    'GV10': variable type 2 integer or state, current value or init value
-    'GV11': variable id 2   
-    'GV12': raw to precision
-    'GV13': Fahrenheit to Celsius
-
     'setTemp'           : set temperature to specific number
     'setAction[1,2]'    : set Action 1,2 None, push, pull
     'setAction[1,2]id'  : set Action 1,2 id
@@ -59,21 +86,9 @@ class VirtualTemp(udi_interface.Node):
     'setCtoF'           : set Celsius to Fahrenheit
     'setRawToPrec'      : set Raw To Precision
     'resetStats'        : reset Statistics
-    'deleteDB'          : delete Database
-    
-    Class Methods (generic):
-    setDriver('ST', 1, report = True, force = False):
-        This sets the driver 'ST' to 1. If report is False we do not report
-        it to Polyglot/ISY. If force is True, we send a report even if the
-        value hasn't changed.
-    reportDriver(driver, force): report the driver value to Polyglot/ISY if
-        it has changed.  if force is true, send regardless.
-    reportDrivers(): Forces a full update of all drivers to Polyglot/ISY.
-    query(): Called when ISY sends a query request to Polyglot for this
-        specific node
     """
     
-    def __init__(self, polyglot, primary, address, name):
+    def __init__(self, polyglot, primary, address, name, *, default_ovr: Optional[Dict[str, Any]] = None):
         """ Sent by the Controller class node.
         :param polyglot: Reference to the Interface class
         :param primary: Parent address
@@ -91,7 +106,6 @@ class VirtualTemp(udi_interface.Node):
         self.action1type, action2type  State var or init, Int var or init, 1 - 4
         self.RtoPrec Raw to precision conversion
         self.CtoF Celsius to Fahrenheit conversion
-        self.pullError True or False
 
         subscribes:
         START: used to create/check/load DB file
@@ -105,24 +119,7 @@ class VirtualTemp(udi_interface.Node):
         self.address = address
         self.name = name
 
-        self.tempVal = 0.0
-        self.prevVal = 0.0
-        self.lastUpdateTime = 0.0
-        self.highTemp = None
-        self.lowTemp = None
-        self.previousHigh = None
-        self.previousLow = None
-        self.prevAvgTemp = 0.0
-        self.currentAvgTemp = 0.0
-        self.action1 = 0
-        self.action1id = 0
-        self.action1type = 0
-        self.action2 = 0
-        self.action2id = 0
-        self.action2type = 0
-        self.RtoPrec = 0
-        self.CtoF = 0
-        self.pullError = False
+        self._init_defaults(default_ovr)
 
         self.poly.subscribe(self.poly.START, self.start, address)
         self.poly.subscribe(self.poly.POLL, self.poll)
@@ -143,235 +140,348 @@ class VirtualTemp(udi_interface.Node):
         self.isy = ISY(self.poly)
         self.lastUpdateTime = time.time()
         self.setDriver('GV2', 0.0)
-
         
+
+    def _init_defaults(self, default_ovr: Optional[Dict[str, Any]] = None) -> None:
+        """
+        Build per-instance defaults from FIELDS, then overlay optional overrides
+        """
+        self._defaults: Dict[str, Any] = {field: spec.default for field, spec in FIELDS.items()}
+        if default_ovr:
+            for k, v in default_ovr.items():
+                if k in FIELDS:
+                    self._defaults[k] = v
+                else:
+                    LOGGER.warning("Ignoring unknown default override key: %s", k)
+                    
+
     def poll(self, flag):
-        """ POLL event subscription above """
-        if 'shortPoll' in flag:
+        """
+        POLL event subscription above
+        """
+        if 'shortPoll' in flag and self.controller.ready_event:
             LOGGER.debug(f"shortPoll {self.name}")
             self.update()
             
 
-    def _checkDBfile_and_migrate(self):
+    def update(self):
         """
-        Checks for the deprecated DB file, migrates data to Polyglot's
-        persistent storage, and then deletes the old file.
-        This helper function is called by load_persistent_data once during startup.
+        Called by shortPoll to update last update and action list.
         """
-        _name = str(self.name).replace(" ","_")
-        old_file_path = os.path.join("db", f"{_name}.db")
+        _sinceLastUpdate = round(((time.time() - self.lastUpdateTime) / 60), 1)
+        if _sinceLastUpdate < 1440:
+                self.setDriver('GV2', _sinceLastUpdate)
+        else:
+                self.setDriver('GV2', 1440)
+        if self.action1 == 2:
+                self.pull_from_id(GETLIST[self.action1type], self.action1id)
+        if self.action2 == 2:
+                self.pull_from_id(GETLIST[self.action2type], self.action2id)
 
-        if not os.path.exists(old_file_path):
-            LOGGER.info(f'[{self.name}] No old DB file found at: {old_file_path}')
+
+    def _apply_state(self, src: Dict[str, Any]) -> None:
+        """
+        Apply values from src; fall back to per-instance defaults
+        """
+        for field in FIELDS.keys():
+            setattr(self, field, src.get(field, self._defaults[field]))
+            
+
+    def _push_drivers(self) -> None:
+        """
+        Push only fields that have a driver mapping
+        """
+        for field, spec in FIELDS.items():
+            if spec.driver is not None:
+                self.setDriver(spec.driver, getattr(self, field))
+                
+
+    def _shelve_file_candidates(self, base: Path) -> Iterable[Path]:
+        """
+        Include the base and any shelve artifacts (base, base.*)
+        """
+        patterns = [base.name, f"{base.name}.*"]
+        seen: set[Path] = set()
+        for pattern in patterns:
+            for p in base.parent.glob(pattern):
+                if p.exists():
+                    seen.add(p)
+        return sorted(seen)
+    
+
+    def _check_db_files_and_migrate(self) -> Tuple[bool, Dict[str, Any] | None]:
+        """
+        Check for deprecated shelve DB files, migrate data, then delete old files.
+        Called by load_persistent_data once during startup.
+        """
+        name_safe = self.name.replace(" ", "_")
+        base = Path("db") / name_safe  # shelve base path (no extension)
+
+        candidates = list(self._shelve_file_candidates(base))
+        if not candidates:
+            LOGGER.info("[%s] No old DB files found at base: %s", self.name, base)
             return False, None
 
-        LOGGER.info(f'[{self.name}] Old DB file found, migrating data...')
+        LOGGER.info("[%s] Old DB files found, migrating data...", self.name)
 
-        _key = 'key' + str(self.address)
+        key = f"key{self.address}"
         try:
-            with shelve.open(os.path.join("db", _name), flag='r') as s:
-                existing_data = s.get(_key)
+            with shelve.open(str(base), flag="r") as s:
+                existing_data = s.get(key)
         except Exception as ex:
-            LOGGER.error(f"[{self.name}] Error opening or reading old shelve DB: {ex}")
+            LOGGER.error("[%s] Error opening/reading old shelve DB: %s", self.name, ex)
             return False, None
 
-        if existing_data:
-            # Delete the old file after successful read
+        # Delete all shelve artifacts after a successful read attempt
+        errors = []
+        for p in candidates:
             try:
-                LOGGER.info(f'[{self.name}] Deleting old DB file: {old_file_path}')
-                os.remove(old_file_path)
+                p.unlink()
             except OSError as ex:
-                LOGGER.error(f"[{self.name}] Error deleting old DB file: {ex}")
+                errors.append((p, ex))
+        if errors:
+            for p, ex in errors:
+                LOGGER.warning("[%s] Could not delete shelve file %s: %s", self.name, p, ex)
+        else:
+            LOGGER.info("[%s] Deleted old shelve files for base: %s", self.name, base)
 
         return True, existing_data
+    
 
+    def load_persistent_data(self) -> None:
+        """
+        Load state from Polyglot persistence or migrate from old shelve DB files.
+        """
+        # Ensure defaults are initialized (safe if called multiple times)
+        if not hasattr(self, "_defaults"):
+            self._init_defaults()
 
-    def load_persistent_data(self):
-        """
-        Load state from Polyglot persistence or migrate from old DB file.
-        """
-        # Try to load from new persistence format first
         data = self.controller.Data.get(self.name)
 
-        if data:
-            self.tempVal = data.get('tempVal', 0)
-            self.prevVal = data.get('prevVal', 0)
-            self.highTemp = data.get('highTemp', 0)
-            self.lowTemp = data.get('lowTemp', 0)
-            self.previousHigh = data.get('previousHigh', 0)
-            self.previousLow = data.get('previousLow', 0)
-            self.prevAvgTemp = data.get('prevAvgTemp', 0)
-            self.currentAvgTemp = data.get('currentAvgTemp', 0)
-            self.action1 = data.get('action1', 0)
-            self.action1id = data.get('action1id', 0)
-            self.action1type = data.get('action1type', 0)
-            self.action2 = data.get('action2', 0) 
-            self.action2id = data.get('action2id', 0)
-            self.action2type = data.get('action2type', 0)
-            self.RtoPrec = data.get('RtoPrec', 0)
-            self.CtoF = data.get('CtoF', 0)
-            LOGGER.info(f"{self.name}, Loaded from persistence")
+        if data is not None:
+            self._apply_state(data)
+            LOGGER.info("%s, Loaded from persistence", self.name)
         else:
-            LOGGER.info(f"{self.name}, No persistent data found. Checking for old DB file...")
-            is_migrated, old_data = self._checkDBfile_and_migrate()
-            if is_migrated and old_data:
-                self.tempVal = old_data.get('tempVal', 0)
-                self.prevVal = old_data.get('prevVal', 0)
-                self.highTemp = old_data.get('highTemp', 0)
-                self.lowTemp = old_data.get('lowTemp', 0)
-                self.previousHigh = old_data.get('previousHigh', 0)
-                self.previousLow = old_data.get('previousLow', 0)
-                self.prevAvgTemp = old_data.get('prevAvgTemp', 0)
-                self.currentAvgTemp = old_data.get('currentAvgTemp', 0)
-                self.action1 = old_data.get('action1', 0)
-                self.action1id = old_data.get('action1id', 0)
-                self.action1type = old_data.get('action1type', 0)
-                self.action2 = old_data.get('action2', 0) 
-                self.action2id = old_data.get('action2id', 0)
-                self.action2type = old_data.get('action2type', 0)
-                self.RtoPrec = old_data.get('RtoPrec', 0)
-                self.CtoF = old_data.get('CtoF', 0)
-                LOGGER.info(f"{self.name}, Migrated from old DB file.")
+            LOGGER.info("%s, No persistent data found. Checking for old DB files...", self.name)
+            migrated, old_data = self._check_db_files_and_migrate()
+            if migrated and old_data is not None:
+                self._apply_state(old_data)
+                LOGGER.info("%s, Migrated from old DB files.", self.name)
             else:
-                LOGGER.info(f"{self.name}, No old DB file found.")
-        # Store the migrated data in the new persistence format
-        self.storeValues()
-        # Initial setting of ISY
-        self.setDriver('ST', self.tempVal)
-        self.setDriver('GV1', self.prevVal)
-        self.setDriver('GV3', self.highTemp)
-        self.setDriver('GV4', self.lowTemp)
-        self.setDriver('GV5', self.currentAvgTemp)
-        self.setDriver('GV6', self.action1)
-        self.setDriver('GV8', self.action1id)
-        self.setDriver('GV7', self.action1type)
-        self.setDriver('GV9', self.action2)
-        self.setDriver('GV11', self.action2id)
-        self.setDriver('GV10', self.action2type)
-        self.setDriver('GV12', self.RtoPrec)
-        self.setDriver('GV13', self.CtoF)
+                self._apply_state({})  # initialize from defaults
+                LOGGER.info("%s, No old DB files found.", self.name)
 
+        # Persist and push drivers
+        self.store_values()
+        self._push_drivers()
 
-    def storeValues(self):
+        
+    def store_values(self) -> None:
         """
         Store persistent data to Polyglot Data structure.
         """
-        data_to_store = {
-            'action1': self.action1,
-            'action1type': self.action1type,
-            'action1id': self.action1id,
-            'action2': self.action2,
-            'action2type': self.action2type,
-            'action2id': self.action2id,
-            'RtoPrec': self.RtoPrec,
-            'CtoF': self.CtoF,
-            'prevVal': self.prevVal,
-            'tempVal': self.tempVal,
-            'highTemp': self.highTemp,
-            'lowTemp': self.lowTemp,
-            'previousHigh': self.previousHigh,
-            'previousLow': self.previousLow,
-            'prevAvgTemp': self.prevAvgTemp,
-            'currentAvgTemp': self.currentAvgTemp,
-           }
+        data_to_store = {field: getattr(self, field) for field in FIELDS.keys()}
         self.controller.Data[self.name] = data_to_store
-        LOGGER.debug(f'Values stored for {self.name}: {data_to_store}')
+        LOGGER.debug("Values stored for %s: %s", self.name, data_to_store)
 
 
-    def setAction1(self, command):
+    def set_action1(self, command):
+        """
+        Based on program or admin console set action1
+        """
         self.action1 = int(command.get('value'))
         self.setDriver('GV6', self.action1)
-        self.storeValues()
+        self.store_values()
         
 
-    def setAction1id(self, command):
+    def set_action1_id(self, command):
+        """
+        Based on program or admin console set action1 id
+        """
         self.action1id = int(command.get('value'))
         self.setDriver('GV8', self.action1id)
-        self.storeValues()
+        self.store_values()
         
 
-    def setAction1type(self, command):
+    def set_action1_type(self, command):
+        """
+        Based on program or admin console set action1 type
+        """
         self.action1type = int(command.get('value'))
         self.setDriver('GV7', self.action1type)
-        self.storeValues()
+        self.store_values()
         
 
-    def setAction2(self, command):
+    def set_action2(self, command):
+        """
+        Based on program or admin console set action2
+        """
         self.action2 = int(command.get('value'))
         self.setDriver('GV9', self.action2)
-        self.storeValues()
+        self.store_values()
         
 
-    def setAction2id(self, command):
+    def set_action2_id(self, command):
+        """
+        Based on program or admin console set action2 id
+        """
         self.action2id = int(command.get('value'))
         self.setDriver('GV11', self.action2id)
-        self.storeValues()
+        self.store_values()
         
 
-    def setAction2type(self, command):
+    def set_action2_type(self, command):
+        """
+        Based on program or admin console set action2 type
+        """
         self.action2type = int(command.get('value'))
         self.setDriver('GV10', self.action2type)
-        self.storeValues()
+        self.store_values()
         
 
-    def setCtoF(self, command):
+    def set_c_to_f(self, command):
+        """
+        Based on program or admin console set c_to_f flag
+        """
         self.CtoF = int(command.get('value'))
         self.setDriver('GV13', self.CtoF)
-        self.resetStats()
-        self.storeValues()
+        self.reset_stats()
+        self.store_values()
         
 
-    def setRawToPrec(self, command):
+    def set_raw_to_prec(self, command):
+        """
+        Based on program or admin console set raw_to_prec flac
+        """
         self.RtoPrec = int(command.get('value'))
         self.setDriver('GV12', self.RtoPrec)
-        self.resetStats()
-        self.storeValues()
+        self.reset_stats()
+        self.store_values()
         
 
-    def pushTheValue(self, command1, command2):
-        _type = str(command1)
-        _id = str(command2)
-        LOGGER.info(f'Pushing to ISY /rest/vars/{_type}{_id}/{self.tempVal}')
-        self.isy.cmd(f'/rest/vars/{_type}{_id}/{self.tempVal}')
+    def push_the_value(self, type_segment: str | int, var_id: int | str) -> None:
+        """
+        Push self.tempVal to an ISY variable.
+        type_segment can be any of:
+          - '/set/2/', 'set/2', 'set/2/', '/init/1', etc. (as provided by TYPELIST)
+        var_id should be a positive integer.
+        """
+        # Validate var_id
+        try:
+            vid = int(var_id)
+        except (TypeError, ValueError):
+            LOGGER.error("Invalid var_id: %r", var_id)
+            return
+        if vid <= 0:
+            LOGGER.error("var_id must be positive, got: %s", vid)
+            return
+
+        # Normalize and validate type_segment
+        # Expect tokens like ['set', '2'] or ['init', '1']
+        seg = str(type_segment or "").strip().strip("/")
+        tokens = [t for t in seg.split("/") if t]
+        if len(tokens) < 2:
+            LOGGER.error("Invalid type segment (expected 'set/2' or 'init/1'): %r", type_segment)
+            return
+
+        op, vtype = tokens[-2], tokens[-1]
+        if op not in ("set", "init") or vtype not in ("1", "2"):
+            LOGGER.error("Invalid op/type in segment: op=%r type=%r (segment=%r)", op, vtype, type_segment)
+            return
+
+        # Validate value to push
+        value = getattr(self, "tempVal", None)
+        if value is None:
+            LOGGER.error("tempVal is None; nothing to push for var_id=%s", vid)
+            return
+
+        # Format value safely as a string; leave semantics unchanged
+        # Note: if you know vtype == '1' must be integer, consider: value_str = str(int(round(value)))
+        value_str = f"{value:.1f}" if isinstance(value, float) else str(value)
+
+        # Build canonical path without double slashes
+        path = f"/rest/vars/{op}/{vtype}/{vid}/{value_str}"
+        LOGGER.info("Pushing to ISY %s", path)
+
+        try:
+            resp = self.isy.cmd(path)
+            # Optional: log response for diagnostics
+            rtxt = resp.decode("utf-8", errors="replace") if isinstance(resp, (bytes, bytearray)) else str(resp)
+            LOGGER.debug("ISY push response for %s: %s", path, rtxt)
+        except Exception as exc:
+            LOGGER.exception("ISY push failed for %s: %s", path, exc)
         
 
-    def pullFromID(self, command1, command2):
-        _type = str(command1)
-        _id = str(command2)
-        _newTemp = 0
-        r = ""
-        if command2 == 0:
-            pass
-        else:
-            try:
-                #LOGGER.info('Pulling from http://%s/rest/vars/get%s%s/', self.parent.isy, _type, _id)
-                r = str(self.isy.cmd('/rest/vars/get' + _type + _id))
-                LOGGER.debug(f"get value: {r}")
-                rx = parseString(r)
-                rx = rx.getElementsByTagName("var")[0]
-                rx = rx.getElementsByTagName("val")[0]
-                rx = rx.firstChild
-                r = rx.toxml(encoding=None, standalone=None)
-                # _content = (r.getElementsByTagName("var")[0].getElementsByTagName("val")[0].firstChild).toxml()
-                LOGGER.info(f'Type-Id:{_type}-{_id}, Content: {r}')
-            except Exception as e:
-                LOGGER.error('There was an error with the value pull: ' + str(e))
-                self.pullError = True
-            try:
-                _newTemp = int(r)
-            except Exception as e:
-                LOGGER.error('An error occured during the content parse: ' + str(e))
-                self.pullError = True
-            if not self.pullError:
-                _testValRtoP = (_newTemp / 10)
-                _testValRtoPandCtoF = round(((_testValRtoP * 1.8) + 32), 1)
-                _testValCtoF = round(((_newTemp * 1.8) + 32), 1)
-                if self.tempVal not in [_testValRtoP, _testValCtoF, _testValRtoPandCtoF, _newTemp]:
-                    self.setTemp({'cmd': 'data', 'value': _newTemp})
-            self.pullError = False
+    def pull_from_id(self, var_type: int | str, var_id: int | str) -> None:
+       """
+       Pull a variable from ISY using GETLIST-style path segments (e.g., '/2/'),
+       parse the XML <val>, and update state if the transformed value changed.
+       """
+       # Normalize and validate var_id
+       try:
+           vid = int(var_id)
+       except (TypeError, ValueError):
+           LOGGER.error("Invalid var_id: %r", var_id)
+           return
+
+       if vid == 0:
+           LOGGER.debug("var_id is 0; skipping pull.")
+           return
+
+       # Normalize and validate var_type (expecting '/1/' or '/2/' from GETLIST)
+       vtype = str(var_type or "").strip()
+       if not vtype or not vtype.strip() or not vtype.strip().strip("/").isdigit():
+           # Be forgiving but avoid obviously bad segments like a single space
+           LOGGER.error("Invalid var_type segment for GET path: %r", var_type)
+           return
+
+       # Construct path exactly as your original logic did: "/rest/vars/get" + "/2/" + "123"
+       path = f"/rest/vars/get{vtype}{vid}"
+
+       # Fetch
+       try:
+           resp = self.isy.cmd(path)
+       except Exception as exc:
+           LOGGER.exception("ISY command failed for %s: %s", path, exc)
+           return
+
+       # Normalize response to text for parsing/logging
+       text = resp.decode("utf-8", errors="replace") if isinstance(resp, (bytes, bytearray)) else str(resp)
+       LOGGER.debug("ISY response for %s: %s", path, text)
+
+       # Parse XML <val> -> raw int
+       val_str: Optional[str] = None  # ensure bound even if parsing fails
+       try:
+           root = ET.fromstring(text)
+           val_str = root.findtext(".//val")
+           if val_str is None:
+               LOGGER.error("No <val> element in ISY response for %s", path)
+               return
+           new_raw = int(val_str.strip())
+       except ET.ParseError as exc:
+           LOGGER.exception("Failed to parse XML for %s: %s", path, exc)
+           return
+       except ValueError as exc:
+           LOGGER.exception("Value in <val> is not an int for %s (val=%r): %s", path, val_str, exc)
+           return
+
+       # Compute the transformed display value based on current flags
+       new_display = _transform_value(new_raw, getattr(self, "RtoPrec", 0), getattr(self, "CtoF", 0))
+
+       # Update only if changed versus the currently stored transformed value
+       current = getattr(self, "tempVal", None)
+       if current != new_display:
+           # Preserve your behavior: set_temp expects the raw integer
+           self.set_temp({"cmd": "data", "value": new_raw})
+           LOGGER.info("Updated value for var_type=%s var_id=%s from %r to %r", vtype, vid, current, new_display)
+       else:
+           LOGGER.debug("No change for var_type=%s var_id=%s (value %r)", vtype, vid, new_display)
             
 
-    def setTemp(self, command):
+    def set_temp(self, command):
+        """
+        Set temperature based on actions set-up.
+        """
         LOGGER.debug(command)
         self.setDriver('GV2', 0.0)
         self.lastUpdateTime = time.time()
@@ -388,46 +498,54 @@ class VirtualTemp(udi_interface.Node):
                 self.tempVal = round(((self.tempVal * 1.8) + 32), 1)
             
         self.setDriver('ST', self.tempVal)
-        self.checkHighLow(self.tempVal)
-        self.storeValues()
+        self.check_high_low(self.tempVal)
+        self.store_values()
 
         if self.action1 == 1:
             _type = TYPELIST[(self.action1type - 1)]
-            self.pushTheValue(_type, self.action1id)
+            self.push_the_value(_type, self.action1id)
             LOGGER.info('Action 1 Pushing')
 
         if self.action2 == 1:
             _type = TYPELIST[(self.action2type - 1)]
-            self.pushTheValue(_type, self.action2id)
+            self.push_the_value(_type, self.action2id)
             LOGGER.info('Action 2 Pushing')
             
 
-    def checkHighLow(self, command):
-        LOGGER.info(f"{command}, low:{self.lowTemp}, high:{self.highTemp}")
-        if command != None:
-            self.previousHigh = self.highTemp
-            self.previousLow = self.lowTemp
-            if self.highTemp == None:
-                comp = -1000.0
-            else:
-                comp = self.highTemp
-            if command > comp:
-                self.setDriver('GV3', command)
-                self.highTemp = command
-            if self.lowTemp == None:
-                comp = 1000.0
-            else:
-                comp = self.lowTemp
-            if command < comp:
-                self.setDriver('GV4', command)
-                self.lowTemp = command
-            if self.highTemp != None and self.lowTemp != None:
-                self.prevAvgTemp = self.currentAvgTemp
-                self.currentAvgTemp = round(((self.highTemp + self.lowTemp) / 2), 1)
-                self.setDriver('GV5', self.currentAvgTemp)
-                
+    def check_high_low(self, value):
+        """
+        Move high & low temp based on current temp.
+        """
+        LOGGER.info(f"{value}, low:{self.lowTemp}, high:{self.highTemp}")
 
-    def resetStats(self, command=None):
+        if value is None:
+            return
+
+        # Save previous high/low
+        self.previousHigh = self.highTemp
+        self.previousLow = self.lowTemp
+
+        # Update highTemp if needed
+        if self.highTemp is None or value > self.highTemp:
+            self.highTemp = value
+            self.setDriver('GV3', value)
+
+        # Update lowTemp if needed
+        if self.lowTemp is None or value < self.lowTemp:
+            self.lowTemp = value
+            self.setDriver('GV4', value)
+
+        # Update average if both high and low are set
+        if self.highTemp is not None and self.lowTemp is not None:
+            self.prevAvgTemp = self.currentAvgTemp
+            self.currentAvgTemp = round((self.highTemp + self.lowTemp) / 2, 1)
+            self.setDriver('GV5', self.currentAvgTemp)
+
+
+    def reset_stats(self, command=None):
+        """
+        Command to reset stats for the device.
+        """
         LOGGER.info(f'Resetting Stats: {command}')
         self.lowTemp = None
         self.highTemp = None
@@ -435,27 +553,12 @@ class VirtualTemp(udi_interface.Node):
         self.currentAvgTemp = 0
         self.prevTemp = None
         self.tempVal = None
-        self.setDriver('GV1', 0)
-        self.setDriver('GV5', 0)
-        self.setDriver('GV3', 0)
-        self.setDriver('GV4', 0)
-        self.setDriver('ST', 0)
-        self.storeValues()
+        # Reset drivers
+        for driver in ['GV1', 'GV3', 'GV4', 'GV5', 'ST']:
+            self.setDriver(driver, 0)
+        self.store_values()
         
 
-    def update(self):
-        """ called by Node shortPoll """
-        _sinceLastUpdate = round(((time.time() - self.lastUpdateTime) / 60), 1)
-        if _sinceLastUpdate < 1440:
-            self.setDriver('GV2', _sinceLastUpdate)
-        else:
-            self.setDriver('GV2', 1440)
-        if self.action1 == 2:
-            self.pullFromID(GETLIST[self.action1type], self.action1id)
-        if self.action2 == 2:
-            self.pullFromID(GETLIST[self.action2type], self.action2id)
-            
-            
     def query(self, command=None):
         """
         Called by ISY to report all drivers for this node. This is done in
@@ -498,16 +601,16 @@ class VirtualTemp(udi_interface.Node):
     this tells it which method to call. DON calls setOn, etc.
     """
     commands = {
-        'setTemp': setTemp,
-        'setAction1': setAction1,
-        'setAction1id': setAction1id,
-        'setAction1type': setAction1type,
-        'setAction2': setAction2,
-        'setAction2id': setAction2id,
-        'setAction2type': setAction2type,
-        'setCtoF': setCtoF,
-        'setRawToPrec': setRawToPrec,
-        'resetStats': resetStats,
+        'setTemp': set_temp,
+        'setAction1': set_action1,
+        'setAction1id': set_action1_id,
+        'setAction1type': set_action1_type,
+        'setAction2': set_action2,
+        'setAction2id': set_action2_id,
+        'setAction2type': set_action2_type,
+        'setCtoF': set_c_to_f,
+        'setRawToPrec': set_raw_to_prec,
+        'resetStats': reset_stats,
                 }
 
 

@@ -147,7 +147,7 @@ class VirtualTempC(udi_interface.Node):
         
     def poll(self, flag):
         """ POLL event subscription above """
-        if 'shortPoll' in flag:
+        if 'shortPoll' in flag and self.controller.ready_event:
             LOGGER.debug(f"shortPoll {self.name}")
             self.update()
             
