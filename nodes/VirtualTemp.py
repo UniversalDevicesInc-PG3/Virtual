@@ -444,11 +444,7 @@ class VirtualTemp(udi_interface.Node):
 
        # Normalize and validate var_type (expecting '/1/' or '/2/' from GETLIST)
        vtype = str(var_type or "").strip()
-       if not vtype or not vtype.strip() or not vtype.strip().strip("/").isdigit():
-           # Be forgiving but avoid obviously bad segments like a single space
-           LOGGER.error("Invalid var_type segment for GET path: %r", var_type)
-           return
-
+       
        # Construct path exactly as your original logic did: "/rest/vars/get" + "/2/" + "123"
        path = f"/rest/vars/get{vtype}{vid}"
 
