@@ -18,20 +18,15 @@ import udi_interface
 # constants
 LOGGER = udi_interface.LOGGER
 ISY = udi_interface.ISY
-TYPELIST = ['/set/2/',  #1
-            '/init/2/', #2
-            '/set/1/',  #3
-            'init/1/'   #4
-           ]
 
 # Dispatch map to select the correct tag AND GETLIST index based on var_type.
 # Using a dictionary for dispatch is more extensible and readable than a long if/elif chain.
 _VARIABLE_TYPE_MAP = {
-    # Key: ISY var_type, Value: (GETLIST_INDEX, XML_TAG)
-    '1': ('/2/', 'val'),
-    '2': ('/2/', 'init'),
-    '3': ('/1/', 'val'),
-    '4': ('/1/', 'init'),
+    # Key: ISY var_type, Value : (GETLIST_INDEX, XML_TAG, SET_TAG)
+    '1': ('/2/', 'val', 'set'),
+    '2': ('/2/', 'init', 'init'),
+    '3': ('/1/', 'val', 'set'),
+    '4': ('/1/', 'init', 'init'),
 }
 
 @dataclass(frozen=True)
@@ -377,7 +372,7 @@ class VirtualTemp(udi_interface.Node):
         self.store_values()
         
 
-    def push_the_value(self, type_segment: str | int, var_id: int | str) -> None:
+    def push_the_value(self, var_type: str | int, var_id: int | str) -> None:
         """
         Push self.tempVal to an ISY variable.
         type_segment can be any of:
@@ -400,8 +395,17 @@ class VirtualTemp(udi_interface.Node):
             LOGGER.error("tempVal is None; nothing to push for var_id=%s", vid)
             return
 
+        vtype_str = str(var_type).strip()
+
+        # Use dictionary dispatch to get both the GETLIST index and the XML tag.
+        try:
+            getlist_segment, _, tag_to_set = _VARIABLE_TYPE_MAP[vtype_str]
+        except KeyError:
+            LOGGER.error("Invalid or unsupported var_type: %r", vtype_str)
+            return
+
         # Build canonical path without double slashes
-        path = f"/rest/vars{type_segment}{vid}/{value}"
+        path = f"/rest/vars{tag_to_set}{getlist_segment}/{value}"
         LOGGER.info("Pushing to ISY %s", path)
 
         try:
@@ -432,7 +436,7 @@ class VirtualTemp(udi_interface.Node):
 
         # Use dictionary dispatch to get both the GETLIST index and the XML tag.
         try:
-            getlist_segment, tag_to_find = _VARIABLE_TYPE_MAP[vtype_str]
+            getlist_segment, tag_to_find, _ = _VARIABLE_TYPE_MAP[vtype_str]
         except KeyError:
             LOGGER.error("Invalid or unsupported var_type: %r", vtype_str)
             return
@@ -502,13 +506,11 @@ class VirtualTemp(udi_interface.Node):
         self.store_values()
 
         if self.action1 == 1:
-            _type = TYPELIST[(self.action1type - 1)]
-            self.push_the_value(_type, self.action1id)
+            self.push_the_value(self.action1type, self.action1id)
             LOGGER.info('Action 1 Pushing')
 
         if self.action2 == 1:
-            _type = TYPELIST[(self.action2type - 1)]
-            self.push_the_value(_type, self.action2id)
+            self.push_the_value(self.action2type, self.action2id)
             LOGGER.info('Action 2 Pushing')
             
 

@@ -6,18 +6,14 @@ udi-Virtual-pg3 NodeServer/Plugin for EISY/Polisy
 VirtualGarage class
 """
 # standard imports
-import os
-import time
-import shelve
-import os.path
-import subprocess
-import ipaddress
+import os, time, shelve, os.path, subprocess, ipaddress, asyncio
 from xml.dom.minidom import parseString
+from threading import Thread, Event, Lock, Condition
 
 # external imports
+import udi_interface
 import requests
 import json
-import udi_interface
 
 # local imports
 pass
@@ -40,7 +36,6 @@ GETLIST = [' ',
           ]
 
 # ratdgo constants
-
 RATGDO = "ratgdov25i-fad8fd"
 
 BUTTON = "/binary_sensor/button"
@@ -64,6 +59,11 @@ STOP = "/stop"
 TURN_ON = "/turn_on"
 TURN_OFF = "/turn_off"
 TOGGLE = "/toggle"
+
+# We need an event loop as we run in a
+# thread which doesn't have a loop
+mainloop = asyncio.get_event_loop()
+
 
 class VirtualGarage(udi_interface.Node):
     id = 'virtualgarage'
@@ -188,6 +188,13 @@ class VirtualGarage(udi_interface.Node):
         self.firstPass = True
         self.dCommand = 0
         self.bonjourOnce = True
+
+        # set-up async loop
+        self.mainloop = mainloop
+        asyncio.set_event_loop(mainloop)
+        self.connect_thread = Thread(target=mainloop.run_forever)
+        self.connect_thread.start()
+
         self.getConfigData()
         self.resetTime()
         self.createDBfile()
