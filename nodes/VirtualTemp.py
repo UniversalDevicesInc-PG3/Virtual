@@ -69,7 +69,7 @@ def _transform_value(raw: int | float, r_to_prec: int | bool, c_to_f: int | bool
     if c_to_f:
         val = round(val * 1.8 + 32, 1)  # keep one decimal when converting to F
     if f_to_c:
-        val = round((val -32) / 1.8, 1)  # keep one decimal when converting to C
+        val = round((val - 32) / 1.8, 1)  # keep one decimal when converting to C
     return val
 
 
@@ -480,7 +480,10 @@ class VirtualTemp(udi_interface.Node):
            return
 
        # Compute the transformed display value based on current flags
-       new_display = _transform_value(new_raw, getattr(self, "RtoPrec", 0), getattr(self, "CtoF", 0), getattr(self, "FtoC", 0))
+       new_display = _transform_value(new_raw,
+                                      getattr(self, "RtoPrec", 0),
+                                      getattr(self, "CtoF", 0),
+                                      getattr(self, "FtoC", 0))
 
        # Update only if changed versus the currently stored transformed value
        current = getattr(self, "tempVal", None)
@@ -504,7 +507,10 @@ class VirtualTemp(udi_interface.Node):
         self.tempVal = float(command.get('value'))
 
         if command.get('cmd') == 'data':
-            self.tempVal = _transform_value(self.tempVal, getattr(self, "RtoPrec", 0), getattr(self, "CtoF", 0), getattr(self, "FtoC", 0))
+            self.tempVal = _transform_value(self.tempVal,
+                                            getattr(self, "RtoPrec", 0),
+                                            getattr(self, "CtoF", 0),
+                                            getattr(self, "FtoC", 0))
             
         self.setDriver('ST', self.tempVal)
         self.check_high_low(self.tempVal)
