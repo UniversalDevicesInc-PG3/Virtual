@@ -505,11 +505,12 @@ class VirtualTemp(udi_interface.Node):
             new_raw = int(val_str.strip())
 
             # parse prec            
+            prec_div = 1
             prec_str = root.findtext(f".//prec")
             if prec_str:
                 prec_div = int(prec_str.strip()) * 10
-            else:
-                prec_div = 1
+                if prec_div <= 0:
+                    prec_div = 1
 
             # Update only if UDATE == True & changed versus the currently stored transformed value
             if UPDATE:
