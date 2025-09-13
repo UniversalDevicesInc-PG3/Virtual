@@ -176,10 +176,14 @@ class VirtualTemp(udi_interface.Node):
                 self.setDriver('GV2', _sinceLastUpdate)
         else:
                 self.setDriver('GV2', 1440)
+        if self.action1 == 1:
+            self.push_the_value(self.action1type, self.action1id)
+        if self.action2 == 1:
+            self.push_the_value(self.action2type, self.action2id)
         if self.action1 == 2:
-                self.pull_from_id(self.action1type, self.action1id)
+            self.pull_from_id(self.action1type, self.action1id)
         if self.action2 == 2:
-                self.pull_from_id(self.action2type, self.action2id)
+            self.pull_from_id(self.action2type, self.action2id)
 
 
     def _apply_state(self, src: Dict[str, Any]) -> None:
@@ -422,22 +426,27 @@ class VirtualTemp(udi_interface.Node):
             LOGGER.error("Invalid or unsupported var_type: %r", vtype_str)
             return
 
-        # Build canonical path without double slashes
-        path = f"/rest/vars/{tag_to_set}/{getlist_segment}/{value}"
-        LOGGER.info("Pushing to ISY %s", path)
+        # check if there is a change to write location
+        current_val = self.pull_from_id(var_type, var_id, UPDATE = False)
 
-        try:
-            resp = self.isy.cmd(path)
-            # Optional: log response for diagnostics
-            rtxt = resp.decode("utf-8", errors="replace") if isinstance(resp, (bytes, bytearray)) else str(resp)
-            LOGGER.debug("ISY push response for %s: %s", path, rtxt)
-        except Exception as exc:
-            LOGGER.exception("ISY push failed for %s: %s", path, exc)
+        # only write if required
+        if current_val != value:        
+            # Build canonical path without double slashes
+            path = f"/rest/vars/{tag_to_set}/{getlist_segment}/{value}"
+            LOGGER.info("Pushing to ISY %s", path)
+
+            try:
+                resp = self.isy.cmd(path)
+                # Optional: log response for diagnostics
+                rtxt = resp.decode("utf-8", errors="replace") if isinstance(resp, (bytes, bytearray)) else str(resp)
+                LOGGER.debug("ISY push response for %s: %s", path, rtxt)
+            except Exception as exc:
+                LOGGER.exception("ISY push failed for %s: %s", path, exc)
 
 
-    def pull_from_id(self, var_type: int | str, var_id: int | str) -> None:
+    def pull_from_id(self, var_type: int | str, var_id: int | str, UPDATE = True) -> None | int | float:
         """
-        Pull a variable from ISY using GETLIST-style path segments,
+        Pull a variable from ISY using path segments,
         parse the XML, and update state if the transformed value changed.
         """
         LOGGER.debug(f"Pull from ID")
@@ -460,7 +469,7 @@ class VirtualTemp(udi_interface.Node):
             LOGGER.error("Invalid or unsupported var_type: %r", vtype_str)
             return
 
-        path = f"/rest/vars/get{getlist_segment}{vid}"
+        path = f"/rest/vars/get/{getlist_segment}/{vid}"
 
         # Fetch
         try:
@@ -499,14 +508,16 @@ class VirtualTemp(udi_interface.Node):
                                       getattr(self, "RtoPrec", 0),
                                       getattr(self, "CtoF", 0),
                                       getattr(self, "FtoC", 0))
-
-        # Update only if changed versus the currently stored transformed value
-        current = getattr(self, "tempVal", None)
-        if current != new_display:
-            self.set_temp({"cmd": "data", "value": new_raw})
-            LOGGER.info("Updated value for var_type=%s var_id=%s from %r to %r", vtype_str, vid, current, new_display)
-        else:
-            LOGGER.debug("No change for var_type=%s var_id=%s (value %r)", vtype_str, vid, new_display)
+        
+        # Update only if UDATE == True & changed versus the currently stored transformed value
+        if UPDATE:
+            current = getattr(self, "tempVal", None)
+            if current != new_display:
+                self.set_temp({"cmd": "data", "value": new_raw})
+                LOGGER.info("Updated value for var_type=%s var_id=%s from %r to %r", vtype_str, vid, current, new_display)
+            else:
+                LOGGER.debug("No change for var_type=%s var_id=%s (value %r)", vtype_str, vid, new_display)
+        return new_display
             
 
     def set_temp(self, command):
@@ -529,14 +540,6 @@ class VirtualTemp(udi_interface.Node):
         self.setDriver('ST', self.tempVal)
         self.check_high_low(self.tempVal)
         self.store_values()
-
-        if self.action1 == 1:
-            self.push_the_value(self.action1type, self.action1id)
-            LOGGER.info('Action 1 Pushing')
-
-        if self.action2 == 1:
-            self.push_the_value(self.action2type, self.action2id)
-            LOGGER.info('Action 2 Pushing')
             
 
     def check_high_low(self, value):
