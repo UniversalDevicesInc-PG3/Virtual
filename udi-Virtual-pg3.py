@@ -28,9 +28,11 @@ DONE garage send CMDs, motor, motion, obstruction ; get naming consistent
 DONE standardize startup sequence
 DONE rewrite checkParams, Discovery
 DONE add NumberOfNodes
-DONE switch/generic/dimmer/temp: nodes use polyglot persistence, delete old db files
+DONE switch/generic/dimmer/temp(R/C): nodes use polyglot persistence, delete old db files
 DONE swtich cmd TOGGLE add
-
+DONE consolidate temp, tempC, tempRC into one module
+TODO refactor function naming
+TODO refactor garage, fix persistence, sse client
 
 3.1.15
 DONE generic, dimmer, change ST to OL, memory of level for DON, DFON/DFOF, command

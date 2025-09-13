@@ -447,7 +447,7 @@ class VirtualTemp(udi_interface.Node):
             return
 
         text = resp.decode("utf-8", errors="replace") if isinstance(resp, (bytes, bytearray)) else str(resp)
-        LOGGER.info("ISY response for %s: %s", path, text)
+        LOGGER.debug("ISY response for %s: %s", path, text)
 
         # Parse XML based on the determined tag
         val_str: Optional[str] = None
