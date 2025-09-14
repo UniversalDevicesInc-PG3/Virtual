@@ -7,13 +7,14 @@ Controller class
 """
 
 # std libraries
-import time, json
+import time, json, os, logging
 from threading import Event, Condition
 from typing import Dict, Any, List
 
 # external libraries
+from udi_interface import Node, LOGGER, Custom, LOG_HANDLER
 import yaml
-import udi_interface
+import markdown2
 
 # personal libraries
 from utils.node_funcs import get_valid_node_name # not using  get_valid_node_address as id's seem to behave
@@ -21,33 +22,6 @@ from utils.node_funcs import get_valid_node_name # not using  get_valid_node_add
 
 # Nodes
 from nodes import *
-
-
-"""
-Some shortcuts for udi interface components
-
-- LOGGER: to create log entries
-- Custom: to access the custom data class
-- ISY:    to communicate directly with the ISY (not commonly used)
-"""
-LOGGER = udi_interface.LOGGER
-LOG_HANDLER = udi_interface.LOG_HANDLER
-Custom = udi_interface.Custom
-ISY = udi_interface.ISY
-
-# local constants
-TYPELIST = ['/set/2/',  #1
-            '/init/2/', #2
-            '/set/1/',  #3
-            'init/1/'   #4
-           ]
-
-GETLIST = [' ',
-           '/2/',
-           '/2/',
-           '/1/',
-           '/1/'
-          ]
 
 # Map device types to their respective node classes
 DEVICE_TYPE_TO_NODE_CLASS = {
@@ -61,7 +35,7 @@ DEVICE_TYPE_TO_NODE_CLASS = {
 }
 
 
-class Controller(udi_interface.Node):
+class Controller(Node):
     id = 'controller'
 
     def __init__(self, polyglot, primary, address, name):
@@ -133,8 +107,8 @@ class Controller(udi_interface.Node):
         self.Notices.clear()
         self.Notices['hello'] = 'Start-up'
         self.setDriver('ST', 1, report = True, force = True)
-
         self.last = 0.0
+
         # Send the profile files to the ISY if neccessary or version changed.
         self.poly.updateProfile()
 
@@ -143,6 +117,12 @@ class Controller(udi_interface.Node):
 
         # Initializing a heartbeat
         self.heartbeat()
+
+        # configuration file setting
+        configurationHelp = './POLYGLOT_CONFIG.md'
+        if os.path.isfile(configurationHelp):
+            cfgdoc = markdown2.markdown_path(configurationHelp)
+            self.poly.setCustomParamsDoc(cfgdoc)
 
         # Wait for all handlers to finish
         LOGGER.warning(f'Waiting for all handlers to complete...')
@@ -341,9 +321,16 @@ class Controller(udi_interface.Node):
         
     def handleLevelChange(self, level):
         """
-        Called via the LOGLEVEL event.
+        Called via the LOGLEVEL event, to handle log level change.
         """
-        LOGGER.info('New log level: {}'.format(level))
+        LOGGER.info(f'enter: level={level}')
+        if level['level'] < 10:
+            LOGGER.info("Setting basic config to DEBUG...")
+            LOG_HANDLER.set_basic_config(True,logging.DEBUG)
+        else:
+            LOGGER.info("Setting basic config to WARNING...")
+            LOG_HANDLER.set_basic_config(True,logging.WARNING)
+        LOGGER.info(f'exit: level={level}')
 
         
     def poll(self, flag):

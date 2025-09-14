@@ -468,7 +468,7 @@ class VirtualTemp(udi_interface.Node):
 
         vtype_str = str(var_type).strip()
 
-        # Use dictionary dispatch to get both the GETLIST index and the XML tag.
+        # Use dictionary dispatch to get both the index and the XML tag.
         try:
             getlist_segment, tag_to_find, _ = _VARIABLE_TYPE_MAP[vtype_str]
         except KeyError:

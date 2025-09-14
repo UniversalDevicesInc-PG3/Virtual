@@ -9,35 +9,17 @@ VirtualGarage class
 import time, shelve, ipaddress, asyncio
 import xml.etree.ElementTree as ET
 from typing import Any, Dict, Iterable, Optional, Tuple
-from xml.dom.minidom import parseString
 from dataclasses import dataclass
 from pathlib import Path
 from threading import Thread, Event, Lock
 
 # external imports
-import udi_interface
+from udi_interface import ISY, Node, LOGGER
 import requests
 import json
 
 # local imports
 pass
-
-LOGGER = udi_interface.LOGGER
-ISY = udi_interface.ISY
-
-# var constants
-TYPELIST = ['/set/2/',  #1
-            '/init/2/', #2
-            '/set/1/',  #3
-            'init/1/'   #4
-           ]
-
-GETLIST = [' ',
-           '/2/',
-           '/2/',
-           '/1/',
-           '/1/'
-          ]
 
 # Dispatch map to select the correct tag and index based on var_type.
 # Using a dictionary for dispatch is more extensible and readable than a long if/elif chain.
@@ -119,7 +101,7 @@ TOGGLE = "/toggle"
 mainloop = asyncio.get_event_loop()
 
 
-class VirtualGarage(udi_interface.Node):
+class VirtualGarage(Node):
     id = 'virtualgarage'
 
     """ This class is meant to represent a virtual garage device.
@@ -249,6 +231,7 @@ class VirtualGarage(udi_interface.Node):
                 self.getRatgdoEvents()
                 LOGGER.error('start events dropped out')
                 time.sleep(10)
+                
                     
     async def _poll_ratgdo_via_executor(self):
         # Run the blocking call in a separate thread pool
@@ -280,6 +263,7 @@ class VirtualGarage(udi_interface.Node):
                 self.updateVars()
             self.updateISY()
 
+            
     def _push_drivers(self) -> None:
         """
         Push only fields that have a driver mapping
@@ -395,7 +379,7 @@ class VirtualGarage(udi_interface.Node):
             return
 
         # Iterate through fields and update from self.dev if key exists
-        for field, spec in FIELDS.items():
+        for field, _ in FIELDS.items():
             # Use a safe get to retrieve config data
             if field in self.dev:
                 self.data[field] = self.dev[field]
@@ -459,6 +443,7 @@ class VirtualGarage(udi_interface.Node):
             LOGGER.error(f"error: {ex}, command: {command}")
         self.bonjourOnce = True
 
+        
     def ratgdoCheck(self):
         try:
             ipaddress.ip_address(self.ratgdo)
@@ -482,6 +467,7 @@ class VirtualGarage(udi_interface.Node):
         self.controller.Notices['ratgdo'] = "RATGDO deice communicatinos failure."
         return False
 
+    
     def ratgdoPost(self, post):
         if self.ratgdoOK:
             LOGGER.info(f'post:{post}')
@@ -491,6 +477,7 @@ class VirtualGarage(udi_interface.Node):
                     LOGGER.error(f"{post}: {rpost.status_code}")
             except Exception as ex:
                 LOGGER.error(f"{post}: {ex}")
+                
         
     def getRatgdoEvents(self):
         timer = 0
@@ -564,6 +551,7 @@ class VirtualGarage(udi_interface.Node):
                     break
             LOGGER.info('Done processing getRatgdoEvents')
             
+            
     def sseEvent(self):
         success = False
         url = f"http://{self.ratgdo}{EVENTS}"
@@ -602,6 +590,7 @@ class VirtualGarage(udi_interface.Node):
             LOGGER.debug(f"sse other exception: {e}")
         return success
 
+    
     def lt_on_cmd(self, command = None):
         LOGGER.info(f"{self.name}, {command}")
         self.data['light'] = 1
@@ -614,6 +603,7 @@ class VirtualGarage(udi_interface.Node):
         self.store_values()
         self.resetTime()
 
+        
     def lt_off_cmd(self, command = None):
         LOGGER.info(f"{self.name}, {command}")
         self.data['light'] = 0
@@ -625,6 +615,7 @@ class VirtualGarage(udi_interface.Node):
         self.ratgdoPost(post)
         self.store_values()
         self.resetTime()
+
         
     def door_command(self, post):
         if self.data['dcommandId'] > 0:
@@ -633,20 +624,23 @@ class VirtualGarage(udi_interface.Node):
         self.ratgdoPost(post)
         self.store_values()
         self.resetTime()
-    
+
+        
     def dr_open_cmd(self, command = None):
         LOGGER.info(f"{self.name}, {command}")
         self.data['dcommand'] = 1
         post = f"{self.ratgdo}{DOOR}{OPEN}"
         self.door_command(post)
         self.reportCmd("OPEN",25)
-    
+
+        
     def dr_close_cmd(self, command = None):
         LOGGER.info(f"{self.name}, {command}")
         self.data['dcommand'] = 2
         post = f"{self.ratgdo}{DOOR}{CLOSE}"
         self.door_command(post)
         self.reportCmd("CLOSE",25)
+
         
     def dr_trigger_cmd(self, command = None):
         LOGGER.info(f"{self.name}, {command}")
@@ -654,6 +648,7 @@ class VirtualGarage(udi_interface.Node):
         post = f"{self.ratgdo}{TRIGGER}"
         self.door_command(post)
         self.reportCmd("TRIGGER",25)
+
         
     def dr_stop_cmd(self, command = None):
         LOGGER.info(f"{self.name}, {command}")
@@ -661,6 +656,7 @@ class VirtualGarage(udi_interface.Node):
         post = f"{self.ratgdo}{DOOR}{STOP}"
         self.door_command(post)
         self.reportCmd("CLOSE",25)
+        
         
     def lk_lock_cmd(self, command = None):
         LOGGER.info(f"{self.name}, {command}")
@@ -674,6 +670,7 @@ class VirtualGarage(udi_interface.Node):
         self.store_values()
         self.resetTime()
         
+        
     def lk_unlock_cmd(self, command = None):
         LOGGER.info(f"{self.name}, {command}")
         self.data['lock'] = 0
@@ -686,75 +683,138 @@ class VirtualGarage(udi_interface.Node):
         self.store_values()
         self.resetTime()
 
+        
     def pushTheValue(self, type, id, value):
         _type = str(type)
         _id = str(id)
         _value = str(value)
         LOGGER.info(f'Pushing to {self.isy}, type: {_type}, id: {_id}, value: {_value}')
         self.isy.cmd('/rest/vars' + _type + _id + '/' + str(value))
-    
-    def updateVars(self):
-        success = False
-        change = False
-        success, self.data['light'], change = self.updateVar('light', self.data['light'], self.data['lightT'], self.data['lightId'])
-        success, self.data['door'], change = self.updateVar('door', self.data['door'], self.data['doorT'], self.data['doorId'])
-        success, self.data['dcommand'], change = self.updateVar('dcommand', self.data['dcommand'], self.data['dcommandT'], self.data['dcommandId'])
-        success, self.data['motion'], change = self.updateVar('motion', self.data['motion'], self.data['motionT'], self.data['motionId'])
-        success, self.data['lock'], change = self.updateVar('lock', self.data['lock'], self.data['lockT'], self.data['lockId'])
-        success, self.data['obstruct'], change = self.updateVar('obstruct', self.data['obstruct'], self.data['obstructT'], self.data['obstructId'])
-        if success:
-            self.store_values()
-        return change
-    
-    def updateVar(self, name, dev, T, Id):
-        success = False
-        change = False
-        _data = 0
-        try:
-            if T > 0 and Id > 0:
-                success, _data = self.pullFromISY(T, Id)
-                if success:
-                    LOGGER.debug(f'{name} success: {success}, _data: {_data}')
-                    if dev != _data:
-                        LOGGER.info(f'changed {name} = {dev}')
-                        change = True
-                        dev = _data
-        except Exception as ex:
-            LOGGER.error(f"Error: {ex}")
-        return success, dev, change
-    
-    def pullFromISY(self, type: int, id: int) -> tuple[bool, int]:
-        success = False
-        _data = 0
-        if id == 0 or id == None:
-            LOGGER.error(f'bad data id: {id}, _type: {type}')
-        else:
-            _type = GETLIST[self.data['lightT']]
-            _id = str(id)
-            try:
-                cmdString = '/rest/vars/get' + _type + _id
-                LOGGER.debug(f'CMD Attempt: {self.isy}, type: {_type}, id: {_id},cmdString: {cmdString}')
-                _r = self.isy.cmd(cmdString)
-                LOGGER.debug(f'RES: {self.isy}, type: {_type}, id: {_id}, value: {_r}')
-                if isinstance(_r, str):
-                    r = parseString(_r)
-                    if type == 1 or type == 3:
-                        _content = r.getElementsByTagName("val")[0].firstChild
-                    else:
-                        _content = r.getElementsByTagName("init")[0].firstChild
-                    if _content == None:
-                        LOGGER.error(f'_content: {_content}')
-                    else:                        
-                        _data = int(_content.toxml())
-                        LOGGER.debug(f'_data: {_data}')
-                    success = True
-                else:
-                    LOGGER.error(f'r: {_r}')
-            except Exception as ex:
-                LOGGER.error(f'There was an error with the value pull or Parse: {ex}')
-                time.sleep(2)
-        return success, _data
 
+        
+    def updateVars(self) -> None:
+        """
+        Update variables by pulling data from ISY based on FIELDS definitions.
+        """
+        for var_name, spec in FIELDS.items():
+            # Only process fields that are of type "state"
+            if spec.data_type == "state":
+                # Safely get the type and ID from the data dictionary
+                var_type = self.data.get(f'{var_name}T')
+                var_id = self.data.get(f'{var_name}Id')
+
+                # Only proceed if both type and ID are present and non-zero
+                if var_type and var_id:
+                    new_val = self.updateVar_from_id(var_type, var_id)
+                    if new_val is not None:
+                        self.data[var_name] = new_val
+
+        self.store_values()
+
+
+    def updateVar_from_id(self, var_type: Any, var_id: Any) -> int | float | None:
+        """
+        Pulls data using pull_from_id and handles errors.
+        """
+        # Guard clause for invalid input
+        if not var_type or not var_id:
+            return None
+
+        try:
+            result: Tuple[bool, int | float] | None = self.pull_from_id(var_type, var_id)
+            if result is None:
+                return None
+
+            success, _data = result
+            if success:
+                return _data
+            return None
+        except Exception as ex:
+            LOGGER.error(f"Error pulling from ID {var_id} with type {var_type}: {ex}", exc_info=True)
+            return None
+
+
+    def pull_from_id(self, var_type: int | str, var_id: int | str, prec_flag = False) -> tuple[bool, int | float] | None:
+        """
+        Pull a variable from ISY using path segments,
+        parse the XML, and update state if the transformed value changed.
+        """
+        LOGGER.debug(f"Pull from ID")
+        try:
+            vid = int(var_id)
+        except (TypeError, ValueError):
+            LOGGER.error("Invalid var_id: %r", var_id)
+            return
+
+        if vid == 0:
+            LOGGER.debug("var_id is 0; skipping pull.")
+            return
+
+        vtype_str = str(var_type).strip()
+
+        # Use dictionary dispatch to get both the index and the XML tag.
+        try:
+            getlist_segment, tag_to_find, _ = _VARIABLE_TYPE_MAP[vtype_str]
+        except KeyError:
+            LOGGER.error("Invalid or unsupported var_type: %r", vtype_str)
+            return
+
+        path = f"/rest/vars/get/{getlist_segment}/{vid}"
+
+        # Fetch
+        try:
+            resp = self.isy.cmd(path)
+        except RuntimeError as exc:
+            if 'ISY info not available' in str(exc):
+                LOGGER.info(f"{self.name}: ISY info not available on {path}")
+            else:
+                LOGGER.exception("RuntimeError on path {path}")
+            return
+        except Exception as exc:
+            LOGGER.exception("%s:, ISY push failed for %s: %s", self.name, path, exc)
+            return
+
+        text = resp.decode("utf-8", errors="replace") if isinstance(resp, (bytes, bytearray)) else str(resp)
+        LOGGER.debug("ISY response for %s: %s", path, text)
+
+        # Parse XML based on the determined tag
+        val_str: Optional[str] = None
+        prec_str: Optional[str] = None
+        try:
+            root = ET.fromstring(text)
+            # parse val or init
+            val_str = root.findtext(f".//{tag_to_find}")
+            if val_str is None:
+                LOGGER.error("No <%s> element in ISY response for %s", tag_to_find, path)
+                return
+            new_raw = int(val_str.strip())
+
+            # consider precision of ISY variable only if prec_flag == True
+            if prec_flag:
+                # parse prec            
+                prec_div = 1
+                prec_str = root.findtext(f".//prec")
+                if prec_str:
+                    prec_div = int(prec_str.strip()) * 10
+                    if prec_div <= 0:
+                        prec_div = 1
+                calc = new_raw / prec_div
+                LOGGER.debug(f"NO UPDATE: raw:{new_raw}, prec:{prec_div}, calc{calc}")
+                return True, calc
+            else:
+                return True, new_raw
+
+        except ET.ParseError as exc:
+            LOGGER.exception("Failed to parse XML for %s: %s", path, exc)
+            return
+        except ValueError as exc:
+            LOGGER.exception("Value in <%s> is not an int for %s (val=%r): %s", tag_to_find, path, val_str, exc)
+            return
+        except Exception as ex:
+            LOGGER.error(f"{self.name}: parse error {ex}", exc_info = True)
+            return
+
+    
     def pullFromRatgdo(self, get):
         _data = {}
         resTxt = f'{self.ratgdo}{get}'
@@ -772,6 +832,7 @@ class VirtualGarage(udi_interface.Node):
             LOGGER.error(f"error: {ex}")
             return False, {}
 
+        
     def getRatgdoDirect(self):
         try:
             res = requests.get(f"http://{self.ratgdo}{LIGHT}")
@@ -851,6 +912,7 @@ class VirtualGarage(udi_interface.Node):
 
         LOGGER.info('getRatgdoDirect success!')
         return True
+    
                                 
     def setRatgdoLight(self, _data):
         state = _data['state']
@@ -859,6 +921,7 @@ class VirtualGarage(udi_interface.Node):
             self.data['light'] = 1
         elif state == 'OFF':
             self.data['light'] = 0
+            
 
     def setRatgdoDoor(self, _data):
         state = _data['state']
@@ -892,6 +955,7 @@ class VirtualGarage(udi_interface.Node):
             LOGGER.info(f"value False, value: {value}")
             self.data['position'] = 101
 
+            
     def setRatgdoMotor(self, _data):
         state = _data['state']
         LOGGER.debug(f"id: {_data['id']}, value: {_data['value']}, state: {state}")
@@ -902,6 +966,7 @@ class VirtualGarage(udi_interface.Node):
             self.data['motor'] = 0
             self.reportCmd('MOTOROFF',2)
 
+            
     def setRatgdoMotion(self, _data):
         state = _data['state']
         LOGGER.debug(f"id: {_data['id']}, value: {_data['value']}, state: {state}")
@@ -912,6 +977,7 @@ class VirtualGarage(udi_interface.Node):
             self.data['motion'] = 0
             self.reportCmd('NOMOTION',2)
 
+            
     def setRatgdoLock(self, _data):
         state = _data['state']
         LOGGER.debug(f"id: {_data['id']}, value: {_data['value']}, state: {state}")
@@ -920,6 +986,7 @@ class VirtualGarage(udi_interface.Node):
         elif state == 'UNLOCKED':
             self.data['lock'] = 0
 
+            
     def setRatgdoObstruct(self, _data):
         state = _data['state']
         LOGGER.debug(f"id: {_data['id']}, value: {_data['value']}, state: {state}")
@@ -929,7 +996,8 @@ class VirtualGarage(udi_interface.Node):
         elif state == 'OFF':
             self.data['obstruct'] = 0
             self.reportCmd('NOOBSTRUCTION',2)
-                                
+
+            
     def updateISY(self):
         _currentTime = time.time()
         if self.firstPass:
@@ -990,16 +1058,19 @@ class VirtualGarage(udi_interface.Node):
             _openTimeDelta = 0
         self.setDriver('GV7', _openTimeDelta)
 
+        
     def reset_stats_cmd(self, command = None):
         LOGGER.info(f"{self.name}, {command}")
         self.firstPass = True
         self.resetTime()
         self.store_values()
 
+        
     def resetTime(self):
         """ Reset the last update time to now """
         self.data['lastUpdateTime'] = time.time()
         self.setDriver('GV6', 0.0)
+
         
     def query(self, command = None):
         """ Query for updated values """ 
