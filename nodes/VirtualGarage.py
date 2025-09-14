@@ -6,9 +6,13 @@ udi-Virtual-pg3 NodeServer/Plugin for EISY/Polisy
 VirtualGarage class
 """
 # standard imports
-import os, time, shelve, os.path, subprocess, ipaddress, asyncio
+import time, shelve, ipaddress, asyncio
+import xml.etree.ElementTree as ET
+from typing import Any, Dict, Iterable, Optional, Tuple
 from xml.dom.minidom import parseString
-from threading import Thread, Event, Lock, Condition
+from dataclasses import dataclass
+from pathlib import Path
+from threading import Thread, Event, Lock
 
 # external imports
 import udi_interface
@@ -34,6 +38,56 @@ GETLIST = [' ',
            '/1/',
            '/1/'
           ]
+
+# Dispatch map to select the correct tag and index based on var_type.
+# Using a dictionary for dispatch is more extensible and readable than a long if/elif chain.
+_VARIABLE_TYPE_MAP = {
+    # Key: ISY var_type, Value : (INDEX, XML_TAG, SET_TAG)
+    '1': ('2', 'val', 'set'),
+    '2': ('2', 'init', 'init'),
+    '3': ('1', 'val', 'set'),
+    '4': ('1', 'init', 'init'),
+}
+
+@dataclass(frozen=True)
+class FieldSpec:
+    driver: Optional[str]  # e.g., "GV1" or None if not pushed to a driver
+    default: Any           # per-field default
+    data_type: str         # denote data type (state or config)
+
+# Single source of truth for field names, driver codes, and defaults
+FIELDS: dict[str, FieldSpec] = {
+    # State variables (pushed to drivers)
+    "light":           FieldSpec(driver="GV0", default=0, data_type="state"),
+    "door":            FieldSpec(driver="GV1", default=0, data_type="state"),
+    "dcommand":        FieldSpec(driver="GV2", default=0, data_type="state"),
+    "motion":          FieldSpec(driver="GV3", default=0, data_type="state"),
+    "lock":            FieldSpec(driver="GV4", default=0, data_type="state"),
+    "obstruct":        FieldSpec(driver="GV5", default=0, data_type="state"),
+    "lastUpdateTime":  FieldSpec(driver="GV6", default=0.0, data_type="state"),
+    "openTime":        FieldSpec(driver="GV7", default=0.0, data_type="state"),
+    "motor":           FieldSpec(driver="GV8", default=0, data_type="state"),
+    "position":        FieldSpec(driver="GV9", default=0, data_type="state"),
+    
+    # Configuration variables (set during discovery/config, no driver)
+    "lightT":          FieldSpec(driver=None, default=1, data_type="config"),
+    "lightId":         FieldSpec(driver=None, default=0, data_type="config"),
+    "doorT":           FieldSpec(driver=None, default=1, data_type="config"),
+    "doorId":          FieldSpec(driver=None, default=0, data_type="config"),
+    "dcommandT":       FieldSpec(driver=None, default=1, data_type="config"),
+    "dcommandId":      FieldSpec(driver=None, default=0, data_type="config"),
+    "motionT":         FieldSpec(driver=None, default=1, data_type="config"),
+    "motionId":        FieldSpec(driver=None, default=0, data_type="config"),
+    "lockT":           FieldSpec(driver=None, default=1, data_type="config"),
+    "lockId":          FieldSpec(driver=None, default=0, data_type="config"),
+    "obstructT":       FieldSpec(driver=None, default=1, data_type="config"),
+    "obstructId":      FieldSpec(driver=None, default=0, data_type="config"),
+    "motorT":          FieldSpec(driver=None, default=1, data_type="config"),
+    "motorId":         FieldSpec(driver=None, default=0, data_type="config"),
+    "positioT":        FieldSpec(driver=None, default=1, data_type="config"),
+    "positionId":      FieldSpec(driver=None, default=0, data_type="config"),
+}
+
 
 # ratdgo constants
 RATGDO = "ratgdov25i-fad8fd"
@@ -83,7 +137,7 @@ class VirtualGarage(udi_interface.Node):
     'GV6' : time since last update in minutes
     'GV7' : time garage open = not closed
     'GV8' : motor status On/Off
-    'GV8' : door position
+    'GV9' : door position
 
     'query'         : query all vars
     'ltOn'          : light on
@@ -107,7 +161,7 @@ class VirtualGarage(udi_interface.Node):
     query(): Called when ISY sends a query request to Polyglot for this
         specific node
     """
-    def __init__(self, polyglot, primary, address, name):
+    def __init__(self, polyglot, primary, address, name, *, default_ovr: Optional[Dict[str, Any]] = None):
         """ Sent by the Controller class node.
         :param polyglot: Reference to the Interface class
         :param primary: Parent address
@@ -134,34 +188,6 @@ class VirtualGarage(udi_interface.Node):
         self.address = address
         self.name = name
 
-        self.lastUpdateTime = 0.0
-        self.openTime = 0.0
-
-        self.light = 0
-        self.lightT = 1
-        self.lightId = 0
-        self.door = 0
-        self.doorT = 1
-        self.doorId = 0
-        self.dcommand = 0
-        self.dcommandT = 1
-        self.dcommandId = 0
-        self.motor = 0
-        self.motorT = 1
-        self.motorId = 0
-        self.position = 0
-        self.positionT = 1
-        self.positionId = 0
-        self.motion = 0
-        self.motionT = 1
-        self.motionId = 0
-        self.lock = 0
-        self.lockT = 1
-        self.lockId = 0
-        self.obstruct = 0
-        self.obstructT = 1
-        self.obstructId = 0
-
         self.firstPass = True
         self.updatingAll = False
 
@@ -178,16 +204,32 @@ class VirtualGarage(udi_interface.Node):
         self.ratgdo_do_poll = True
         self.ratgdo_do_events = True
         
+        # default variables and drivers
+        self.data = {field: spec.default for field, spec in FIELDS.items()}
+
         self.poly.subscribe(self.poly.START, self.start, address)
         self.poly.subscribe(self.poly.POLL, self.poll)
         self.poly.subscribe(self.poly.BONJOUR, self.bonjour)
+        
 
     def start(self):
-        """ START event subscription above """
+        """
+        Start node and retrieve persistent data
+        """
+        LOGGER.info(f'start: garage:{self.name}')
+        
+        # wait for controller start ready
+        self.controller.ready_event.wait()
+
+        # get persistent data from polyglot or depreciated: old db file, then delete db file
+        self.load_persistent_data()
+
         self.isy = ISY(self.poly)
         self.firstPass = True
-        self.dCommand = 0
         self.bonjourOnce = True
+
+        # Set up a lock for ratgdo access
+        self.ratgdo_lock = Lock()
 
         # set-up async loop
         self.mainloop = mainloop
@@ -197,15 +239,29 @@ class VirtualGarage(udi_interface.Node):
 
         self.getConfigData()
         self.resetTime()
-        self.createDBfile()
+
         if self.ratgdo and self.ratgdo_do_events:
+            # # Signal readiness and start the event processing in the background
+            # asyncio.run_coroutine_threadsafe(self.getRatgdoEvents_async(), self.mainloop)            
             while not self.ratgdoOK:
                 time.sleep(2)
             while True:
                 self.getRatgdoEvents()
                 LOGGER.error('start events dropped out')
                 time.sleep(10)
-        
+                    
+    async def _poll_ratgdo_via_executor(self):
+        # Run the blocking call in a separate thread pool
+        await asyncio.to_thread(self.getRatgdoDirect)
+
+    async def getRatgdoEvents_async(self):
+        # Your original event loop logic, but with async await and event.is_set()
+        while not self.controller.stop_polling_event.is_set():
+            # Use async methods for I/O
+            await asyncio.sleep(1)
+            # Process ratgdo events
+
+                
     def poll(self, flag):
         """ POLL event subscription above """
         if 'longPoll' in flag:
@@ -224,188 +280,164 @@ class VirtualGarage(udi_interface.Node):
                 self.updateVars()
             self.updateISY()
 
-    def createDBfile(self):
+    def _push_drivers(self) -> None:
         """
-        DB file is used to store switch status across ISY & Polyglot reboots.
+        Push only fields that have a driver mapping
         """
+        for field, spec in FIELDS.items():
+            if spec.driver and spec.data_type == "state":
+                self.setDriver(spec.driver, self.data[field], report=True, force=True)
+
+                
+    def _apply_state(self, src: Dict[str, Any]) -> None:
+        """
+        Apply values from src; fall back to per-instance defaults
+        """
+        for field in FIELDS.keys():
+            self.data[field] = src.get(field, self.data.get(field))
+
+            
+    def _shelve_file_candidates(self, base: Path) -> Iterable[Path]:
+        """
+        Include the base and any shelve artifacts (base, base.*)
+        """
+        patterns = [base.name, f"{base.name}.*"]
+        seen: set[Path] = set()
+        for pattern in patterns:
+            for p in base.parent.glob(pattern):
+                if p.exists():
+                    seen.add(p)
+        return sorted(seen)
+
+
+    def _check_db_files_and_migrate(self) -> Tuple[bool, Dict[str, Any] | None]:
+        """
+        Check for deprecated shelve DB files, migrate data, then delete old files.
+        Called by load_persistent_data once during startup.
+        """
+        name_safe = self.name.replace(" ", "_")
+        base = Path("db") / name_safe  # shelve base path (no extension)
+
+        candidates = list(self._shelve_file_candidates(base))
+        if not candidates:
+            LOGGER.info("[%s] No old DB files found at base: %s", self.name, base)
+            return False, None
+
+        LOGGER.info("[%s] Old DB files found, migrating data...", self.name)
+
+        key = f"key{self.address}"
+        existing_data = None
         try:
-            _key = 'key' + str(self.address)
-            _name = str(self.name).replace(" ","_")
-            _file = f"db/{_name}.db"
-            LOGGER.info(f'Checking to see existence of db file: {_file}')
-            if os.path.exists(_file):
-                LOGGER.info('...file exists')
-                self.retrieveValues()
-            else:
-                s = shelve.open(f"db/{_name}", writeback=False)
-                s[_key] = { 'created': 'yes'}
-                time.sleep(2)
-                s.close()
-                LOGGER.info("...file didn\'t exist, created successfully")
-                self.resetStats()
+            with shelve.open(str(base), flag="r") as s:
+                existing_data = s.get(key)
         except Exception as ex:
-                LOGGER.error(f"createDBfile error: {ex}")
+                    LOGGER.exception("[%s] Unexpected error during shelve migration", self.name)
+                    return False, None
 
-    def deleteDB(self, command=None):
-        """ Called from Controller when node is deleted """
-        LOGGER.debug(f"deleteDB, {self.name} {command}")
-        _name = str(self.name).replace(" ","_")
-        _file = f"db/{_name}.db"
-        if os.path.exists(_file):
-            LOGGER.info(f'Deleting db: {_file}')
-            subprocess.run(["rm", _file])
+        # Delete all shelve artifacts after a successful read attempt
+        errors = []
+        for p in candidates:
+            try:
+                p.unlink()
+            except OSError as ex:
+                errors.append((p, ex))
+        if errors:
+            for p, ex in errors:
+                LOGGER.warning("[%s] Could not delete shelve file %s: %s", self.name, p, ex)
+        else:
+            LOGGER.info("[%s] Deleted old shelve files for base: %s", self.name, base)
 
-    def storeValues(self):
-        _key = 'key' + str(self.address)
-        _name = str(self.name).replace(" ","_")
-        s = shelve.open(f"db/{_name}", writeback=False)
-        try:
-            s[_key] = { 'light': self.light,
-                        'door': self.door,
-                        'motion': self.motion,
-                        'lock': self.lock,
-                        'obstruct': self.obstruct,
-                       }
-        finally:
-            s.close()
-        LOGGER.debug('Values Stored')
+        return True, existing_data
 
-    def retrieveValues(self):
-        _key = 'key' + str(self.address)
-        _name = str(self.name).replace(" ","_")
-        s = shelve.open(f"db/{_name}", writeback=False)
-        try:
-            existing = s[_key]
-        finally:
-            s.close()
-        LOGGER.info('Retrieving Values %s', existing)
-        self.light = existing['light']
-        self.door = existing['door']
-        self.motion = existing['motion']
-        self.lock = existing['lock']
-        self.obstruct = existing['obstruct']
+
+    def load_persistent_data(self) -> None:
+        """
+        Load state from Polyglot persistence or migrate from old shelve DB files.
+        """
+        data = self.controller.Data.get(self.name)
+
+        if data is not None:
+            self._apply_state(data)
+            LOGGER.info("%s, Loaded from persistence", self.name)
+        else:
+            LOGGER.info("%s, No persistent data found. Checking for old DB files...", self.name)
+            migrated, old_data = self._check_db_files_and_migrate()
+            if migrated and old_data is not None:
+                self._apply_state(old_data)
+                LOGGER.info("%s, Migrated from old DB files.", self.name)
+            else:
+                self._apply_state({})  # initialize from defaults
+                LOGGER.info("%s, No old DB files found.", self.name)
+
+        # Persist and push drivers
+        self.store_values()
+        self._push_drivers()
+
+
+    def store_values(self) -> None:
+        """
+        Store persistent data to Polyglot Data structure.
+        """
+        data_to_store = {field: self.data[field] for field in FIELDS.keys()}
+        self.controller.Data[self.name] = data_to_store
+        LOGGER.debug("Values stored for %s: %s", self.name, data_to_store)
+
 
     def getConfigData(self):
-        # repull config data for var data, light, door, dcommand, motor, motion, lock, obstruction
-        # var type & ID are optional, also, will pull with only ID assuming type = 1
-        # ratgdo = nonexist, false, true or ip address, true assumes http://ratgdov25i-fad8fd.local
-        success = False
-        for dev in self.controller.devlist:
-            if str(dev['type']) == 'garage':
-                if dev['name'] == self.name:
-                    self.dev = dev
-                    LOGGER.info(f'GARAGE: {self.dev}')
-                    success = True
-                    break
-        if success:
+        """
+        Retrieves and processes garage configuration data from the controller.
+        """
+        self.dev = next((dev for dev in self.controller.devlist 
+                         if str(dev.get('type')) == 'garage' and dev.get('name') == self.name), None)
+
+        if not self.dev:
+            LOGGER.error('No configuration data found for this garage node.')
+            return
+
+        # Iterate through fields and update from self.dev if key exists
+        for field, spec in FIELDS.items():
+            # Use a safe get to retrieve config data
+            if field in self.dev:
+                self.data[field] = self.dev[field]
+        
+        # Process ratgdo
+        self.process_ratgdo_config()
+        
+
+    def process_ratgdo_config(self):
+        """Processes the ratgdo configuration specifically."""
+        self.controller.Notices.delete('ratgdo')
+        self.ratgdoOK = False
+        if not self.dev:
+            LOGGER.error('No configuration data found for this garage node.')
+            return
+        
+        ratgdo_config: Any = self.dev.get('ratgdo', False)
+
+        if ratgdo_config in [False, 'false', 'False']:
+            self.ratgdo = False
+        elif ratgdo_config in ['true', 'True', True, RATGDO, f"{RATGDO}.local"]:
+            self.ratgdo = RATGDO
+            self.bonjourOn = True
+            warn = f"Searching for RATGDO IP: {RATGDO}"
+            LOGGER.error(warn)
+            self.controller.Notices['ratgdo'] = warn
+        elif isinstance(ratgdo_config,str):
             try:
-                self.lightT = self.dev['lightT']
-                LOGGER.debug(f'self.lightT = {self.lightT}')
-            except:
-                self.lightT = 1
-            try:
-                self.lightId = self.dev['lightId']
-                LOGGER.debug(f'self.lightId = {self.lightId}')
-            except:
-                self.lightId = 0
-            try:
-                self.doorT = self.dev['doorT']
-                LOGGER.debug(f'self.doorT = {self.doorT}')
-            except:
-                self.doorT = 1
-            try:
-                self.doorId = self.dev['doorId']
-                LOGGER.debug(f'self.doorId = {self.doorId}')
-            except:
-                self.doorId = 0
-            try:
-                self.dcommandT = self.dev['dcommandT']
-                LOGGER.debug(f'self.dcommandT = {self.dcommandT}')
-            except:
-                self.dcommandT = 1
-            try:
-                self.dcommandId = self.dev['dcommandId']
-                LOGGER.debug(f'self.dcommandId = {self.dcommandId}')
-            except:
-                self.dcommandId = 0
-            try:
-                self.positionT = self.dev['positionT']
-                LOGGER.debug(f'self.positionT = {self.positionT}')
-            except:
-                self.positionT = 1
-            try:
-                self.positionId = self.dev['positionId']
-                LOGGER.debug(f'self.positionId = {self.positionId}')
-            except:
-                self.positionId = 0
-            try:
-                self.motorT = self.dev['motorT']
-                LOGGER.debug(f'self.motorT = {self.motorT}')
-            except:
-                self.motorT = 1
-            try:
-                self.motorId = self.dev['motorId']
-                LOGGER.debug(f'self.motorId = {self.motorId}')
-            except:
-                self.motorId = 0
-            try:
-                self.motionT = self.dev['motionT']
-                LOGGER.debug(f'self.motionT = {self.motionT}')
-            except:
-                self.motionT = 1
-            try:
-                self.motionId = self.dev['motionId']
-                LOGGER.debug(f'self.motionId = {self.motionId}')
-            except:
-                self.motionId = 0
-            try:
-                self.lockT = self.dev['lockT']
-                LOGGER.debug(f'self.lockT = {self.lockT}')
-            except:
-                self.lockT = 1
-            try:
-                self.lockId = self.dev['lockId']
-                LOGGER.debug(f'self.lockId = {self.lockId}')
-            except:
-                self.lockId = 0
-            try:
-                self.obstructT = self.dev['obstructT']
-                LOGGER.debug(f'self.obstructT = {self.obstructT}')
-            except:
-                self.obstructT = 1
-            try:
-                self.obstructId = self.dev['obstructId']
-                LOGGER.debug(f'self.obstructId = {self.obstructId}')
-            except:
-                self.obstructId = 0
-            self.controller.Notices.delete('ratgdo')
-            self.ratgdoOK = False
-            try:
-                ratgdoTemp = self.dev['ratgdo']
-                if ratgdoTemp in ['true', 'True', True, RATGDO, f"{RATGDO}.local"]:
-                    if self.ratgdoOK == False:
-                        self.ratgdo = RATGDO
-                        self.bonjourOn = True
-                        warn = f"Searching for RATGDO IP: {RATGDO}"
-                        LOGGER.error(warn)
-                        self.controller.Notices['ratgdo'] = warn
-                elif ratgdoTemp in [False, 'false', 'False']:
-                    self.ratgdo = False
-                else:
-                    try:
-                        self.ratgdo = ratgdoTemp
-                        ipaddress.ip_address(self.ratgdo)
-                        self.ratgdoCheck()
-                    except:
-                        error = f"RATGDO address error: {self.ratgdo}"
-                        LOGGER.error(error)
-                        self.controller.Notices['ratgdo'] = error
-                        self.ratgdo = False
-            except:
+                self.ratgdo = ratgdo_config
+                ipaddress.ip_address(self.ratgdo)
+                self.ratgdoCheck()
+                self.ratgdoOK = True
+            except (ValueError, ipaddress.AddressValueError):
+                error = f"RATGDO address error: {self.ratgdo}"
+                LOGGER.error(error)
+                self.controller.Notices['ratgdo'] = error
                 self.ratgdo = False
-            LOGGER.info(f'self.ratgdo = {self.ratgdo}')                        
-        else:
-            LOGGER.error('no self.dev data')
+            else:
+                self.ratgdo = False
+
+        LOGGER.info(f'self.ratgdo = {self.ratgdo}')
+
         
     def bonjour(self, command):
         # bonjour(self, type, subtypes, protocol)
@@ -569,88 +601,88 @@ class VirtualGarage(udi_interface.Node):
             LOGGER.debug(f"sse other exception: {e}")
         return success
 
-    def ltOn(self, command = None):
-        LOGGER.debug(f'command:{command}')
-        self.light = 1
-        self.setDriver('GV0', self.light)
+    def lt_on_cmd(self, command = None):
+        LOGGER.info(f"{self.name}, {command}")
+        self.data['light'] = 1
+        self.setDriver('GV0', self.data['light'])
         self.reportCmd("LT_ON", 2)
-        if self.lightId > 0:
-            self.pushTheValue(self.lightT, self.lightId, self.light)
+        if self.data['lightId'] > 0: # type: ignore
+            self.pushTheValue(self.data['lightT'], self.data['lightId'], self.data['light'])
         post = f"{self.ratgdo}{LIGHT}{TURN_ON}"
         self.ratgdoPost(post)
-        self.storeValues()
+        self.store_values()
         self.resetTime()
 
-    def ltOff(self, command = None):
-        LOGGER.debug(f'command:{command}')
-        self.light = 0
-        self.setDriver('GV0', self.light)
+    def lt_off_cmd(self, command = None):
+        LOGGER.info(f"{self.name}, {command}")
+        self.data['light'] = 0
+        self.setDriver('GV0', self.data['light'])
         self.reportCmd("LT_OFF", 2)
-        if self.lightId > 0:
-            self.pushTheValue(self.lightT, self.lightId, self.light)
+        if self.data['lightId'] > 0:
+            self.pushTheValue(self.data['lightT'], self.data['lightId'], self.data['light'])
         post = f"{self.ratgdo}{LIGHT}{TURN_OFF}"
         self.ratgdoPost(post)
-        self.storeValues()
+        self.store_values()
         self.resetTime()
         
-    def drCommand(self, post):
-        if self.dcommandId > 0:
-            self.pushTheValue(self.dcommandT, self.dcommandId, self.dcommand)
-        self.setDriver('GV2', self.dcommand)
+    def door_command(self, post):
+        if self.data['dcommandId'] > 0:
+            self.pushTheValue(self.data['dcommandT'], self.data['dcommandId'], self.data['dcommand'])
+        self.setDriver('GV2', self.data['dcommand'])
         self.ratgdoPost(post)
-        self.storeValues()
+        self.store_values()
         self.resetTime()
     
-    def drOpen(self, command = None):
-        LOGGER.debug(f'command:{command}')
-        self.dcommand = 1
+    def dr_open_cmd(self, command = None):
+        LOGGER.info(f"{self.name}, {command}")
+        self.data['dcommand'] = 1
         post = f"{self.ratgdo}{DOOR}{OPEN}"
-        self.drCommand(post)
+        self.door_command(post)
         self.reportCmd("OPEN",25)
     
-    def drClose(self, command = None):
-        LOGGER.debug(f'command:{command}')
-        self.dcommand = 2
+    def dr_close_cmd(self, command = None):
+        LOGGER.info(f"{self.name}, {command}")
+        self.data['dcommand'] = 2
         post = f"{self.ratgdo}{DOOR}{CLOSE}"
-        self.drCommand(post)
+        self.door_command(post)
         self.reportCmd("CLOSE",25)
         
-    def drTrigger(self, command = None):
-        LOGGER.debug(f'command:{command}')
-        self.dcommand = 3
+    def dr_trigger_cmd(self, command = None):
+        LOGGER.info(f"{self.name}, {command}")
+        self.data['dcommand'] = 3
         post = f"{self.ratgdo}{TRIGGER}"
-        self.drCommand(post)
+        self.door_command(post)
         self.reportCmd("TRIGGER",25)
         
-    def drStop(self, command = None):
-        LOGGER.debug(f'command:{command}')
-        self.dcommand = 4
+    def dr_stop_cmd(self, command = None):
+        LOGGER.info(f"{self.name}, {command}")
+        self.data['dcommand'] = 4
         post = f"{self.ratgdo}{DOOR}{STOP}"
-        self.drCommand(post)
+        self.door_command(post)
         self.reportCmd("CLOSE",25)
         
-    def lkLock(self, command = None):
-        LOGGER.debug(f'command:{command}')
-        self.lock = 1
-        self.setDriver('GV4', self.lock)
+    def lk_lock_cmd(self, command = None):
+        LOGGER.info(f"{self.name}, {command}")
+        self.data['lock'] = 1
+        self.setDriver('GV4', self.data['lock'])
         self.reportCmd("LOCK",2)
-        if self.lockId > 0:
-            self.pushTheValue(self.lockT, self.lockId, self.lock)
+        if self.data['lockId'] > 0:
+            self.pushTheValue(self.data['lockT'], self.data['lockId'], self.data['lock'])
         post = f"{self.ratgdo}{LOCK_REMOTES}{LOCK}"
         self.ratgdoPost(post)
-        self.storeValues()
+        self.store_values()
         self.resetTime()
         
-    def lkUnlock(self, command = None):
-        LOGGER.debug(f'command:{command}')
-        self.lock = 0
-        self.setDriver('GV4', self.lock)
+    def lk_unlock_cmd(self, command = None):
+        LOGGER.info(f"{self.name}, {command}")
+        self.data['lock'] = 0
+        self.setDriver('GV4', self.data['lock'])
         self.reportCmd("UNLOCK",2)
-        if self.lockId > 0:
-            self.pushTheValue(self.lockT, self.lockId, self.lock)
+        if self.data['lockId'] > 0:
+            self.pushTheValue(self.data['lockT'], self.data['lockId'], self.data['lock'])
         post = f"{self.ratgdo}{LOCK_REMOTES}{UNLOCK}"
         self.ratgdoPost(post)
-        self.storeValues()
+        self.store_values()
         self.resetTime()
 
     def pushTheValue(self, type, id, value):
@@ -663,14 +695,14 @@ class VirtualGarage(udi_interface.Node):
     def updateVars(self):
         success = False
         change = False
-        success, self.light, change = self.updateVar('light', self.light, self.lightT, self.lightId)
-        success, self.door, change = self.updateVar('door', self.door, self.doorT, self.doorId)
-        success, self.dcommand, change = self.updateVar('dcommand', self.dcommand, self.dcommandT, self.dcommandId)
-        success, self.motion, change = self.updateVar('motion', self.motion, self.motionT, self.motionId)
-        success, self.lock, change = self.updateVar('lock', self.lock, self.lockT, self.lockId)
-        success, self.obstruct, change = self.updateVar('obstruct', self.obstruct, self.obstructT, self.obstructId)
+        success, self.data['light'], change = self.updateVar('light', self.data['light'], self.data['lightT'], self.data['lightId'])
+        success, self.data['door'], change = self.updateVar('door', self.data['door'], self.data['doorT'], self.data['doorId'])
+        success, self.data['dcommand'], change = self.updateVar('dcommand', self.data['dcommand'], self.data['dcommandT'], self.data['dcommandId'])
+        success, self.data['motion'], change = self.updateVar('motion', self.data['motion'], self.data['motionT'], self.data['motionId'])
+        success, self.data['lock'], change = self.updateVar('lock', self.data['lock'], self.data['lockT'], self.data['lockId'])
+        success, self.data['obstruct'], change = self.updateVar('obstruct', self.data['obstruct'], self.data['obstructT'], self.data['obstructId'])
         if success:
-            self.storeValues()
+            self.store_values()
         return change
     
     def updateVar(self, name, dev, T, Id):
@@ -696,7 +728,7 @@ class VirtualGarage(udi_interface.Node):
         if id == 0 or id == None:
             LOGGER.error(f'bad data id: {id}, _type: {type}')
         else:
-            _type = GETLIST[self.lightT]
+            _type = GETLIST[self.data['lightT']]
             _id = str(id)
             try:
                 cmdString = '/rest/vars/get' + _type + _id
@@ -823,9 +855,9 @@ class VirtualGarage(udi_interface.Node):
         state = _data['state']
         LOGGER.debug(f"id: {_data['id']}, state: {state}")
         if state == 'ON':
-            self.light = 1
+            self.data['light'] = 1
         elif state == 'OFF':
-            self.light = 0
+            self.data['light'] = 0
 
     def setRatgdoDoor(self, _data):
         state = _data['state']
@@ -835,148 +867,148 @@ class VirtualGarage(udi_interface.Node):
 
         if current_operation == 'IDLE':
             if state == 'CLOSED':
-                self.door = 0
+                self.data['door'] = 0
             elif state == 'OPEN':
-                    self.door = 100
+                    self.data['door'] = 100
             elif state == 'OPENING':
-                    self.door = 104
+                    self.data['door'] = 104
             elif state == 'STOPPED':
-                    self.door = 102
+                    self.data['door'] = 102
             elif state == 'CLOSING':
-                    self.door = 103
+                    self.data['door'] = 103
             else: # UNKNOWN
-                    self.door = 101
+                    self.data['door'] = 101
         elif current_operation == 'OPENING':
-            self.door = 104
+            self.data['door'] = 104
         elif current_operation == 'CLOSING':
-            self.door = 103
+            self.data['door'] = 103
             
         # check position
         if 0 <= value <= 100:
             LOGGER.info(f"value True, value: {value}")
-            self.position = value
+            self.data['position'] = value
         else:
             LOGGER.info(f"value False, value: {value}")
-            self.position = 101
+            self.data['position'] = 101
 
     def setRatgdoMotor(self, _data):
         state = _data['state']
         LOGGER.debug(f"id: {_data['id']}, value: {_data['value']}, state: {state}")
         if state == 'ON':
-            self.motor = 1
+            self.data['motor'] = 1
             self.reportCmd('MOTORON',2)
         elif state =='OFF':
-            self.motor = 0
+            self.data['motor'] = 0
             self.reportCmd('MOTOROFF',2)
 
     def setRatgdoMotion(self, _data):
         state = _data['state']
         LOGGER.debug(f"id: {_data['id']}, value: {_data['value']}, state: {state}")
         if state == 'ON':
-            self.motion = 1
+            self.data['motion'] = 1
             self.reportCmd('MOTION',2)
         elif state =='OFF':
-            self.motion = 0
+            self.data['motion'] = 0
             self.reportCmd('NOMOTION',2)
 
     def setRatgdoLock(self, _data):
         state = _data['state']
         LOGGER.debug(f"id: {_data['id']}, value: {_data['value']}, state: {state}")
         if state == 'LOCKED':
-            self.lock = 1
+            self.data['lock'] = 1
         elif state == 'UNLOCKED':
-            self.lock = 0
+            self.data['lock'] = 0
 
     def setRatgdoObstruct(self, _data):
         state = _data['state']
         LOGGER.debug(f"id: {_data['id']}, value: {_data['value']}, state: {state}")
         if state == 'ON':
-            self.obstruct = 1
+            self.data['obstruct'] = 1
             self.reportCmd('OBSTRUCTION',2)
         elif state == 'OFF':
-            self.obstruct = 0
+            self.data['obstruct'] = 0
             self.reportCmd('NOOBSTRUCTION',2)
                                 
     def updateISY(self):
         _currentTime = time.time()
         if self.firstPass:
-            self.setDriver('GV0', self.light)
-            if self.getDriver('GV1') != self.door:
+            self.setDriver('GV0', self.data['light'])
+            if self.getDriver('GV1') != self.data['door']:
                 self.dcommand = 0
-            self.setDriver('GV1', self.door)
-            self.setDriver('GV2', self.dcommand)
-            self.setDriver('GV8', self.motor)
-            self.setDriver('GV9', self.position)
-            self.setDriver('GV3', self.motion)
-            self.setDriver('GV4', self.lock)
-            self.setDriver('GV5', self.obstruct)
+            self.setDriver('GV1', self.data['door'])
+            self.setDriver('GV2', self.data['dcommand'])
+            self.setDriver('GV8', self.data['motor'])
+            self.setDriver('GV9', self.data['position'])
+            self.setDriver('GV3', self.data['motion'])
+            self.setDriver('GV4', self.data['lock'])
+            self.setDriver('GV5', self.data['obstruct'])
             self.resetTime()
             self.firstPass = False
         else:
-            if self.getDriver('GV0') != self.light:
-                self.setDriver('GV0', self.light)
+            if self.getDriver('GV0') != self.data['light']:
+                self.setDriver('GV0', self.data['light'])
                 self.resetTime()
             _doorOldStatus = self.getDriver('GV1')
-            if _doorOldStatus != self.door:
-                self.dcommand = 0
-                self.setDriver('GV1', self.door)
+            if _doorOldStatus != self.data['door']:
+                self.data['dcommand'] = 0
+                self.setDriver('GV1', self.data['door'])
                 self.resetTime()
-            if self.getDriver('GV2') != self.dcommand:
-                self.setDriver('GV2', self.dcommand)
+            if self.getDriver('GV2') != self.data['dcommand']:
+                self.setDriver('GV2', self.data['dcommand'])
                 self.resetTime()
-            if self.getDriver('GV8') != self.motor:
-                self.setDriver('GV8', self.motor)
+            if self.getDriver('GV8') != self.data['motor']:
+                self.setDriver('GV8', self.data['motor'])
                 self.resetTime()
-            if self.getDriver('GV9') != self.position:
-                self.setDriver('GV9', self.position)
+            if self.getDriver('GV9') != self.data['position']:
+                self.setDriver('GV9', self.data['position'])
                 self.resetTime()
-            if self.getDriver('GV3') != self.motor:
-                self.setDriver('GV3', self.motor)
+            if self.getDriver('GV3') != self.data['motor']:
+                self.setDriver('GV3', self.data['motor'])
                 self.resetTime()
-            if self.getDriver('GV3') != self.motion:
-                self.setDriver('GV3', self.motion)
+            if self.getDriver('GV3') != self.data['motion']:
+                self.setDriver('GV3', self.data['motion'])
                 self.resetTime()
-            if self.getDriver('GV4') != self.lock:
-                self.setDriver('GV4', self.lock)
+            if self.getDriver('GV4') != self.data['lock']:
+                self.setDriver('GV4', self.data['lock'])
                 self.resetTime()
-            if self.getDriver('GV5') != self.obstruct:
-                self.setDriver('GV5', self.obstruct)
+            if self.getDriver('GV5') != self.data['obstruct']:
+                self.setDriver('GV5', self.data['obstruct'])
                 self.resetTime()
-        _sinceLastUpdate = round(((_currentTime - self.lastUpdateTime) / 60), 1)
+        _sinceLastUpdate = round(((_currentTime - self.data['lastUpdateTime']) / 60), 1)
         if _sinceLastUpdate < 9999:
             self.setDriver('GV6', _sinceLastUpdate)
         else:
             self.setDriver('GV6', 9999)
 
-        if self.door != 0:
-            if self.openTime == 0.0:
-                self.openTime = _currentTime
-            _openTimeDelta = round((_currentTime - self.openTime), 1)
+        if self.data['door'] != 0:
+            if self.data['openTime'] == 0.0:
+                self.data['openTime'] = _currentTime
+            _openTimeDelta = round((_currentTime - self.data['openTime']), 1)
         else:
-            self.openTime = 0.0
+            self.data['openTime'] = 0.0
             _openTimeDelta = 0
         self.setDriver('GV7', _openTimeDelta)
 
-    def resetStats(self, command = None):
-        LOGGER.info('Resetting Stats')
-        LOGGER.debug(f'command:{command}')
+    def reset_stats_cmd(self, command = None):
+        LOGGER.info(f"{self.name}, {command}")
         self.firstPass = True
         self.resetTime()
-        self.storeValues()
+        self.store_values()
 
     def resetTime(self):
         """ Reset the last update time to now """
-        self.lastUpdateTime = time.time()
+        self.data['lastUpdateTime'] = time.time()
         self.setDriver('GV6', 0.0)
         
     def query(self, command = None):
         """ Query for updated values """ 
-        LOGGER.debug(f'command:{command}')
+        LOGGER.info(f"{self.name}, {command}")
         self.reportDrivers()
 
 
+    hint = '0x01120100'
+    # home, barrier, None
     # Hints See: https://github.com/UniversalDevicesInc/hints
-    hint = [1,2,3,4]
     
     """
     This is an array of dictionary items containing the variable names(drivers)
@@ -987,14 +1019,14 @@ class VirtualGarage(udi_interface.Node):
     drivers = [
         {"driver": "GV0", "value": 0, "uom": 2},  #light
         {"driver": "GV1", "value": 0, "uom": 97}, #door status
-        {'driver': 'GV8', 'value': 0, 'uom': 2},  #motor
-        {"driver": "GV9", "value": 0, "uom": 97}, #door position
         {"driver": "GV2", "value": 0, "uom": 25}, #door command
         {"driver": "GV3", "value": 0, "uom": 2},  #motion
         {"driver": "GV4", "value": 0, "uom": 2},  #lock
         {"driver": "GV5", "value": 0, "uom": 2},  #obstruction
         {'driver': 'GV6', 'value': 0, 'uom': 45}, #update time
         {'driver': 'GV7', 'value': 0, 'uom': 58}, #open time
+        {'driver': 'GV8', 'value': 0, 'uom': 2},  #motor
+        {"driver": "GV9", "value": 0, "uom": 97}, #door position
     ]
 
     """
@@ -1003,14 +1035,14 @@ class VirtualGarage(udi_interface.Node):
     """
     commands = {
         "QUERY": query,
-        "LT_ON": ltOn,
-        "LT_OFF": ltOff,
-        "OPEN": drOpen,
-        "CLOSE": drClose,
-        "TRIGGER": drTrigger,
-        "STOP": drStop,
-        "LOCK": lkLock,
-        "UNLOCK": lkUnlock,
-        'resetStats': resetStats,
+        "LT_ON": lt_on_cmd,
+        "LT_OFF": lt_off_cmd,
+        "OPEN": dr_open_cmd,
+        "CLOSE": dr_close_cmd,
+        "TRIGGER": dr_trigger_cmd,
+        "STOP": dr_stop_cmd,
+        "LOCK": lk_lock_cmd,
+        "UNLOCK": lk_unlock_cmd,
+        'resetStats': reset_stats_cmd,
         }
 

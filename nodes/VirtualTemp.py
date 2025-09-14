@@ -7,8 +7,8 @@ VirtualTemp class
 """
 # std libraries
 import time, shelve
-from typing import Any, Dict, Iterable, Optional, Tuple
 import xml.etree.ElementTree as ET
+from typing import Any, Dict, Iterable, Optional, Tuple
 from dataclasses import dataclass
 from pathlib import Path
 
@@ -122,6 +122,7 @@ class VirtualTemp(udi_interface.Node):
         self.address = address
         self.name = name
 
+        # default variables and drivers
         self._init_defaults(default_ovr)
 
         self.poly.subscribe(self.poly.START, self.start, address)
