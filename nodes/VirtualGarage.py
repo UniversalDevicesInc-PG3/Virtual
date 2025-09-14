@@ -434,8 +434,8 @@ class VirtualGarage(udi_interface.Node):
                 LOGGER.error(error)
                 self.controller.Notices['ratgdo'] = error
                 self.ratgdo = False
-            else:
-                self.ratgdo = False
+        else:
+            self.ratgdo = False
 
         LOGGER.info(f'self.ratgdo = {self.ratgdo}')
 
