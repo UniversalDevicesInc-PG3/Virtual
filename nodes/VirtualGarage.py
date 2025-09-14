@@ -413,7 +413,7 @@ class VirtualGarage(udi_interface.Node):
             return
         
         ratgdo_config: Any = self.dev.get('ratgdo', False)
-        LOGGER.info(f"{self.name}: ratgdo_config:{ratgdo_config}")
+        LOGGER.info(f"{self.name}: ratgdo_config:{ratgdo_config}, str:{isinstance(ratgdo_config,str)}")
 
         if ratgdo_config in [False, 'false', 'False']:
             self.ratgdo = False
