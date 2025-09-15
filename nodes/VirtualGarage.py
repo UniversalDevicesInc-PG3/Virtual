@@ -389,7 +389,7 @@ class VirtualGarage(Node):
         Run routine in a separate thread to retrieve events from array loaded by sse client from gateway.
         """
         LOGGER.debug(f"start")
-        if self._event_polling_thread.is_alive():
+        if self._event_polling_thread and self._event_polling_thread.is_alive():
            LOGGER.debug("event polling running, skip")
         else:
             try:
