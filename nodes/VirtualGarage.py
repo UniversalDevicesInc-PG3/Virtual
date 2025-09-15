@@ -168,6 +168,7 @@ class VirtualGarage(Node):
         self.controller = polyglot.getNode(self.primary)
         self.address = address
         self.name = name
+        self.hb = 0 #heartbeat
 
         self.firstPass = True
         self.updatingAll = False
