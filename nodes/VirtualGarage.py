@@ -185,6 +185,7 @@ class VirtualGarage(Node):
         self.ratgdo_event = []
         self.ratgdo_event_condition = Condition()
         self.stop_sse_client_event = Event()
+        self._event_polling_thread = None
         self.ratgdo_poll_lock = Lock()
         self.sse_lock = Lock()
 
