@@ -13,11 +13,7 @@ from dataclasses import dataclass
 from pathlib import Path
 
 # external libraries
-import udi_interface
-
-# constants
-LOGGER = udi_interface.LOGGER
-ISY = udi_interface.ISY
+from udi_interface import LOGGER, ISY, Node
 
 # Dispatch map to select the correct tag and index based on var_type.
 # Using a dictionary for dispatch is more extensible and readable than a long if/elif chain.
@@ -72,7 +68,7 @@ def _transform_value(raw: int | float, r_to_prec: int | bool, c_to_f: int | bool
     return val
 
 
-class VirtualTemp(udi_interface.Node):
+class VirtualTemp(Node):
     id = 'virtualtemp'
 
     """ This class represents a simple virtual temperature sensor.

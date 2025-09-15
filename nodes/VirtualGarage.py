@@ -6,11 +6,9 @@ udi-Virtual-pg3 NodeServer/Plugin for EISY/Polisy
 VirtualGarage class
 """
 # standard imports
-import time, shelve, ipaddress, asyncio, json
+import time, ipaddress, asyncio, json
 import xml.etree.ElementTree as ET
-from typing import Any, Dict, Iterable, Optional, Tuple
-from dataclasses import dataclass
-from pathlib import Path
+from typing import Any, Dict, Optional, Tuple
 from threading import Thread, Event, Lock, Condition
 
 # external imports
@@ -19,7 +17,8 @@ import requests
 import aiohttp
 
 # local imports
-pass
+from utils.node_funcs import FieldSpec, load_persistent_data, store_values
+# from utils.node_funcs import _push_drivers, _apply_state, _shelve_file_candidates, _check_db_files_and_migrate, store_values  
 
 # Dispatch map to select the correct tag and index based on var_type.
 # Using a dictionary for dispatch is more extensible and readable than a long if/elif chain.
@@ -31,11 +30,11 @@ _VARIABLE_TYPE_MAP = {
     '4': ('1', 'init', 'init'),
 }
 
-@dataclass(frozen=True)
-class FieldSpec:
-    driver: Optional[str]  # e.g., "GV1" or None if not pushed to a driver
-    default: Any           # per-field default
-    data_type: str         # denote data type (state or config)
+# @dataclass(frozen=True)
+# class FieldSpec:
+#     driver: Optional[str]  # e.g., "GV1" or None if not pushed to a driver
+#     default: Any           # per-field default
+#     data_type: str         # denote data type (state or config)
 
 # Single source of truth for field names, driver codes, and defaults
 FIELDS: dict[str, FieldSpec] = {
@@ -181,23 +180,16 @@ class VirtualGarage(Node):
         self.eventTimeout = 720
         self.eventTimer = 0
 
-        # in function vars
-        self.update_in = False
-        self.poll_in = False
-        self.sse_client_in = False
-        self.event_polling_in = False
-
-        # storage arrays & conditions
-        self.ratgdo_array = []
+        # storage arrays, events, conditions, locks
         self.ratgdo_event = []
         self.ratgdo_event_condition = Condition()
-
-        self.ratgdo_do_poll = True
-        self.ratgdo_do_events = True
-        
-        # Events
         self.stop_sse_client_event = Event()
-        
+        self.ratgdo_poll_lock = Lock()
+        self.sse_lock = Lock()
+
+        self.ratgdo_do_events = True # debug flag to turn on/off events
+        self.ratgdo_do_poll = True # debug flag to turn on/off ratgdo periodic polling of data
+                
         # default variables and drivers
         self.data = {field: spec.default for field, spec in FIELDS.items()}
 
@@ -216,14 +208,11 @@ class VirtualGarage(Node):
         self.controller.ready_event.wait()
 
         # get persistent data from polyglot or depreciated: old db file, then delete db file
-        self.load_persistent_data()
+        load_persistent_data(self)
 
         self.isy = ISY(self.poly)
         self.firstPass = True
         self.bonjourOnce = True
-
-        # Set up a lock for ratgdo access
-        self.ratgdo_lock = Lock()
 
         # set-up async loop
         self.mainloop = mainloop
@@ -236,157 +225,52 @@ class VirtualGarage(Node):
 
         if self.ratgdo and self.ratgdo_do_events:
             # first start of sse client via the async loop
-            # if not self.sse_client_in:
-            #     self.start_sse_client()
+            self.start_sse_client()
+            # start event polling loop    
+            self.start_event_polling()
 
-#             # start event polling loop    
-            # if not self.event_polling_in:
-            #     self.start_event_polling()
-
-            # # Signal readiness and start the event processing in the background
-            # asyncio.run_coroutine_threadsafe(self.getRatgdoEvents_async(), self.mainloop)            
-            while not self.ratgdoOK:
-                time.sleep(2)
-            while True:
-                self.getRatgdoEvents()
-                LOGGER.error('start events dropped out')
-                time.sleep(10)
+            # # original version
+            # while not self.ratgdoOK:
+            #     time.sleep(2)
+            # while True:
+            #     self.getRatgdoEvents()
+            #     LOGGER.error('start events dropped out')
+            #     time.sleep(10)
+        LOGGER.info(f"{self.name} exit start")
                 
                     
-    async def _poll_ratgdo_via_executor(self):
-        # Run the blocking call in a separate thread pool
-        await asyncio.to_thread(self.getRatgdoDirect)
-
-    async def getRatgdoEvents_async(self):
-        # Your original event loop logic, but with async await and event.is_set()
-        while not self.controller.stop_polling_event.is_set():
-            # Use async methods for I/O
-            await asyncio.sleep(1)
-            # Process ratgdo events
-
-                
     def poll(self, flag):
         """ POLL event subscription above """
         if 'longPoll' in flag:
-            LOGGER.info(f"POLLING: {flag} {self.name}")
-            if self.ratgdo and self.ratgdoOK:
-                if self.ratgdo_do_poll and not self.updatingAll:
-                    self.updatingAll = True
-                    success = self.getRatgdoDirect()
-                    LOGGER.info(f"getRadgdoDirect success = {success}")
-                    self.updatingAll = False
+            # update ratgdo device if being used
+            if self.ratgdo and self.ratgdoOK and self.ratgdo_do_poll:
+                LOGGER.info(f"POLLING: {flag} {self.name}")
+                # if needed check for re-start of sse client via the async loop
+                self.start_sse_client()
+                # if needed check for re-start event polling loop    
+                self.start_event_polling()
+                # verify we are not in direct polling
+                if self.ratgdo_poll_lock.acquire(blocking = False):
+                    try:
+                        # get Ratgdo data directly to validate sse events
+                        success = self.getRatgdoDirect()
+                        LOGGER.info(f"getRadgdoDirect success = {success}")
+                    except Exception as ex:
+                        LOGGER.error(f"Error during getRadgdoDirect: {ex}", exc_info=True)
+                    finally:
+                        self.ratgdo_poll_lock.release()
+            LOGGER.debug('longPoll exit')
         else:
+            self.heartbeat() # send cmd DON/DOF
             if self.bonjourOnce and self.bonjourOn:
                 self.bonjourOnce = False
                 self.poly.bonjour('http', None, None)
             if not self.ratgdo:
-                self.updateVars()
-            self.updateISY()
+                self.updateVars() # update variables
+            self.updateISY() # update ISY
+            LOGGER.debug('shortPoll exit')
 
             
-    def _push_drivers(self) -> None:
-        """
-        Push only fields that have a driver mapping
-        """
-        for field, spec in FIELDS.items():
-            if spec.driver and spec.data_type == "state":
-                self.setDriver(spec.driver, self.data[field], report=True, force=True)
-
-                
-    def _apply_state(self, src: Dict[str, Any]) -> None:
-        """
-        Apply values from src; fall back to per-instance defaults
-        """
-        for field in FIELDS.keys():
-            self.data[field] = src.get(field, self.data.get(field))
-
-            
-    def _shelve_file_candidates(self, base: Path) -> Iterable[Path]:
-        """
-        Include the base and any shelve artifacts (base, base.*)
-        """
-        patterns = [base.name, f"{base.name}.*"]
-        seen: set[Path] = set()
-        for pattern in patterns:
-            for p in base.parent.glob(pattern):
-                if p.exists():
-                    seen.add(p)
-        return sorted(seen)
-
-
-    def _check_db_files_and_migrate(self) -> Tuple[bool, Dict[str, Any] | None]:
-        """
-        Check for deprecated shelve DB files, migrate data, then delete old files.
-        Called by load_persistent_data once during startup.
-        """
-        name_safe = self.name.replace(" ", "_")
-        base = Path("db") / name_safe  # shelve base path (no extension)
-
-        candidates = list(self._shelve_file_candidates(base))
-        if not candidates:
-            LOGGER.info("[%s] No old DB files found at base: %s", self.name, base)
-            return False, None
-
-        LOGGER.info("[%s] Old DB files found, migrating data...", self.name)
-
-        key = f"key{self.address}"
-        existing_data = None
-        try:
-            with shelve.open(str(base), flag="r") as s:
-                existing_data = s.get(key)
-        except Exception as ex:
-                    LOGGER.exception("[%s] Unexpected error during shelve migration", self.name)
-                    return False, None
-
-        # Delete all shelve artifacts after a successful read attempt
-        errors = []
-        for p in candidates:
-            try:
-                p.unlink()
-            except OSError as ex:
-                errors.append((p, ex))
-        if errors:
-            for p, ex in errors:
-                LOGGER.warning("[%s] Could not delete shelve file %s: %s", self.name, p, ex)
-        else:
-            LOGGER.info("[%s] Deleted old shelve files for base: %s", self.name, base)
-
-        return True, existing_data
-
-
-    def load_persistent_data(self) -> None:
-        """
-        Load state from Polyglot persistence or migrate from old shelve DB files.
-        """
-        data = self.controller.Data.get(self.name)
-
-        if data is not None:
-            self._apply_state(data)
-            LOGGER.info("%s, Loaded from persistence", self.name)
-        else:
-            LOGGER.info("%s, No persistent data found. Checking for old DB files...", self.name)
-            migrated, old_data = self._check_db_files_and_migrate()
-            if migrated and old_data is not None:
-                self._apply_state(old_data)
-                LOGGER.info("%s, Migrated from old DB files.", self.name)
-            else:
-                self._apply_state({})  # initialize from defaults
-                LOGGER.info("%s, No old DB files found.", self.name)
-
-        # Persist and push drivers
-        self.store_values()
-        self._push_drivers()
-
-
-    def store_values(self) -> None:
-        """
-        Store persistent data to Polyglot Data structure.
-        """
-        data_to_store = {field: self.data[field] for field in FIELDS.keys()}
-        self.controller.Data[self.name] = data_to_store
-        LOGGER.debug("Values stored for %s: %s", self.name, data_to_store)
-
-
     def getConfigData(self):
         """
         Retrieves and processes garage configuration data from the controller.
@@ -504,21 +388,43 @@ class VirtualGarage(Node):
         Run routine in a separate thread to retrieve events from array loaded by sse client from gateway.
         """
         LOGGER.debug(f"start")
-        if self._event_polling_thread and self._event_polling_thread.is_alive():
-            return  # Already running
-
-        self.stop_sse_client_event.clear()
-        self._event_polling_thread = Thread(
-            target=self._poll_events,
-            name="EventPollingThread",
-            daemon=True
-        )
-        self._event_polling_thread.start()
+        if self._event_polling_thread.is_alive():
+           LOGGER.debug("event polling running, skip")
+        else:
+            try:
+                self.stop_sse_client_event.clear()
+                self._event_polling_thread = Thread(
+                    target=self._poll_events,
+                    name="EventPollingThread",
+                    daemon=True)
+                self._event_polling_thread.start()
+                LOGGER.info("event polling started")
+            except Exception as ex:
+                LOGGER.error(f"failed to start event polling thread, {ex}", exc_info=True)                
         LOGGER.debug("exit")
-        return
+
+
+    def get_ratgdo_event(self) -> list[dict]:
+        """
+        Called by consumer fuctions to efficiently wait for events to process.
+        """
+        with self.ratgdo_event_condition:
+            while not self.ratgdo_event:
+                self.ratgdo_event_condition.wait()
+            return self.ratgdo_event  # return reference, not a copy
+
 
     def _poll_events(self):
-        pass
+        """
+        Handles Gateway Events like homedoc-updated & scene-add (for new scenes)
+        Removes unacted events only if isoDate is older than 2 minutes or invalid.
+        """
+
+        while not self.stop_sse_client_event.is_set():
+            # wait for events to process
+            ratgdo_events = self.get_ratgdo_event()
+            LOGGER.info(f"POLL EVENT CHECK: {ratgdo_events}")
+            ratgdo_events = []
     # TODO take from H-D controller and below get RatgdoEvetns
     # TODO append, remove locking routines
 
@@ -600,10 +506,15 @@ class VirtualGarage(Node):
         Run sse client in a thread-safe loop for gateway events polling which then loads the events to an array.
         """
         LOGGER.debug(f"start")
-        self.stop_sse_client_event.clear()
-        future = asyncio.run_coroutine_threadsafe(self._client_sse(), self.mainloop)
-        LOGGER.info(f"sse client started: {future}")        
-
+        if self.sse_lock.acquire(blocking=False):
+            try:
+                self.stop_sse_client_event.clear()
+                future = asyncio.run_coroutine_threadsafe(self._client_sse(), self.mainloop)
+                LOGGER.info(f"sse client started: {future}")        
+            finally:
+                self.sse_lock.release()
+        else:
+            LOGGER.debug("sse client running, skipping.")
         LOGGER.debug("exit")        
 
 
@@ -612,7 +523,6 @@ class VirtualGarage(Node):
         Polls the SSE endpoint with aiohttp for events.
         Includes robust retry logic with exponential backoff.
         """
-        self.sse_client_in = True
         LOGGER.info(f"controller start poll events")
 
         url = f"http://{self.ratgdo}{EVENTS}"
@@ -706,7 +616,7 @@ class VirtualGarage(Node):
             self.pushTheValue(self.data['lightT'], self.data['lightId'], self.data['light'])
         post = f"{self.ratgdo}{LIGHT}{TURN_ON}"
         self.ratgdoPost(post)
-        self.store_values()
+        store_values(self)
         self.resetTime()
 
         
@@ -719,7 +629,7 @@ class VirtualGarage(Node):
             self.pushTheValue(self.data['lightT'], self.data['lightId'], self.data['light'])
         post = f"{self.ratgdo}{LIGHT}{TURN_OFF}"
         self.ratgdoPost(post)
-        self.store_values()
+        store_values(self)
         self.resetTime()
 
         
@@ -728,7 +638,7 @@ class VirtualGarage(Node):
             self.pushTheValue(self.data['dcommandT'], self.data['dcommandId'], self.data['dcommand'])
         self.setDriver('GV2', self.data['dcommand'])
         self.ratgdoPost(post)
-        self.store_values()
+        store_values(self)
         self.resetTime()
 
         
@@ -773,7 +683,7 @@ class VirtualGarage(Node):
             self.pushTheValue(self.data['lockT'], self.data['lockId'], self.data['lock'])
         post = f"{self.ratgdo}{LOCK_REMOTES}{LOCK}"
         self.ratgdoPost(post)
-        self.store_values()
+        store_values(self)
         self.resetTime()
         
         
@@ -786,7 +696,7 @@ class VirtualGarage(Node):
             self.pushTheValue(self.data['lockT'], self.data['lockId'], self.data['lock'])
         post = f"{self.ratgdo}{LOCK_REMOTES}{UNLOCK}"
         self.ratgdoPost(post)
-        self.store_values()
+        store_values(self)
         self.resetTime()
 
         
@@ -815,7 +725,7 @@ class VirtualGarage(Node):
                     if new_val is not None:
                         self.data[var_name] = new_val
 
-        self.store_values()
+        store_values(self)
 
 
     def updateVar_from_id(self, var_type: Any, var_id: Any) -> int | float | None:
@@ -1169,13 +1079,24 @@ class VirtualGarage(Node):
         LOGGER.info(f"{self.name}, {command}")
         self.firstPass = True
         self.resetTime()
-        self.store_values()
+        store_values(self)
 
         
     def resetTime(self):
         """ Reset the last update time to now """
         self.data['lastUpdateTime'] = time.time()
         self.setDriver('GV6', 0.0)
+
+    def heartbeat(self):
+        """
+        Heartbeat function uses the long poll interval to alternately send a ON and OFF
+        command back to the ISY.  Programs on the ISY can then monitor this.
+        """
+        LOGGER.debug(f'heartbeat: hb={self.hb}')
+        command = "DOF" if self.hb else "DON"
+        self.reportCmd(command, 2)
+        self.hb = not self.hb
+        LOGGER.debug("Exit")
 
         
     def query(self, command = None):

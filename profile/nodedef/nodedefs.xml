@@ -189,8 +189,10 @@
         </sts>
         <cmds>
           <sends>
-            <cmd id="LT_ON" />
-            <cmd id="LT_OFF" />
+            <cmd id="DON" />
+            <cmd id="DOF" />
+			<cmd id="LT_ON" />
+			<cmd id="LT_OFF" />
             <cmd id="OPEN" />
             <cmd id="CLOSE" />
             <cmd id="TRIGGER" />

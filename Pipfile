@@ -6,10 +6,10 @@ name = "pypi"
 [packages]
 udi-interface = "*"
 requests = "*"
+aiohttp = "*"
 
 [dev-packages]
 pyaml = "*"
 markdown2 = "*"
 pylsp-mypy = "*"
 pyls = "*"
-

@@ -1,3 +1,6 @@
 udi_interface
 pyyaml
 requests
+markdown2
+aiohttp
+
