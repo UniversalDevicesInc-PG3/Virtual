@@ -6,17 +6,17 @@ udi-Virtual-pg3 NodeServer/Plugin for EISY/Polisy
 VirtualGarage class
 """
 # standard imports
-import time, shelve, ipaddress, asyncio
+import time, shelve, ipaddress, asyncio, json
 import xml.etree.ElementTree as ET
 from typing import Any, Dict, Iterable, Optional, Tuple
 from dataclasses import dataclass
 from pathlib import Path
-from threading import Thread, Event, Lock
+from threading import Thread, Event, Lock, Condition
 
 # external imports
 from udi_interface import ISY, Node, LOGGER
 import requests
-import json
+import aiohttp
 
 # local imports
 pass
@@ -178,13 +178,25 @@ class VirtualGarage(Node):
         self.bonjourOnce = True
         self.ratgdo = False
         self.ratgdoOK = False
-        self.ratgdo_array = []
-        self.ratgdo_event = []
         self.eventTimeout = 720
         self.eventTimer = 0
 
+        # in function vars
+        self.update_in = False
+        self.poll_in = False
+        self.sse_client_in = False
+        self.event_polling_in = False
+
+        # storage arrays & conditions
+        self.ratgdo_array = []
+        self.ratgdo_event = []
+        self.ratgdo_event_condition = Condition()
+
         self.ratgdo_do_poll = True
         self.ratgdo_do_events = True
+        
+        # Events
+        self.stop_sse_client_event = Event()
         
         # default variables and drivers
         self.data = {field: spec.default for field, spec in FIELDS.items()}
@@ -223,6 +235,14 @@ class VirtualGarage(Node):
         self.resetTime()
 
         if self.ratgdo and self.ratgdo_do_events:
+            # first start of sse client via the async loop
+            # if not self.sse_client_in:
+            #     self.start_sse_client()
+
+#             # start event polling loop    
+            # if not self.event_polling_in:
+            #     self.start_event_polling()
+
             # # Signal readiness and start the event processing in the background
             # asyncio.run_coroutine_threadsafe(self.getRatgdoEvents_async(), self.mainloop)            
             while not self.ratgdoOK:
@@ -479,6 +499,29 @@ class VirtualGarage(Node):
                 LOGGER.error(f"{post}: {ex}")
                 
         
+    def start_event_polling(self):
+        """
+        Run routine in a separate thread to retrieve events from array loaded by sse client from gateway.
+        """
+        LOGGER.debug(f"start")
+        if self._event_polling_thread and self._event_polling_thread.is_alive():
+            return  # Already running
+
+        self.stop_sse_client_event.clear()
+        self._event_polling_thread = Thread(
+            target=self._poll_events,
+            name="EventPollingThread",
+            daemon=True
+        )
+        self._event_polling_thread.start()
+        LOGGER.debug("exit")
+        return
+
+    def _poll_events(self):
+        pass
+    # TODO take from H-D controller and below get RatgdoEvetns
+    # TODO append, remove locking routines
+
     def getRatgdoEvents(self):
         timer = 0
         msg = {}
@@ -552,6 +595,69 @@ class VirtualGarage(Node):
             LOGGER.info('Done processing getRatgdoEvents')
             
             
+    def start_sse_client(self):
+        """
+        Run sse client in a thread-safe loop for gateway events polling which then loads the events to an array.
+        """
+        LOGGER.debug(f"start")
+        self.stop_sse_client_event.clear()
+        future = asyncio.run_coroutine_threadsafe(self._client_sse(), self.mainloop)
+        LOGGER.info(f"sse client started: {future}")        
+
+        LOGGER.debug("exit")        
+
+
+    async def _client_sse(self):
+        """
+        Polls the SSE endpoint with aiohttp for events.
+        Includes robust retry logic with exponential backoff.
+        """
+        self.sse_client_in = True
+        LOGGER.info(f"controller start poll events")
+
+        url = f"http://{self.ratgdo}{EVENTS}"
+        retries = 0
+        max_retries = 5
+        base_delay = 1
+
+        while not self.stop_sse_client_event.is_set():
+            try:
+                async with aiohttp.ClientSession() as session:
+                    async with session.get(url) as response:
+                        retries = 0  # Reset retries on successful connection
+                        async for val in response.content:
+                            line = val.decode().strip()
+                            if not line:
+                                continue
+
+                            LOGGER.debug(f"Received: {line}")
+
+                            try:
+                                data = json.loads(line)
+                                self.ratgdo_event.append(data) # move to self.append_gateway_event(data)
+                                LOGGER.info(f"new sse: {self.ratgdo_event}")
+                                self.eventTimer = 0
+                            except json.JSONDecodeError:
+                                if line == "100 HELO":
+                                    LOGGER.info(f"Pulse check: {line}")
+                                else:
+                                    LOGGER.error(f"Failed to decode JSON: <<{line}>>")
+                            except Exception as ex:
+                                LOGGER.error(f"sse client error: {ex}")
+
+            except (aiohttp.ClientError, asyncio.TimeoutError) as e:
+                LOGGER.error(f"Connection to sse error: {e}")
+                if retries >= max_retries:
+                    LOGGER.error("Max retries reached. Stopping SSE client.")
+                    break
+
+                delay = base_delay * (2 ** retries)
+                LOGGER.warning(f"Reconnecting in {delay}s")
+                await asyncio.sleep(delay) # Explicitly use asyncio.sleep
+                retries += 1
+        LOGGER.info(f"controller sse client exiting due to while exit")
+
+
     def sseEvent(self):
         success = False
         url = f"http://{self.ratgdo}{EVENTS}"
