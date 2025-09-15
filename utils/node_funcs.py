@@ -18,8 +18,8 @@ class FieldSpec:
 # below is an example
 FIELDS: dict[str, FieldSpec] = {
     # State variables (pushed to drivers)
-    "name":           FieldSpec(driver="GV0", default=0, data_type="state"),
-    "nameT":          FieldSpec(driver=None, default=0, data_type="config"),
+    # "name":           FieldSpec(driver="GV0", default=0, data_type="state"),
+    # "nameT":          FieldSpec(driver=None, default=0, data_type="config"),
 }
 
 
