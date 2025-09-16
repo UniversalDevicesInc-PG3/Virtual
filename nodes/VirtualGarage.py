@@ -1077,7 +1077,7 @@ class VirtualGarage(Node):
 
             
     def updateISY(self):
-       current_time = time.time()
+       current_time = datetime.now()
 
        def update_driver(field_name):
            spec = FIELDS[field_name]
@@ -1107,14 +1107,14 @@ class VirtualGarage(Node):
                    update_driver(field_name)
 
        # Time since last update
-       since_last_update = abs(round((current_time - self.data["lastUpdateTime"]) / 60, 1))
+       since_last_update = (current_time - self.data["lastUpdateTime"]).total_seconds()
        self.setDriver(FIELDS["lastUpdateTime"].driver, min(since_last_update, 9999))
 
        # Door open time tracking
        if self.data["door"] != 0:
            if self.data["openTime"] == 0.0:
                self.data["openTime"] = current_time
-           open_time_delta = abs(round(current_time - self.data["openTime"], 1))
+           open_time_delta = (current_time - self.data["openTime"]).total_seconds()
        else:
            self.data["openTime"] = 0.0
            open_time_delta = 0
