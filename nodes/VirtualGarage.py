@@ -1107,14 +1107,16 @@ class VirtualGarage(Node):
                     update_driver(field_name)
 
         # Time since last update
+        if self.data['lastUpdateTime'] == 0.0:
+            self.resetTime()
         since_last_update = round(((current_time - self.data["lastUpdateTime"]).total_seconds())/60,1)
         self.setDriver(FIELDS["lastUpdateTime"].driver, min(since_last_update, 9999))
 
         # Door open time tracking
-        if self.data["door"] != 0:
-            if not self.data["openTime"]:
-                self.data["openTime"] = current_time
-        else:
+        if not self.data["openTime"] or self.data["openTime"] == 0.0:
+            self.data["openTime"] = current_time
+            
+        if self.data["door"] == 0:
             self.data["openTime"] = current_time
 
         open_time_delta = round(((current_time - self.data['openTime']).total_seconds())/60,1)
