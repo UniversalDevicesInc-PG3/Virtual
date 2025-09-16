@@ -416,6 +416,15 @@ class VirtualGarage(Node):
             return self.ratgdo_event  # return reference, not a copy
 
 
+    def append_ratgdo_event(self, event):
+        """
+        Called by sse to append to gateway_event array & signal that there is an event to process.
+        """
+        with self.ratgdo_event_condition:
+            self.ratgdo_event.append(event)
+            self.ratgdo_event_condition.notify_all()  # Wake up all waiting consumers
+
+
     def _poll_events(self):
         """
         Handles Gateway Events like homedoc-updated & scene-add (for new scenes)
@@ -427,25 +436,11 @@ class VirtualGarage(Node):
             ratgdo_events = self.get_ratgdo_event()
             LOGGER.info(f"POLL EVENT CHECK: {ratgdo_events}")
             ratgdo_events = []
-    # TODO take from H-D controller and below get RatgdoEvetns
-    # TODO append, remove locking routines
+
 
     def getRatgdoEvents(self):
-        timer = 0
         msg = {}
         while True:
-            LOGGER.debug(f'gIN: {timer}')
-            try:
-                i = self.sseEvent()
-            except:
-                break
-            if not i:
-                timer += 1
-            else:
-                timer = 0
-                LOGGER.info(self.ratgdo_event)
-            if timer >= 1000:
-                break
             while self.ratgdo_event != []:
                 try:
                     event = self.ratgdo_event[0]
@@ -523,14 +518,17 @@ class VirtualGarage(Node):
     async def _client_sse(self):
         """
         Polls the SSE endpoint with aiohttp for events.
+        Parses SSE-style lines into structured JSON objects.
         Includes robust retry logic with exponential backoff.
         """
-        LOGGER.info(f"controller start poll events")
+        LOGGER.info("controller start poll events")
 
         url = f"http://{self.ratgdo}{EVENTS}"
         retries = 0
         max_retries = 5
         base_delay = 1
+
+        current_event = None
 
         while not self.stop_sse_client_event.is_set():
             try:
@@ -544,18 +542,47 @@ class VirtualGarage(Node):
 
                             LOGGER.debug(f"Received: {line}")
 
-                            try:
-                                data = json.loads(line)
-                                self.ratgdo_event.append(data) # move to self.append_gateway_event(data)
-                                LOGGER.info(f"new sse: {self.ratgdo_event}")
-                                self.eventTimer = 0
-                            except json.JSONDecodeError:
-                                if line == "100 HELO":
-                                    LOGGER.info(f"Pulse check: {line}")
-                                else:
-                                    LOGGER.error(f"Failed to decode JSON: <<{line}>>")
-                            except Exception as ex:
-                                LOGGER.error(f"sse client error: {ex}")
+                            # Remove << and >> delimiters
+                            if line.startswith("<<") and line.endswith(">>"):
+                                clean_line = line[2:-2]
+                                if ':' not in clean_line:
+                                    LOGGER.warning(f"Malformed line: {line}")
+                                    continue
+
+                                key, value = clean_line.split(":", 1)
+                                key = key.strip()
+                                value = value.strip()
+
+                                try:
+                                    if key == "retry" or key == "id":
+                                        parsed = {key: int(value) if value.isdigit() else value}
+                                        self.append_ratgdo_event(parsed)
+
+                                    elif key == "event":
+                                        current_event = value
+
+                                    elif key == "data":
+                                        data_obj = json.loads(value)
+                                        if current_event:
+                                            parsed = {"event": current_event, "data": data_obj}
+                                            current_event = None
+                                        else:
+                                            parsed = {"data": data_obj}
+                                        self.append_ratgdo_event(parsed)
+
+                                    else:
+                                        LOGGER.warning(f"Unknown key: {key}")
+
+                                    self.eventTimer = 0
+
+                                except json.JSONDecodeError:
+                                    LOGGER.error(f"Failed to decode JSON from data line: <<{line}>>")
+                                except Exception as ex:
+                                    LOGGER.error(f"sse client error: {ex}")
+                            elif line == "100 HELO":
+                                LOGGER.info(f"Pulse check: {line}")
+                            else:
+                                LOGGER.warning(f"Unexpected line format: {line}")
 
             except (aiohttp.ClientError, asyncio.TimeoutError) as e:
                 LOGGER.error(f"Connection to sse error: {e}")
@@ -565,50 +592,13 @@ class VirtualGarage(Node):
 
                 delay = base_delay * (2 ** retries)
                 LOGGER.warning(f"Reconnecting in {delay}s")
-                await asyncio.sleep(delay) # Explicitly use asyncio.sleep
+                await asyncio.sleep(delay)
                 retries += 1
-        LOGGER.info(f"controller sse client exiting due to while exit")
 
+        LOGGER.info("controller sse client exiting due to while exit")
 
-    def sseEvent(self):
-        success = False
-        url = f"http://{self.ratgdo}{EVENTS}"
-        try:
-            LOGGER.debug(f"GET: {url}")
-            s = requests.Session()
-            e = {}
-            with s.get(url,headers=None, stream=True, timeout=3) as gateway_sse:
-                for val in gateway_sse.iter_lines():
-                    dval = val.decode('utf-8')
-                    #LOGGER.debug(f"raw decode:[{dval}]")
-                    if val:                            
-                        if e:
-                            try:
-                                i = dict(event = e, data = dval.replace('data: ',''))
-                            except:
-                                i = dict(event = e, data = 'error')
-                            self.ratgdo_event.append(i)
-                            success = True
-                            e = None
-                        else:
-                            if 'event: ' in dval:
-                                e = dval.replace('event: ','')
-                                continue
-                            else:
-                                try:
-                                    i = dict(event = dval.split(":")[0], data = dval.split(":")[1])
-                                    #LOGGER.debug(f"raw dict:[{i}]")
-                                    self.ratgdo_event.append(i)
-                                    success = True
-                                except:
-                                    LOGGER.error(f"raw dict parse error")
-        except requests.exceptions.Timeout:
-            LOGGER.debug(f"see timeout")
-        except requests.exceptions.RequestException as e:
-            LOGGER.debug(f"sse other exception: {e}")
-        return success
+        
 
-    
     def lt_on_cmd(self, command = None):
         LOGGER.info(f"{self.name}, {command}")
         self.data['light'] = 1
