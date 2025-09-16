@@ -118,11 +118,11 @@ class Controller(Node):
         # Initializing a heartbeat
         self.heartbeat()
 
-        # configuration file setting
-        configurationHelp = './POLYGLOT_CONFIG.md'
-        if os.path.isfile(configurationHelp):
-            cfgdoc = markdown2.markdown_path(configurationHelp)
-            self.poly.setCustomParamsDoc(cfgdoc)
+        # # configuration file setting
+        # configurationHelp = './POLYGLOT_CONFIG.md'
+        # if os.path.isfile(configurationHelp):
+        #     cfgdoc = markdown2.markdown_path(configurationHelp)
+        #     self.poly.setCustomParamsDoc(cfgdoc)
 
         # Wait for all handlers to finish
         LOGGER.warning(f'Waiting for all handlers to complete...')
