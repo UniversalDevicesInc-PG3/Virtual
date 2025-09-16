@@ -494,7 +494,7 @@ class VirtualGarage(Node):
 
             # event - state
             if event.get('event') == "state":
-                event_data = event.get('date')
+                event_data = event.get('data')
                 LOGGER.info('event - state - data:{}'.format(event_data))
                 self.remove_ratgdo_event(event)
                 acted_upon = True
