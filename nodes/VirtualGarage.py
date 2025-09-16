@@ -489,7 +489,7 @@ class VirtualGarage(Node):
             # event - log
             if event.get('event') == "log":
                 LOGGER.info('event - log -{}'.format(event))
-                if 'Rebooting...' in event['data']:
+                if 'No clients: rebooting' in event['data']:
                     LOGGER.warning('API Rebooting...')
                 self.remove_ratgdo_event(event)
                 acted_upon = True
