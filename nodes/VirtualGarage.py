@@ -458,47 +458,53 @@ class VirtualGarage(Node):
 
             # retry
             if event.get('retry'):
-                LOGGER.info('gateway event - retry - {}'.format(event))
+                LOGGER.info('retry - {}'.format(event))
                 self.remove_ratgdo_event(event)
                 acted_upon = True
 
             # id
             if event.get('id'):
-                LOGGER.info('event - id - {}'.format(event))
+                LOGGER.info('id - {}'.format(event))
                 self.remove_ratgdo_event(event)
                 acted_upon = True
 
-            # event - ping
-            if event.get('event') == "ping":
-                LOGGER.info('event - ping - {}'.format(event))
-                self.remove_ratgdo_event(event)
-                acted_upon = True
+            is_event = event.get('event')
+            if is_event:
+                # event - ping
+                if is_event == "ping":
+                    LOGGER.info('event - ping - {}'.format(event))
+                    self.remove_ratgdo_event(event)
+                    acted_upon = True
 
-            # event - error
-            if event.get('event') == "error":
-                LOGGER.info('event - eror -{}'.format(event))
-                self.remove_ratgdo_event(event)
-                acted_upon = True
+                # event - error
+                elif is_event == "error":
+                    LOGGER.info('event - eror -{}'.format(event))
+                    self.remove_ratgdo_event(event)
+                    acted_upon = True
 
-            # event - error
-            if event.get('event') == "error":
-                LOGGER.info('event - error -{}'.format(event))
-                self.remove_ratgdo_event(event)
-                acted_upon = True
+                # event - error
+                elif is_event == "error":
+                    LOGGER.info('event - error -{}'.format(event))
+                    self.remove_ratgdo_event(event)
+                    acted_upon = True
 
-            # event - log
-            if event.get('event') == "log":
-                LOGGER.info('event - log -{}'.format(event))
-                if 'No clients: rebooting' in event['data']:
-                    LOGGER.warning('API Rebooting...')
-                self.remove_ratgdo_event(event)
-                acted_upon = True
+                # event - log
+                elif is_event == "log":
+                    LOGGER.info('event - log -{}'.format(event))
+                    if 'No clients: rebooting' in event['data']:
+                        LOGGER.warning('API Rebooting...')
+                    self.remove_ratgdo_event(event)
+                    acted_upon = True
 
-            # event - unknown
-            if event.get('event') == "unknown":
-                LOGGER.info('event - unknown -{}'.format(event))
-                self.remove_ratgdo_event(event)
-                acted_upon = True
+                # event - unknown
+                elif is_event == "unknown":
+                    LOGGER.info('event - unknown -{}'.format(event))
+                    self.remove_ratgdo_event(event)
+                    acted_upon = True
+                else:
+                    LOGGER.info('event - REALLY unknown -{}'.format(event))
+                    self.remove_ratgdo_event(event)
+                    acted_upon = True
 
             # event - state
             if event.get('event') == "state":
