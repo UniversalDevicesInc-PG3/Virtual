@@ -583,12 +583,9 @@ class VirtualGarage(Node):
         """
         LOGGER.debug(f"start")
         if self.sse_lock.acquire(blocking=False):
-            try:
                 self.stop_sse_client_event.clear()
                 future = asyncio.run_coroutine_threadsafe(self._client_sse(), self.mainloop)
                 LOGGER.info(f"sse client started: {future}")        
-            finally:
-                self.sse_lock.release()
         else:
             LOGGER.debug("sse client running, skipping.")
         LOGGER.debug("exit")        
@@ -601,100 +598,102 @@ class VirtualGarage(Node):
         Includes robust retry logic with exponential backoff.
         """
         LOGGER.info("controller start poll events")
+        try:
+            url = f"http://{self.ratgdo}{EVENTS}"
+            retries = 0
+            max_retries = 5
+            base_delay = 1
 
-        url = f"http://{self.ratgdo}{EVENTS}"
-        retries = 0
-        max_retries = 5
-        base_delay = 1
+            current_event = None
 
-        current_event = None
+            while not self.stop_sse_client_event.is_set():
+                try:
+                    async with aiohttp.ClientSession() as session:
+                        async with session.get(url) as response:
+                            retries = 0  # Reset retries on successful connection
+                            async for val in response.content:
+                                line = val.decode().strip()
+                                if not line:
+                                    continue
 
-        while not self.stop_sse_client_event.is_set():
-            try:
-                async with aiohttp.ClientSession() as session:
-                    async with session.get(url) as response:
-                        retries = 0  # Reset retries on successful connection
-                        async for val in response.content:
-                            line = val.decode().strip()
-                            if not line:
-                                continue
+                                LOGGER.debug(f"Received: {line}")
 
-                            LOGGER.debug(f"Received: {line}")
+                                # Normalize line format: remove << >> if present
+                                clean_line = line
+                                if line.startswith("<<") and line.endswith(">>"):
+                                    clean_line = line[2:-2]
 
-                            # Normalize line format: remove << >> if present
-                            clean_line = line
-                            if line.startswith("<<") and line.endswith(">>"):
-                                clean_line = line[2:-2]
+                                # Split key and value
+                                if ':' not in clean_line:
+                                    LOGGER.warning(f"Malformed line: {line}")
+                                    continue
 
-                            # Split key and value
-                            if ':' not in clean_line:
-                                LOGGER.warning(f"Malformed line: {line}")
-                                continue
+                                key, value = clean_line.split(":", 1)
+                                key = key.strip()
+                                value = value.strip()
 
-                            key, value = clean_line.split(":", 1)
-                            key = key.strip()
-                            value = value.strip()
+                                timestamp = datetime.now(timezone.utc).isoformat()
 
-                            timestamp = datetime.now(timezone.utc).isoformat()
-
-                            try:
-                                if key == "retry" or key == "id":
-                                    parsed = {
-                                        key: int(value) if value.isdigit() else value,
-                                        "timestamp": timestamp
-                                    }
-                                    self.append_ratgdo_event(parsed)
-
-                                elif key == "event":
-                                    current_event = value
-
-                                elif key == "data":
-                                    if not value:
-                                        LOGGER.warning("Received empty data line, skipping")
-                                        continue
-                                    try:
-                                        data_obj = json.loads(value)
-                                    except json.JSONDecodeError as e:
-                                        LOGGER.error(f"Failed to decode JSON from data line: <<{line}>> — {e}")
-                                        continue
-                                    if current_event:
+                                try:
+                                    if key == "retry" or key == "id":
                                         parsed = {
-                                            "event": current_event,
-                                            "data": data_obj,
+                                            key: int(value) if value.isdigit() else value,
                                             "timestamp": timestamp
                                         }
-                                        current_event = None
+                                        self.append_ratgdo_event(parsed)
+
+                                    elif key == "event":
+                                        current_event = value
+
+                                    elif key == "data":
+                                        if not value:
+                                            LOGGER.warning("Received empty data line, skipping")
+                                            continue
+                                        try:
+                                            data_obj = json.loads(value)
+                                        except json.JSONDecodeError as e:
+                                            LOGGER.error(f"Failed to decode JSON from data line: <<{line}>> — {e}")
+                                            continue
+                                        if current_event:
+                                            parsed = {
+                                                "event": current_event,
+                                                "data": data_obj,
+                                                "timestamp": timestamp
+                                            }
+                                            current_event = None
+                                        else:
+                                            parsed = {
+                                                "data": data_obj,
+                                                "timestamp": timestamp
+                                            }
+                                        self.append_ratgdo_event(parsed)
+
                                     else:
-                                        parsed = {
-                                            "data": data_obj,
-                                            "timestamp": timestamp
-                                        }
-                                    self.append_ratgdo_event(parsed)
+                                        LOGGER.warning(f"Unknown key: {key}")
 
-                                else:
-                                    LOGGER.warning(f"Unknown key: {key}")
+                                    self.eventTimer = 0
 
-                                self.eventTimer = 0
+                                except json.JSONDecodeError:
+                                    LOGGER.error(f"Failed to decode JSON from data line: <<{line}>>")
+                                except Exception as ex:
+                                    LOGGER.error(f"sse client error: {ex}")
 
-                            except json.JSONDecodeError:
-                                LOGGER.error(f"Failed to decode JSON from data line: <<{line}>>")
-                            except Exception as ex:
-                                LOGGER.error(f"sse client error: {ex}")
+                except (aiohttp.ClientError, asyncio.TimeoutError) as e:
+                    LOGGER.error(f"Connection to sse error: {e}")
+                    if retries >= max_retries:
+                        LOGGER.error("Max retries reached. Stopping SSE client.")
+                        break
 
-            except (aiohttp.ClientError, asyncio.TimeoutError) as e:
-                LOGGER.error(f"Connection to sse error: {e}")
-                if retries >= max_retries:
-                    LOGGER.error("Max retries reached. Stopping SSE client.")
-                    break
+                    delay = base_delay * (2 ** retries)
+                    LOGGER.warning(f"Reconnecting in {delay}s")
+                    await asyncio.sleep(delay)
+                    retries += 1
 
-                delay = base_delay * (2 ** retries)
-                LOGGER.warning(f"Reconnecting in {delay}s")
-                await asyncio.sleep(delay)
-                retries += 1
+        finally:
+               if self.sse_lock.locked():
+                   self.sse_lock.release()
+               LOGGER.info("SSE client exiting and lock released")
 
-        LOGGER.info("controller sse client exiting due to while exit")
-
-        
 
     def lt_on_cmd(self, command = None):
         LOGGER.info(f"{self.name}, {command}")
