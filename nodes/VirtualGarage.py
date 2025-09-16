@@ -468,77 +468,72 @@ class VirtualGarage(Node):
                 self.remove_ratgdo_event(event)
                 acted_upon = True
 
+            # events
             is_event = event.get('event')
             if is_event:
-                # event - ping
-                if is_event == "ping":
-                    LOGGER.info('event - ping - {}'.format(event))
-                    self.remove_ratgdo_event(event)
-                    acted_upon = True
+                    # event - ping
+                    if is_event == "ping":
+                        LOGGER.info('event - ping - {}'.format(event))
+                        self.remove_ratgdo_event(event)
+                        acted_upon = True
 
-                # event - error
-                elif is_event == "error":
-                    LOGGER.info('event - eror -{}'.format(event))
-                    self.remove_ratgdo_event(event)
-                    acted_upon = True
+                    # event - error
+                    elif is_event == "error":
+                        LOGGER.info('event - eror -{}'.format(event))
+                        self.remove_ratgdo_event(event)
+                        acted_upon = True
 
-                # event - error
-                elif is_event == "error":
-                    LOGGER.info('event - error -{}'.format(event))
-                    self.remove_ratgdo_event(event)
-                    acted_upon = True
+                    # event - log
+                    elif is_event == "log":
+                        LOGGER.info('event - log -{}'.format(event))
+                        if 'No clients: rebooting' in event['data']:
+                            LOGGER.warning('API Rebooting...')
+                        self.remove_ratgdo_event(event)
+                        acted_upon = True
 
-                # event - log
-                elif is_event == "log":
-                    LOGGER.info('event - log -{}'.format(event))
-                    if 'No clients: rebooting' in event['data']:
-                        LOGGER.warning('API Rebooting...')
-                    self.remove_ratgdo_event(event)
-                    acted_upon = True
-
-                # event - unknown
-                elif is_event == "unknown":
-                    LOGGER.info('event - unknown -{}'.format(event))
-                    self.remove_ratgdo_event(event)
-                    acted_upon = True
-                else:
-                    LOGGER.info('event - REALLY unknown -{}'.format(event))
-                    self.remove_ratgdo_event(event)
-                    acted_upon = True
-
-            # event - state
-            if event.get('event') == "state":
-                try:
-                    msg = event.get('data')
-                    if msg:
-                        id = msg.get('id')
-                        if id == 'light-light':
-                            self.setRatgdoLight(msg)
-                            LOGGER.info('event:state - processed id:{}'.format(id))
-                        elif id == 'cover-door':
-                            self.setRatgdoDoor(msg)
-                            LOGGER.info('event:state - processed id:{}'.format(id))
-                        elif id == 'binary_sensor-motor':
-                            self.setRatgdoMotor(msg)
-                            LOGGER.info('event:state - processed id:{}'.format(id))
-                        elif id == 'binary_sensor-motion':
-                            self.setRatgdoMotion(msg)
-                            LOGGER.info('event:state - processed id:{}'.format(id))
-                        elif id == 'lock-lock_remotes':
-                            self.setRatgdoLock(msg)
-                            LOGGER.info('event:state - processed id:{}'.format(id))
-                        elif id == 'binary_sensor-obstruction': 
-                            self.setRatgdoObstruct(msg)
-                            LOGGER.info('event:state - processed id:{}'.format(id))
-                        else:
-                            LOGGER.info(f'event:state - no action - {id}')                    
+                    # event - unknown
+                    elif is_event == "unknown":
+                        LOGGER.info('event - unknown -{}'.format(event))
+                        self.remove_ratgdo_event(event)
+                        acted_upon = True
+                        
+                    # event - state
+                    elif is_event == "state":
+                        try:
+                            msg = event.get('data')
+                            if msg:
+                                id = msg.get('id')
+                                if id == 'light-light':
+                                    self.setRatgdoLight(msg)
+                                    LOGGER.info('event:state - processed id:{}'.format(id))
+                                elif id == 'cover-door':
+                                    self.setRatgdoDoor(msg)
+                                    LOGGER.info('event:state - processed id:{}'.format(id))
+                                elif id == 'binary_sensor-motor':
+                                    self.setRatgdoMotor(msg)
+                                    LOGGER.info('event:state - processed id:{}'.format(id))
+                                elif id == 'binary_sensor-motion':
+                                    self.setRatgdoMotion(msg)
+                                    LOGGER.info('event:state - processed id:{}'.format(id))
+                                elif id == 'lock-lock_remotes':
+                                    self.setRatgdoLock(msg)
+                                    LOGGER.info('event:state - processed id:{}'.format(id))
+                                elif id == 'binary_sensor-obstruction': 
+                                    self.setRatgdoObstruct(msg)
+                                    LOGGER.info('event:state - processed id:{}'.format(id))
+                                else:
+                                    LOGGER.info(f'event:state - no action - {id}')                    
+                            else:
+                                LOGGER.info('event - state data bad:{}'.format(event))
+                        except Exception as ex:
+                            LOGGER.error(f"bad json {event.get('data')}  ex:{ex}", exc_info=True)                
+                        self.remove_ratgdo_event(event)
+                        acted_upon = True
                     else:
-                        LOGGER.info('event - state data bad:{}'.format(event))
-                except Exception as ex:
-                    LOGGER.error(f"bad json {event.get('data')}  ex:{ex}", exc_info=True)                
-                self.remove_ratgdo_event(event)
-                acted_upon = True
-
+                        LOGGER.info('event - REALLY unknown -{}'.format(event))
+                        self.remove_ratgdo_event(event)
+                        acted_upon = True
+                        
             #If not acted upon, remove if older than 2 minutes to prevent blocking of other events
             if not acted_upon and event:
                 try:
