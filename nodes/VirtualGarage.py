@@ -8,6 +8,7 @@ VirtualGarage class
 # standard imports
 import time, ipaddress, asyncio, json
 import xml.etree.ElementTree as ET
+from datetime import datetime, timezone
 from typing import Any, Dict, Optional, Tuple
 from threading import Thread, Event, Lock, Condition
 
@@ -542,47 +543,61 @@ class VirtualGarage(Node):
 
                             LOGGER.debug(f"Received: {line}")
 
-                            # Remove << and >> delimiters
+                            # Normalize line format: remove << >> if present
+                            clean_line = line
                             if line.startswith("<<") and line.endswith(">>"):
                                 clean_line = line[2:-2]
-                                if ':' not in clean_line:
-                                    LOGGER.warning(f"Malformed line: {line}")
-                                    continue
 
-                                key, value = clean_line.split(":", 1)
-                                key = key.strip()
-                                value = value.strip()
+                            # Split key and value
+                            if ':' not in clean_line:
+                                LOGGER.warning(f"Malformed line: {line}")
+                                continue
 
-                                try:
-                                    if key == "retry" or key == "id":
-                                        parsed = {key: int(value) if value.isdigit() else value}
-                                        self.append_ratgdo_event(parsed)
+                            key, value = clean_line.split(":", 1)
+                            key = key.strip()
+                            value = value.strip()
 
-                                    elif key == "event":
-                                        current_event = value
+                            timestamp = datetime.now(timezone.utc).isoformat()
 
-                                    elif key == "data":
-                                        data_obj = json.loads(value)
-                                        if current_event:
-                                            parsed = {"event": current_event, "data": data_obj}
-                                            current_event = None
-                                        else:
-                                            parsed = {"data": data_obj}
-                                        self.append_ratgdo_event(parsed)
+                            try:
+                                if key == "retry" or key == "id":
+                                    parsed = {
+                                        key: int(value) if value.isdigit() else value,
+                                        "timestamp": timestamp
+                                    }
+                                    self.append_ratgdo_event(parsed)
 
+                                elif key == "event":
+                                    current_event = value
+
+                                elif key == "data":
+                                    data_obj = json.loads(value)
+                                    if current_event:
+                                        parsed = {
+                                            "event": current_event,
+                                            "data": data_obj,
+                                            "timestamp": timestamp
+                                        }
+                                        current_event = None
                                     else:
-                                        LOGGER.warning(f"Unknown key: {key}")
+                                        parsed = {
+                                            "data": data_obj,
+                                            "timestamp": timestamp
+                                        }
+                                    self.append_ratgdo_event(parsed)
 
-                                    self.eventTimer = 0
+                                else:
+                                    LOGGER.warning(f"Unknown key: {key}")
 
-                                except json.JSONDecodeError:
-                                    LOGGER.error(f"Failed to decode JSON from data line: <<{line}>>")
-                                except Exception as ex:
-                                    LOGGER.error(f"sse client error: {ex}")
-                            elif line == "100 HELO":
+                                self.eventTimer = 0
+
+                            except json.JSONDecodeError:
+                                LOGGER.error(f"Failed to decode JSON from data line: <<{line}>>")
+                            except Exception as ex:
+                                LOGGER.error(f"sse client error: {ex}")
+
+                            if line == "100 HELO":
                                 LOGGER.info(f"Pulse check: {line}")
-                            else:
-                                LOGGER.warning(f"Unexpected line format: {line}")
 
             except (aiohttp.ClientError, asyncio.TimeoutError) as e:
                 LOGGER.error(f"Connection to sse error: {e}")
