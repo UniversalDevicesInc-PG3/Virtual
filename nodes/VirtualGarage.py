@@ -1131,7 +1131,7 @@ class VirtualGarage(Node):
 
     def resetTime(self):
         """ Reset the last update time to now """
-        self.data['lastUpdateTime'] = time.time()
+        self.data['lastUpdateTime'] = datetime.now()
         self.setDriver('GV6', 0.0)
 
     def heartbeat(self):
