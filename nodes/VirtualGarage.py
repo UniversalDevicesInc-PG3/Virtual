@@ -489,6 +489,8 @@ class VirtualGarage(Node):
             # event - log
             if event.get('event') == "log":
                 LOGGER.info('event - log -{}'.format(event))
+                if 'Rebooting...' in event['data']:
+                    LOGGER.warning('API Rebooting...')
                 self.remove_ratgdo_event(event)
                 acted_upon = True
 
@@ -500,8 +502,26 @@ class VirtualGarage(Node):
 
             # event - state
             if event.get('event') == "state":
-                event_data = event.get('data')
-                LOGGER.info('event - state - data:{}'.format(event_data))
+                try:
+                    msg = json.loads(str(event.get('data')))
+                    id = msg.get('id')
+                    if id == 'light-light':
+                        self.setRatgdoLight(msg)
+                    elif id == 'cover-door':
+                        self.setRatgdoDoor(msg)
+                    elif id == 'binary_sensor-motor':
+                        self.setRatgdoMotor(msg)
+                    elif id == 'binary_sensor-motion':
+                        self.setRatgdoMotion(msg)
+                    elif id == 'lock-lock_remotes':
+                        self.setRatgdoLock(msg)
+                    elif id == 'binary_sensor-obstruction': 
+                        self.setRatgdoObstruct(msg)
+                    else:
+                        LOGGER.warning(f'event:state - NO ACTION - {id}')                    
+                    LOGGER.info('event - state - id:{}'.format(id))
+                except Exception as ex:
+                    LOGGER.error(f"bad json {event.get('data')}  ex:{ex}", exc_info=True)                
                 self.remove_ratgdo_event(event)
                 acted_upon = True
 
@@ -519,70 +539,9 @@ class VirtualGarage(Node):
                     LOGGER.error(f"Invalid 'isoDate' in unacted event: {event}. Error: {ex}")
                     self.ratgdo_event.remove(event)
 
-        LOGGER.info(f"controller sse client event exiting while")                
-            
+        LOGGER.info(f"controller sse client event exiting while")                            
 
 
-    def getRatgdoEvents(self):
-        msg = {}
-        while True:
-            while self.ratgdo_event != []:
-                try:
-                    event = self.ratgdo_event[0]
-                    if event['event'] == 'ping':
-                        LOGGER.info('event:ping')
-                        self.ratgdo_event.remove(event)
-                    elif event['event'] == 'state':
-                        try:
-                            msg = json.loads(event['data'])
-                            id = msg['id']
-                        except:
-                            LOGGER.error(f'bad event data {event}')
-                            id = 'bad'
-                        finally:
-                            LOGGER.info(f"event:state: {id}")
-                            if id == 'light-light':
-                                self.setRatgdoLight(msg)
-                            elif id == 'cover-door':
-                                self.setRatgdoDoor(msg)
-                            elif id == 'binary_sensor-motor':
-                                self.setRatgdoMotor(msg)
-                            elif id == 'binary_sensor-motion':
-                                self.setRatgdoMotion(msg)
-                            elif id == 'lock-lock_remotes':
-                                self.setRatgdoLock(msg)
-                            elif id == 'binary_sensor-obstruction': 
-                                self.setRatgdoObstruct(msg)
-                            else:
-                                LOGGER.warning(f'event:state - NO ACTION - {id}')
-                        self.ratgdo_event.remove(event)
-                    elif event['event'] == 'error':
-                        LOGGER.info('event:error')
-                        self.ratgdo_event.remove(event)
-                    elif event['event'] == 'log':
-                        LOGGER.info('event:log')
-                        self.ratgdo_event.remove(event)
-                        if 'Rebooting...' in event['data']:
-                            LOGGER.warning('API Rebooting...')
-                            break
-                    elif event['event'] == 'other':
-                        LOGGER.info('event:other')
-                        self.ratgdo_event.remove(event)
-                    elif event['event'] == 'id':
-                        LOGGER.info(f'event:id={event["data"]}')
-                        self.ratgdo_event.remove(event)
-                    elif event['event'] == 'retry':
-                        LOGGER.info('event:retry')
-                        self.ratgdo_event.remove(event)
-                    else:
-                        LOGGER.error(f'event - NONE FOUND - <{event}>')
-                        self.ratgdo_event.remove(event)
-                except:
-                    LOGGER.error("event parse error")
-                    break
-            LOGGER.info('Done processing getRatgdoEvents')
-            
-            
     def start_sse_client(self):
         """
         Run sse client in a thread-safe loop for gateway events polling which then loads the events to an array.
@@ -1056,10 +1015,10 @@ class VirtualGarage(Node):
             
         # check position
         if 0 <= value <= 100:
-            LOGGER.info(f"value True, value: {value}")
+            LOGGER.debug(f"value True, value: {value}")
             self.data['position'] = value
         else:
-            LOGGER.info(f"value False, value: {value}")
+            LOGGER.error(f"value False, value: {value}")
             self.data['position'] = 101
 
             
