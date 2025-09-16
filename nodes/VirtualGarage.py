@@ -171,26 +171,24 @@ class VirtualGarage(Node):
         self.primary = primary
         self.controller = polyglot.getNode(self.primary)
         self.address = address
-        self.name = name
-        self.hb = 0 #heartbeat
+        self.name = name # node name
+        self.hb = 0 # heartbeat
 
-        self.firstPass = True
-        self.updatingAll = False
-
+        # Bonjour checking vars
         self.bonjourCommand = None
         self.bonjourOn = False
         self.bonjourOnce = True
-        self.ratgdo = False
-        self.ratgdoOK = False
-        self.eventTimeout = 720
-        self.eventTimer = 0
+        
+        self.ratgdo = False # False, True, ip of Ratgdo
+        self.ratgdoOK = False # checker for Ratgdo device
 
         # storage arrays, events, conditions, locks
-        self.ratgdo_event = []
-        self.ratgdo_event_condition = Condition()
-        self.stop_sse_client_event = Event()
-        self._event_polling_thread = None
-        self.ratgdo_poll_lock = Lock()
+        self.ratgdo_event = [] # array, keeper of the Ratgdo events, json / dictionary
+        self.ratgdo_event_condition = Condition() # condition to wait / hold event pollng for new events
+        self.stop_sse_client_event = Event() # graceful exit for sse client and ratgdo_event thread
+        self.first_pass_event = Event() # just to make sure first write of drivers happens
+        self._event_polling_thread = None # thread to run event polling
+        self.ratgdo_poll_lock = Lock() # lock to prevent re-running ratgdo direct polling
         self.sse_lock = Lock()
 
         self.ratgdo_do_events = True # debug flag to turn on/off events
@@ -218,6 +216,7 @@ class VirtualGarage(Node):
 
         self.isy = ISY(self.poly)
         self.firstPass = True
+        self.first_pass_event.set()
         self.bonjourOnce = True
 
         # set-up async loop
@@ -250,7 +249,6 @@ class VirtualGarage(Node):
                 self.start_event_polling()
                 # verify we are not in direct polling
                 if self.ratgdo_poll_lock.acquire(blocking = False):
-                    LOGGER.info("HERE I AM!!!")
                     try:
                         # get Ratgdo data directly to validate sse events
                         success = self.getRatgdoDirect()
@@ -640,8 +638,6 @@ class VirtualGarage(Node):
                                             
                                     else:
                                         LOGGER.warning(f"Unknown key: {key}")
-
-                                    self.eventTimer = 0
 
                                 except Exception as ex:
                                     LOGGER.error(f"sse client error: {ex}")
@@ -1081,14 +1077,14 @@ class VirtualGarage(Node):
                 self.setDriver(spec.driver, self.data[field_name])
                 self.resetTime()
 
-        if self.firstPass:
+        if self.first_pass_event.is_set():
             for field_name, spec in FIELDS.items():
                 if spec.should_update():
                     self.setDriver(spec.driver, self.data[field_name])
             if self.getDriver(FIELDS["door"].driver) != self.data["door"]:
                 self.data["dcommand"] = 0
             self.resetTime()
-            self.firstPass = False
+            self.first_pass_event.clear()
         else:
             # Door change logic
             if self.getDriver(FIELDS["door"].driver) != self.data["door"]:
