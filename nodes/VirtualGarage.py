@@ -49,8 +49,8 @@ FIELDS: dict[str, FieldSpec] = {
     "motion":          FieldSpec(driver="GV3", default=0, data_type="state"),
     "lock":            FieldSpec(driver="GV4", default=0, data_type="state"),
     "obstruct":        FieldSpec(driver="GV5", default=0, data_type="state"),
-    "lastUpdateTime":  FieldSpec(driver="GV6", default=0.0, data_type="state"),
-    "openTime":        FieldSpec(driver="GV7", default=0.0, data_type="state"),
+    "lastUpdateTime":  FieldSpec(driver="GV6", default=0.0, data_type="calc"),
+    "openTime":        FieldSpec(driver="GV7", default=0.0, data_type="calc"),
     "motor":           FieldSpec(driver="GV8", default=0, data_type="state"),
     "position":        FieldSpec(driver="GV9", default=0, data_type="state"),
     
@@ -1119,7 +1119,7 @@ class VirtualGarage(Node):
         if self.data["door"] == 0:
             self.data["openTime"] = current_time
 
-        open_time_delta = round(((current_time - self.data['openTime']).total_seconds())/60,1)
+        open_time_delta = (current_time - self.data['openTime']).total_seconds()
         self.setDriver(FIELDS["openTime"].driver, min(open_time_delta, 9999))
 
        
