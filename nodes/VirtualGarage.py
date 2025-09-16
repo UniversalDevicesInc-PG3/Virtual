@@ -8,7 +8,7 @@ VirtualGarage class
 # standard imports
 import time, ipaddress, asyncio, json
 import xml.etree.ElementTree as ET
-from datetime import datetime, timezone
+from datetime import datetime, timezone, timedelta
 from typing import Any, Dict, Optional, Tuple
 from threading import Thread, Event, Lock, Condition
 
@@ -426,6 +426,15 @@ class VirtualGarage(Node):
             self.ratgdo_event_condition.notify_all()  # Wake up all waiting consumers
 
 
+    def remove_ratgdo_event(self, event):
+        """
+        Called by consumer functions (Controller, Shades, Scenes) to remove processed events.
+        """
+        with self.ratgdo_event_condition:
+            if event in self.ratgdo_event:
+                self.ratgdo_event.remove(event)
+
+
     def _poll_events(self):
         """
         Handles Gateway Events like homedoc-updated & scene-add (for new scenes)
@@ -435,8 +444,77 @@ class VirtualGarage(Node):
         while not self.stop_sse_client_event.is_set():
             # wait for events to process
             ratgdo_events = self.get_ratgdo_event()
-            LOGGER.info(f"POLL EVENT CHECK: {ratgdo_events}")
-            ratgdo_events = []
+            
+            # handle the rest of events in isoDate order
+            try:
+                # get most recent isoDate
+                event = min(ratgdo_events, key=lambda x: x['timestamp'], default={})
+
+            except (ValueError, TypeError) as ex: # Catch specific exceptions
+                LOGGER.error(f"Error filtering or finding minimum event: {ex}")
+                event = {}
+
+            acted_upon = False
+
+            # retry
+            if event.get('retry'):
+                LOGGER.info('gateway event - retry - {}'.format(event))
+                self.remove_ratgdo_event(event)
+                acted_upon = True
+
+            # id
+            if event.get('id'):
+                LOGGER.info('event - id - {}'.format(event))
+                self.remove_ratgdo_event(event)
+                acted_upon = True
+
+            # event - ping
+            if event.get('event') == "ping":
+                LOGGER.info('event - ping - {}'.format(event))
+                self.remove_ratgdo_event(event)
+                acted_upon = True
+
+            # event - error
+            if event.get('event') == "error":
+                LOGGER.info('event - eror -{}'.format(event))
+                self.remove_ratgdo_event(event)
+                acted_upon = True
+
+            # event - error
+            if event.get('event') == "error":
+                LOGGER.info('event - error -{}'.format(event))
+                self.remove_ratgdo_event(event)
+                acted_upon = True
+
+            # event - log
+            if event.get('event') == "log":
+                LOGGER.info('event - log -{}'.format(event))
+                self.remove_ratgdo_event(event)
+                acted_upon = True
+
+            # event - state
+            if event.get('event') == "state":
+                event_data = event.get('date')
+                LOGGER.info('event - state - data:{}'.format(event_data))
+                self.remove_ratgdo_event(event)
+                acted_upon = True
+
+            #If not acted upon, remove if older than 2 minutes to prevent blocking of other events
+            if not acted_upon and event:
+                try:
+                    # Compare the current timestamp
+                    now = datetime.now(timezone.utc)
+                    cutoff = now - timedelta(minutes=2)
+                    ts = event.get('timestamp', now.isoformat())
+                    if ts >= cutoff:
+                        LOGGER.warning(f"Unacted event!!! removed due to age > 2 min: {event}")
+                        self.ratgdo_event.remove(event)
+                except (TypeError, ValueError) as ex:
+                    LOGGER.error(f"Invalid 'isoDate' in unacted event: {event}. Error: {ex}")
+                    self.ratgdo_event.remove(event)
+
+        LOGGER.info(f"controller sse client event exiting while")                
+            
 
 
     def getRatgdoEvents(self):
@@ -595,9 +673,6 @@ class VirtualGarage(Node):
                                 LOGGER.error(f"Failed to decode JSON from data line: <<{line}>>")
                             except Exception as ex:
                                 LOGGER.error(f"sse client error: {ex}")
-
-                            if line == "100 HELO":
-                                LOGGER.info(f"Pulse check: {line}")
 
             except (aiohttp.ClientError, asyncio.TimeoutError) as e:
                 LOGGER.error(f"Connection to sse error: {e}")
