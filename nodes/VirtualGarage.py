@@ -492,6 +492,12 @@ class VirtualGarage(Node):
                 self.remove_ratgdo_event(event)
                 acted_upon = True
 
+            # event - unknown
+            if event.get('event') == "unknown":
+                LOGGER.info('event - unknown -{}'.format(event))
+                self.remove_ratgdo_event(event)
+                acted_upon = True
+
             # event - state
             if event.get('event') == "state":
                 event_data = event.get('data')
@@ -598,14 +604,14 @@ class VirtualGarage(Node):
         Includes robust retry logic with exponential backoff.
         """
         LOGGER.info("controller start poll events")
+        url = f"http://{self.ratgdo}{EVENTS}"
+        retries = 0
+        max_retries = 5
+        base_delay = 1
+
+        current_event = None
+
         try:
-            url = f"http://{self.ratgdo}{EVENTS}"
-            retries = 0
-            max_retries = 5
-            base_delay = 1
-
-            current_event = None
-
             while not self.stop_sse_client_event.is_set():
                 try:
                     async with aiohttp.ClientSession() as session:
@@ -651,30 +657,27 @@ class VirtualGarage(Node):
                                             continue
                                         try:
                                             data_obj = json.loads(value)
+                                            parsed = {
+                                                "event": current_event if current_event else "unknown",
+                                                "data": data_obj,
+                                                "timestamp": timestamp
+                                            }                                            
                                         except json.JSONDecodeError as e:
-                                            LOGGER.error(f"Failed to decode JSON from data line: <<{line}>> — {e}")
-                                            continue
-                                        if current_event:
+                                            # Not JSON—store as raw string
                                             parsed = {
-                                                "event": current_event,
-                                                "data": data_obj,
+                                                "event": current_event if current_event else "log",
+                                                "data": value,
                                                 "timestamp": timestamp
                                             }
-                                            current_event = None
-                                        else:
-                                            parsed = {
-                                                "data": data_obj,
-                                                "timestamp": timestamp
-                                            }
+                                            LOGGER.debug(f"Stored raw data line: {value}")
                                         self.append_ratgdo_event(parsed)
-
+                                        current_event = None
+                                            
                                     else:
                                         LOGGER.warning(f"Unknown key: {key}")
 
                                     self.eventTimer = 0
 
-                                except json.JSONDecodeError:
-                                    LOGGER.error(f"Failed to decode JSON from data line: <<{line}>>")
                                 except Exception as ex:
                                     LOGGER.error(f"sse client error: {ex}")
 
