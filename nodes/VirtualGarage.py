@@ -649,7 +649,14 @@ class VirtualGarage(Node):
                                     current_event = value
 
                                 elif key == "data":
-                                    data_obj = json.loads(value)
+                                    if not value:
+                                        LOGGER.warning("Received empty data line, skipping")
+                                        continue
+                                    try:
+                                        data_obj = json.loads(value)
+                                    except json.JSONDecodeError as e:
+                                        LOGGER.error(f"Failed to decode JSON from data line: <<{line}>> — {e}")
+                                        continue
                                     if current_event:
                                         parsed = {
                                             "event": current_event,
