@@ -508,19 +508,24 @@ class VirtualGarage(Node):
                         id = msg.get('id')
                         if id == 'light-light':
                             self.setRatgdoLight(msg)
+                            LOGGER.info('event:state - processed id:{}'.format(id))
                         elif id == 'cover-door':
                             self.setRatgdoDoor(msg)
+                            LOGGER.info('event:state - processed id:{}'.format(id))
                         elif id == 'binary_sensor-motor':
                             self.setRatgdoMotor(msg)
+                            LOGGER.info('event:state - processed id:{}'.format(id))
                         elif id == 'binary_sensor-motion':
                             self.setRatgdoMotion(msg)
+                            LOGGER.info('event:state - processed id:{}'.format(id))
                         elif id == 'lock-lock_remotes':
                             self.setRatgdoLock(msg)
+                            LOGGER.info('event:state - processed id:{}'.format(id))
                         elif id == 'binary_sensor-obstruction': 
                             self.setRatgdoObstruct(msg)
+                            LOGGER.info('event:state - processed id:{}'.format(id))
                         else:
-                            LOGGER.warning(f'event:state - NO ACTION - {id}')                    
-                        LOGGER.info('event - state - id:{}'.format(id))
+                            LOGGER.info(f'event:state - no action - {id}')                    
                     else:
                         LOGGER.info('event - state data bad:{}'.format(event))
                 except Exception as ex:
