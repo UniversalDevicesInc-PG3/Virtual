@@ -1077,49 +1077,48 @@ class VirtualGarage(Node):
 
             
     def updateISY(self):
-       current_time = datetime.now()
+        current_time: datetime = datetime.now()
 
-       def update_driver(field_name):
-           spec = FIELDS[field_name]
-           if spec.driver is None:
-               return  # Skip config-only fields
-           if self.getDriver(spec.driver) != self.data[field_name]:
-               self.setDriver(spec.driver, self.data[field_name])
-               self.resetTime()
+        def update_driver(field_name):
+            spec = FIELDS[field_name]
+            if spec.driver is None:
+                return  # Skip config-only fields
+            if self.getDriver(spec.driver) != self.data[field_name]:
+                self.setDriver(spec.driver, self.data[field_name])
+                self.resetTime()
 
-       if self.firstPass:
-           for field_name, spec in FIELDS.items():
-               if spec.should_update():
-                   self.setDriver(spec.driver, self.data[field_name])
-           if self.getDriver(FIELDS["door"].driver) != self.data["door"]:
-               self.data["dcommand"] = 0
-           self.resetTime()
-           self.firstPass = False
-       else:
-           # Door change logic
-           if self.getDriver(FIELDS["door"].driver) != self.data["door"]:
-               self.data["dcommand"] = 0
-               update_driver("door")
+        if self.firstPass:
+            for field_name, spec in FIELDS.items():
+                if spec.should_update():
+                    self.setDriver(spec.driver, self.data[field_name])
+            if self.getDriver(FIELDS["door"].driver) != self.data["door"]:
+                self.data["dcommand"] = 0
+            self.resetTime()
+            self.firstPass = False
+        else:
+            # Door change logic
+            if self.getDriver(FIELDS["door"].driver) != self.data["door"]:
+                self.data["dcommand"] = 0
+                update_driver("door")
 
-           # Update all other state fields
-           for field_name, spec in FIELDS.items():
-               if spec.should_update():
-                   update_driver(field_name)
+            # Update all other state fields
+            for field_name, spec in FIELDS.items():
+                if spec.should_update():
+                    update_driver(field_name)
 
-       # Time since last update
-       since_last_update = (current_time - self.data["lastUpdateTime"]).total_seconds()
-       self.setDriver(FIELDS["lastUpdateTime"].driver, min(since_last_update, 9999))
+        # Time since last update
+        since_last_update = round(((current_time - self.data["lastUpdateTime"]).total_seconds())/60,1)
+        self.setDriver(FIELDS["lastUpdateTime"].driver, min(since_last_update, 9999))
 
-       # Door open time tracking
-       if self.data["door"] != 0:
-           if self.data["openTime"] == 0.0:
-               self.data["openTime"] = current_time
-           open_time_delta = (current_time - self.data["openTime"]).total_seconds()
-       else:
-           self.data["openTime"] = 0.0
-           open_time_delta = 0
+        # Door open time tracking
+        if self.data["door"] != 0:
+            if not self.data["openTime"]:
+                self.data["openTime"] = current_time
+        else:
+            self.data["openTime"] = current_time
 
-       self.setDriver(FIELDS["openTime"].driver, open_time_delta)
+        open_time_delta = round(((current_time - self.data['openTime']).total_seconds())/60,1)
+        self.setDriver(FIELDS["openTime"].driver, min(open_time_delta, 9999))
 
        
     def reset_stats_cmd(self, command = None):
