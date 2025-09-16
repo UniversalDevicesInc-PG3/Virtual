@@ -235,13 +235,6 @@ class VirtualGarage(Node):
             # start event polling loop    
             self.start_event_polling()
 
-            # # original version
-            # while not self.ratgdoOK:
-            #     time.sleep(2)
-            # while True:
-            #     self.getRatgdoEvents()
-            #     LOGGER.error('start events dropped out')
-            #     time.sleep(10)
         LOGGER.info(f"{self.name} exit start")
                 
                     
@@ -257,6 +250,7 @@ class VirtualGarage(Node):
                 self.start_event_polling()
                 # verify we are not in direct polling
                 if self.ratgdo_poll_lock.acquire(blocking = False):
+                    LOGGER.info("HERE I AM!!!")
                     try:
                         # get Ratgdo data directly to validate sse events
                         success = self.getRatgdoDirect()
@@ -389,27 +383,6 @@ class VirtualGarage(Node):
                 LOGGER.error(f"{post}: {ex}")
                 
         
-    def start_event_polling(self):
-        """
-        Run routine in a separate thread to retrieve events from array loaded by sse client from gateway.
-        """
-        LOGGER.debug(f"start")
-        if self._event_polling_thread and self._event_polling_thread.is_alive():
-           LOGGER.debug("event polling running, skip")
-        else:
-            try:
-                self.stop_sse_client_event.clear()
-                self._event_polling_thread = Thread(
-                    target=self._poll_events,
-                    name="EventPollingThread",
-                    daemon=True)
-                self._event_polling_thread.start()
-                LOGGER.info("event polling started")
-            except Exception as ex:
-                LOGGER.error(f"failed to start event polling thread, {ex}", exc_info=True)                
-        LOGGER.debug("exit")
-
-
     def get_ratgdo_event(self) -> list[dict]:
         """
         Called by consumer fuctions to efficiently wait for events to process.
@@ -438,9 +411,30 @@ class VirtualGarage(Node):
                 self.ratgdo_event.remove(event)
 
 
+    def start_event_polling(self):
+        """
+        Run routine in a separate thread to retrieve events from array loaded by sse client from gateway.
+        """
+        LOGGER.debug(f"start")
+        if self._event_polling_thread and self._event_polling_thread.is_alive():
+           LOGGER.debug("event polling running, skip")
+        else:
+            try:
+                self.stop_sse_client_event.clear()
+                self._event_polling_thread = Thread(
+                    target=self._poll_events,
+                    name="EventPollingThread",
+                    daemon=True)
+                self._event_polling_thread.start()
+                LOGGER.info("event polling started")
+            except Exception as ex:
+                LOGGER.error(f"failed to start event polling thread, {ex}", exc_info=True)                
+        LOGGER.debug("exit")
+
+
     def _poll_events(self):
         """
-        Handles Gateway Events like homedoc-updated & scene-add (for new scenes)
+        Handles Ratgdo SSE Events like state changes.
         Removes unacted events only if isoDate is older than 2 minutes or invalid.
         """
 
