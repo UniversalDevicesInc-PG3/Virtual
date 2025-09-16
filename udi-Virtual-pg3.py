@@ -33,7 +33,8 @@ DONE swtich cmd TOGGLE add
 DONE consolidate temp, tempC, tempRC into one module
 DONE temp variable writing now with shortPoll (only upon change, considers precision)
 DONE refactor function naming
-TODO refactor garage, fix persistence, sse client, bring temp variable improvements
+DONE refactor garage, fix persistence, sse client
+TODO backfeed garage improvements to other devices
 
 3.1.15
 DONE generic, dimmer, change ST to OL, memory of level for DON, DFON/DFOF, command
