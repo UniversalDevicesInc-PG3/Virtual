@@ -13,6 +13,9 @@ class FieldSpec:
     driver: Optional[str]  # e.g., "GV1" or None if not pushed to a driver
     default: Any           # per-field default
     data_type: str         # denote data type (state or config)
+    def should_update(self) -> bool:
+            """Return True if this field should be pushed to a driver."""
+            return self.driver is not None and self.data_type == "state"
 
 # Single source of truth for field names, driver codes, and defaults
 # below is an example

@@ -36,7 +36,10 @@ _VARIABLE_TYPE_MAP = {
 #     driver: Optional[str]  # e.g., "GV1" or None if not pushed to a driver
 #     default: Any           # per-field default
 #     data_type: str         # denote data type (state or config)
-
+#     def should_update(self) -> bool:
+#             """Return True if this field should be pushed to a driver."""
+#             return self.driver is not None and self.data_type == "state"
+        
 # Single source of truth for field names, driver codes, and defaults
 FIELDS: dict[str, FieldSpec] = {
     # State variables (pushed to drivers)
@@ -773,7 +776,7 @@ class VirtualGarage(Node):
         """
         for var_name, spec in FIELDS.items():
             # Only process fields that are of type "state"
-            if spec.data_type == "state":
+            if spec.should_update():
                 # Safely get the type and ID from the data dictionary
                 var_type = self.data.get(f'{var_name}T')
                 var_id = self.data.get(f'{var_name}Id')
@@ -1086,7 +1089,7 @@ class VirtualGarage(Node):
 
        if self.firstPass:
            for field_name, spec in FIELDS.items():
-               if spec.data_type == "state" and spec.driver is not None:
+               if spec.should_update():
                    self.setDriver(spec.driver, self.data[field_name])
            if self.getDriver(FIELDS["door"].driver) != self.data["door"]:
                self.data["dcommand"] = 0
@@ -1100,7 +1103,7 @@ class VirtualGarage(Node):
 
            # Update all other state fields
            for field_name, spec in FIELDS.items():
-               if spec.data_type == "state" and field_name not in {"door", "lastUpdateTime", "openTime"}:
+               if spec.should_update():
                    update_driver(field_name)
 
        # Time since last update
