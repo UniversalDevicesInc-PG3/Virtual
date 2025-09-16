@@ -503,23 +503,26 @@ class VirtualGarage(Node):
             # event - state
             if event.get('event') == "state":
                 try:
-                    msg = json.loads(str(event.get('data')))
-                    id = msg.get('id')
-                    if id == 'light-light':
-                        self.setRatgdoLight(msg)
-                    elif id == 'cover-door':
-                        self.setRatgdoDoor(msg)
-                    elif id == 'binary_sensor-motor':
-                        self.setRatgdoMotor(msg)
-                    elif id == 'binary_sensor-motion':
-                        self.setRatgdoMotion(msg)
-                    elif id == 'lock-lock_remotes':
-                        self.setRatgdoLock(msg)
-                    elif id == 'binary_sensor-obstruction': 
-                        self.setRatgdoObstruct(msg)
+                    msg = event.get('data')
+                    if msg:
+                        id = msg.get('id')
+                        if id == 'light-light':
+                            self.setRatgdoLight(msg)
+                        elif id == 'cover-door':
+                            self.setRatgdoDoor(msg)
+                        elif id == 'binary_sensor-motor':
+                            self.setRatgdoMotor(msg)
+                        elif id == 'binary_sensor-motion':
+                            self.setRatgdoMotion(msg)
+                        elif id == 'lock-lock_remotes':
+                            self.setRatgdoLock(msg)
+                        elif id == 'binary_sensor-obstruction': 
+                            self.setRatgdoObstruct(msg)
+                        else:
+                            LOGGER.warning(f'event:state - NO ACTION - {id}')                    
+                        LOGGER.info('event - state - id:{}'.format(id))
                     else:
-                        LOGGER.warning(f'event:state - NO ACTION - {id}')                    
-                    LOGGER.info('event - state - id:{}'.format(id))
+                        LOGGER.info('event - state data bad:{}'.format(event))
                 except Exception as ex:
                     LOGGER.error(f"bad json {event.get('data')}  ex:{ex}", exc_info=True)                
                 self.remove_ratgdo_event(event)
