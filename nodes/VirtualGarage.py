@@ -1119,7 +1119,7 @@ class VirtualGarage(Node):
         if self.data["door"] == 0:
             self.data["openTime"] = current_time
 
-        open_time_delta = (current_time - self.data['openTime']).total_seconds()
+        open_time_delta = round((current_time - self.data['openTime']).total_seconds(),1)
         self.setDriver(FIELDS["openTime"].driver, min(open_time_delta, 9999))
 
        
