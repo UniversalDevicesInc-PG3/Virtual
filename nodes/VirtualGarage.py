@@ -1074,73 +1074,58 @@ class VirtualGarage(Node):
 
             
     def updateISY(self):
-        _currentTime = time.time()
-        if self.firstPass:
-            self.setDriver('GV0', self.data['light'])
-            if self.getDriver('GV1') != self.data['door']:
-                self.dcommand = 0
-            self.setDriver('GV1', self.data['door'])
-            self.setDriver('GV2', self.data['dcommand'])
-            self.setDriver('GV8', self.data['motor'])
-            self.setDriver('GV9', self.data['position'])
-            self.setDriver('GV3', self.data['motion'])
-            self.setDriver('GV4', self.data['lock'])
-            self.setDriver('GV5', self.data['obstruct'])
-            self.resetTime()
-            self.firstPass = False
-        else:
-            if self.getDriver('GV0') != self.data['light']:
-                self.setDriver('GV0', self.data['light'])
-                self.resetTime()
-            _doorOldStatus = self.getDriver('GV1')
-            if _doorOldStatus != self.data['door']:
-                self.data['dcommand'] = 0
-                self.setDriver('GV1', self.data['door'])
-                self.resetTime()
-            if self.getDriver('GV2') != self.data['dcommand']:
-                self.setDriver('GV2', self.data['dcommand'])
-                self.resetTime()
-            if self.getDriver('GV8') != self.data['motor']:
-                self.setDriver('GV8', self.data['motor'])
-                self.resetTime()
-            if self.getDriver('GV9') != self.data['position']:
-                self.setDriver('GV9', self.data['position'])
-                self.resetTime()
-            if self.getDriver('GV3') != self.data['motor']:
-                self.setDriver('GV3', self.data['motor'])
-                self.resetTime()
-            if self.getDriver('GV3') != self.data['motion']:
-                self.setDriver('GV3', self.data['motion'])
-                self.resetTime()
-            if self.getDriver('GV4') != self.data['lock']:
-                self.setDriver('GV4', self.data['lock'])
-                self.resetTime()
-            if self.getDriver('GV5') != self.data['obstruct']:
-                self.setDriver('GV5', self.data['obstruct'])
-                self.resetTime()
-        _sinceLastUpdate = round(((_currentTime - self.data['lastUpdateTime']) / 60), 1)
-        if _sinceLastUpdate < 9999:
-            self.setDriver('GV6', _sinceLastUpdate)
-        else:
-            self.setDriver('GV6', 9999)
+       current_time = time.time()
 
-        if self.data['door'] != 0:
-            if self.data['openTime'] == 0.0:
-                self.data['openTime'] = _currentTime
-            _openTimeDelta = round((_currentTime - self.data['openTime']), 1)
-        else:
-            self.data['openTime'] = 0.0
-            _openTimeDelta = 0
-        self.setDriver('GV7', _openTimeDelta)
+       def update_driver(field_name):
+           spec = FIELDS[field_name]
+           if spec.driver is None:
+               return  # Skip config-only fields
+           if self.getDriver(spec.driver) != self.data[field_name]:
+               self.setDriver(spec.driver, self.data[field_name])
+               self.resetTime()
 
-        
+       if self.firstPass:
+           for field_name, spec in FIELDS.items():
+               if spec.data_type == "state" and spec.driver is not None:
+                   self.setDriver(spec.driver, self.data[field_name])
+           if self.getDriver(FIELDS["door"].driver) != self.data["door"]:
+               self.data["dcommand"] = 0
+           self.resetTime()
+           self.firstPass = False
+       else:
+           # Door change logic
+           if self.getDriver(FIELDS["door"].driver) != self.data["door"]:
+               self.data["dcommand"] = 0
+               update_driver("door")
+
+           # Update all other state fields
+           for field_name, spec in FIELDS.items():
+               if spec.data_type == "state" and field_name not in {"door", "lastUpdateTime", "openTime"}:
+                   update_driver(field_name)
+
+       # Time since last update
+       since_last_update = round((current_time - self.data["lastUpdateTime"]) / 60, 1)
+       self.setDriver(FIELDS["lastUpdateTime"].driver, min(since_last_update, 9999))
+
+       # Door open time tracking
+       if self.data["door"] != 0:
+           if self.data["openTime"] == 0.0:
+               self.data["openTime"] = current_time
+           open_time_delta = round(current_time - self.data["openTime"], 1)
+       else:
+           self.data["openTime"] = 0.0
+           open_time_delta = 0
+
+       self.setDriver(FIELDS["openTime"].driver, open_time_delta)
+
+       
     def reset_stats_cmd(self, command = None):
-        LOGGER.info(f"{self.name}, {command}")
-        self.firstPass = True
-        self.resetTime()
-        store_values(self)
+         LOGGER.info(f"{self.name}, {command}")
+         self.firstPass = True
+         self.resetTime()
+         store_values(self)
 
-        
+
     def resetTime(self):
         """ Reset the last update time to now """
         self.data['lastUpdateTime'] = time.time()
@@ -1157,7 +1142,7 @@ class VirtualGarage(Node):
         self.hb = not self.hb
         LOGGER.debug("Exit")
 
-        
+
     def query(self, command = None):
         """ Query for updated values """ 
         LOGGER.info(f"{self.name}, {command}")
@@ -1167,7 +1152,7 @@ class VirtualGarage(Node):
     hint = '0x01120100'
     # home, barrier, None
     # Hints See: https://github.com/UniversalDevicesInc/hints
-    
+
     """
     This is an array of dictionary items containing the variable names(drivers)
     values and uoms(units of measure) from ISY. This is how ISY knows what kind
