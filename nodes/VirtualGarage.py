@@ -9,7 +9,7 @@ VirtualGarage class
 import time, ipaddress, asyncio, json
 import xml.etree.ElementTree as ET
 from datetime import datetime, timezone, timedelta
-from typing import Any, Dict, Optional, Tuple
+from typing import Any, Dict, Optional, Tuple, Union
 from threading import Thread, Event, Lock, Condition
 
 # external imports
@@ -883,21 +883,22 @@ class VirtualGarage(Node):
             return None
 
 
-    def pull_from_id(self, var_type: int | str, var_id: int | str, prec_flag = False) -> tuple[bool, int | float] | None:
+    def pull_from_id(self, var_type: int | str, var_id: int | str,
+                     prec_flag = False) -> Optional[Tuple[bool, Union[int, float]]]:
         """
         Pull a variable from ISY using path segments,
         parse the XML, and update state if the transformed value changed.
         """
-        LOGGER.debug(f"Pull from ID")
+
+        LOGGER.debug(f"Pulling from ID: var_type={var_type}, var_id={var_id}")
         try:
             vid = int(var_id)
+            if vid == 0:
+                LOGGER.debug("var_id is 0; skipping pull.")
+                return None
         except (TypeError, ValueError):
-            LOGGER.error("Invalid var_id: %r", var_id)
-            return
-
-        if vid == 0:
-            LOGGER.debug("var_id is 0; skipping pull.")
-            return
+            LOGGER.error(f"Invalid var_id:{var_id}")
+            return None
 
         vtype_str = str(var_type).strip()
 
@@ -906,7 +907,7 @@ class VirtualGarage(Node):
             getlist_segment, tag_to_find, _ = _VARIABLE_TYPE_MAP[vtype_str]
         except KeyError:
             LOGGER.error("Invalid or unsupported var_type: %r", vtype_str)
-            return
+            return None
 
         path = f"/rest/vars/get/{getlist_segment}/{vid}"
 
@@ -918,10 +919,10 @@ class VirtualGarage(Node):
                 LOGGER.info(f"{self.name}: ISY info not available on {path}")
             else:
                 LOGGER.exception("RuntimeError on path {path}")
-            return
+            return None
         except Exception as exc:
             LOGGER.exception("%s:, ISY push failed for %s: %s", self.name, path, exc)
-            return
+            return None
 
         text = resp.decode("utf-8", errors="replace") if isinstance(resp, (bytes, bytearray)) else str(resp)
         LOGGER.debug("ISY response for %s: %s", path, text)
@@ -935,18 +936,13 @@ class VirtualGarage(Node):
             val_str = root.findtext(f".//{tag_to_find}")
             if val_str is None:
                 LOGGER.error("No <%s> element in ISY response for %s", tag_to_find, path)
-                return
+                return None
             new_raw = int(val_str.strip())
 
             # consider precision of ISY variable only if prec_flag == True
             if prec_flag:
-                # parse prec            
-                prec_div = 1
                 prec_str = root.findtext(f".//prec")
-                if prec_str:
-                    prec_div = int(prec_str.strip()) * 10
-                    if prec_div <= 0:
-                        prec_div = 1
+                prec_div = max(int(prec_str.strip()) * 10, 1) if prec_str else 1
                 calc = new_raw / prec_div
                 LOGGER.debug(f"NO UPDATE: raw:{new_raw}, prec:{prec_div}, calc{calc}")
                 return True, calc
@@ -954,14 +950,14 @@ class VirtualGarage(Node):
                 return True, new_raw
 
         except ET.ParseError as exc:
-            LOGGER.exception("Failed to parse XML for %s: %s", path, exc)
-            return
+            LOGGER.exception("Failed to parse XML for {path}: {exc}")
+            return None
         except ValueError as exc:
-            LOGGER.exception("Value in <%s> is not an int for %s (val=%r): %s", tag_to_find, path, val_str, exc)
-            return
+            LOGGER.exception(f"Value in {tag_to_find} is not an int for {path} (val={val_str}): {exc}")
+            return None
         except Exception as ex:
             LOGGER.error(f"{self.name}: parse error {ex}", exc_info = True)
-            return
+            return None
 
     
     def pull_from_ratgdo(self, get):
