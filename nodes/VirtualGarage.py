@@ -988,88 +988,31 @@ class VirtualGarage(Node):
         
     def get_ratgdo_direct(self):
         """
-        Main function to poll Ratgdo for current status of immportant
-        garage variables. Status of Light, door, motion in space, motor movement,
-        remote lock, door obstruction. There are a number of other possible
-        minor varibles, which could be added, see the event logs.
+        Poll Ratgdo for current status of key garage variables:
+        Light, door, motion, motor, remote lock, and obstruction.
         """
-        try:
-            res = requests.get(f"http://{self.ratgdo}{LIGHT}")
-            if not res.ok:
-                LOGGER.error(f"LIGHT: res.status_code = {res.status_code}")
-                return False
-            else:
-                self.set_ratgdo_light(res.json())
-        except Exception as ex:
-            LOGGER.error(f"LIGHT error: {ex}")
-            return False
+        endpoints = [
+            (LIGHT, self.set_ratgdo_light, "LIGHT"),
+            (DOOR, self.set_ratgdo_door, "DOOR"),
+            (MOTION, self.set_ratgdo_motion, "MOTION"),
+            (MOTOR, self.set_ratgdo_motor, "MOTOR"),
+            (LOCK_REMOTES, self.set_ratgdo_lock, "LOCK_REMOTES"),
+            (OBSTRUCT, self.set_ratgdo_obstruct, "OBSTRUCT"),
+        ]
 
-        time.sleep(.2)
-                
-        try:
-            res = requests.get(f"http://{self.ratgdo}{DOOR}")
-            if not res.ok:
-                LOGGER.error(f"DOOR: res.status_code = {res.status_code}")
+        for path, handler, label in endpoints:
+            try:
+                res = requests.get(f"http://{self.ratgdo}{path}")
+                if not res.ok:
+                    LOGGER.error(f"{label}: res.status_code = {res.status_code}")
+                    return False
+                handler(res.json())
+            except Exception as ex:
+                LOGGER.error(f"{label} error: {ex}")
                 return False
-            else:
-                self.set_ratgdo_door(res.json())
-        except Exception as ex:
-            LOGGER.error(f"DOOR error: {ex}")
-            return False
+            time.sleep(0.2)
 
-        time.sleep(.2)
-                
-        try:
-            res = requests.get(f"http://{self.ratgdo}{MOTION}")
-            if not res.ok:
-                LOGGER.error(f"MOTION: res.status_code = {res.status_code}")
-                return False
-            else:
-                self.set_ratgdo_motion(res.json())
-        except Exception as ex:
-            LOGGER.error(f"MOTION error: {ex}")
-            return False
-
-        time.sleep(.2)
-                
-        try:
-            res = requests.get(f"http://{self.ratgdo}{MOTOR}")
-            if not res.ok:
-                LOGGER.error(f"MOTOR: res.status_code = {res.status_code}")
-                return False
-            else:
-                self.set_ratgdo_motor(res.json())
-        except Exception as ex:
-            LOGGER.error(f"MOTOR error: {ex}")
-            return False
-
-        time.sleep(.2)
-                
-        try:
-            res = requests.get(f"http://{self.ratgdo}{LOCK_REMOTES}")
-            if not res.ok:
-                LOGGER.error(f"LOCK_REMOTES: res.status_code = {res.status_code}")
-                return False
-            else:
-                self.set_ratgdo_lock(res.json())
-        except Exception as ex:
-            LOGGER.error(f"LOCK_REMOTES error: {ex}")
-            return False
-
-        time.sleep(.2)
-                
-        try:
-            res = requests.get(f"http://{self.ratgdo}{OBSTRUCT}")
-            if not res.ok:
-                LOGGER.error(f"OBSTRUCT: res.status_code = {res.status_code}")
-                return False
-            else:
-                self.set_ratgdo_obstruct(res.json())
-        except Exception as ex:
-            LOGGER.error(f"OBSTRUCT error: {ex}")
-            return False
-
-        LOGGER.info('get_ratgdo_direct success!')
+        LOGGER.info("get_ratgdo_direct success!")
         return True
     
                                 
