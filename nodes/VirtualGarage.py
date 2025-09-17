@@ -214,12 +214,11 @@ class VirtualGarage(Node):
         # wait for controller start ready
         self.controller.ready_event.wait()
 
-        # get persistent data from polyglot or depreciated: old db file, then delete db file
-        load_persistent_data(self)
-
+        # get isy address
         self.isy = ISY(self.poly)
+
+        # this is first pass
         self.first_pass_event.set()
-        self.bonjourOnce = True
 
         # set-up async loop
         self.mainloop = mainloop
@@ -227,9 +226,19 @@ class VirtualGarage(Node):
         self.connect_thread = Thread(target=mainloop.run_forever)
         self.connect_thread.start()
 
-        self.getConfigData()
-        self.resetTime()
+        # get persistent data from polyglot or depreciated: old db file, then delete db file
+        load_persistent_data(self)
 
+        # retrieve configuration data
+        self.get_config_data()
+        self.reset_time()
+
+        # try bonjour
+        self.bonjourOnce = True
+        if self.bonjourOnce and self.bonjourOn:
+            self.poly.bonjour('http', None, None)
+
+        # if we have Ratgdo device, set up the event sse client & event retrieval loop
         if self.ratgdo and self.ratgdo_do_events:
             # first start of sse client via the async loop
             self.start_sse_client()
@@ -259,7 +268,7 @@ class VirtualGarage(Node):
                 if self.ratgdo_poll_lock.acquire(blocking = False):
                     try:
                         # get Ratgdo data directly to validate sse events
-                        success = self.getRatgdoDirect()
+                        success = self.get_ratgdo_direct()
                         LOGGER.info(f"getRadgdoDirect success = {success}")
                     except Exception as ex:
                         LOGGER.error(f"Error during getRadgdoDirect: {ex}", exc_info=True)
@@ -268,16 +277,14 @@ class VirtualGarage(Node):
             LOGGER.debug('longPoll exit')
         else:
             self.heartbeat() # send cmd DON/DOF
-            if self.bonjourOnce and self.bonjourOn:
-                self.bonjourOnce = False
-                self.poly.bonjour('http', None, None)
+            # no Ratgdo, so get/set data from ISY variables
             if not self.ratgdo:
-                self.updateVars() # update variables
-            self.updateISY() # update ISY
+                self.update_vars() # update variables
+            self.update_isy() # update ISY
             LOGGER.debug('shortPoll exit')
 
             
-    def getConfigData(self):
+    def get_config_data(self):
         """
         Retrieves and processes garage configuration data from the controller.
         Calls helper to process Ratgdo config.
@@ -328,7 +335,7 @@ class VirtualGarage(Node):
             try:
                 self.ratgdo = ratgdo_config
                 ipaddress.ip_address(self.ratgdo)
-                if self.ratgdoCheck():
+                if self.ratgdo_check():
                     self.ratgdoOK = True
             except (ValueError, ipaddress.AddressValueError):
                 error = f"RATGDO address error: {self.ratgdo}"
@@ -349,6 +356,8 @@ class VirtualGarage(Node):
         """
         # bonjour(self, type, subtypes, protocol)
         LOGGER.info(f"BonjourMessage")
+        if not self.bonjourOn or not self.bonjourOnce:
+            return
         try:
             if command['success']:
                 mdns = command['mdns']
@@ -358,15 +367,15 @@ class VirtualGarage(Node):
                         self.controller.Notices.delete('ratgdo')
                         self.ratgdo = addr['addresses'][0]
                         LOGGER.warning(f"FOUND RATGDO@'{self.ratgdo}':ip: {addr['addresses']}, name: {addr['name']}")
-                        if self.ratgdoCheck():
+                        if self.ratgdo_check():
                             self.bonjourOn = False
                         break
         except Exception as ex:
-            LOGGER.error(f"error: {ex}, command: {command}")
+            LOGGER.error(f"error: {ex}, command: {command}", exc_info=True)
         self.bonjourOnce = True
 
         
-    def ratgdoCheck(self):
+    def ratgdo_check(self):
         """
         Function to validate good ip, existence and running of Ratgdo garage
         controller. Setting or resetting ratgdoOK based on simple pulse check,
@@ -395,7 +404,7 @@ class VirtualGarage(Node):
         return False
 
     
-    def ratgdoPost(self, post):
+    def ratgdo_post(self, post):
         """
         Post content, usually commands or request of status,
         to Ratgdo garage controller, if device has been validated with ratgdoOK.
@@ -530,22 +539,22 @@ class VirtualGarage(Node):
                             if msg:
                                 id = msg.get('id')
                                 if id == 'light-light':
-                                    self.setRatgdoLight(msg)
+                                    self.set_ratgdo_light(msg)
                                     LOGGER.info('event:state - processed id:{}'.format(id))
                                 elif id == 'cover-door':
-                                    self.setRatgdoDoor(msg)
+                                    self.set_ratgdo_door(msg)
                                     LOGGER.info('event:state - processed id:{}'.format(id))
                                 elif id == 'binary_sensor-motor':
-                                    self.setRatgdoMotor(msg)
+                                    self.set_ratgdo_motor(msg)
                                     LOGGER.info('event:state - processed id:{}'.format(id))
                                 elif id == 'binary_sensor-motion':
-                                    self.setRatgdoMotion(msg)
+                                    self.set_ratgdo_motion(msg)
                                     LOGGER.info('event:state - processed id:{}'.format(id))
                                 elif id == 'lock-lock_remotes':
-                                    self.setRatgdoLock(msg)
+                                    self.set_ratgdo_lock(msg)
                                     LOGGER.info('event:state - processed id:{}'.format(id))
                                 elif id == 'binary_sensor-obstruction': 
-                                    self.setRatgdoObstruct(msg)
+                                    self.set_ratgdo_obstruct(msg)
                                     LOGGER.info('event:state - processed id:{}'.format(id))
                                 else:
                                     LOGGER.info(f'event:state - no action - {id}')                    
@@ -700,11 +709,11 @@ class VirtualGarage(Node):
         self.setDriver('GV0', self.data['light'])
         self.reportCmd("LT_ON", 2)
         if self.data['lightId'] > 0: # type: ignore
-            self.pushTheValue(self.data['lightT'], self.data['lightId'], self.data['light'])
+            self.push_the_value(self.data['lightT'], self.data['lightId'], self.data['light'])
         post = f"{self.ratgdo}{LIGHT}{TURN_ON}"
-        self.ratgdoPost(post)
+        self.ratgdo_post(post)
         store_values(self)
-        self.resetTime()
+        self.reset_time()
 
         
     def lt_off_cmd(self, command = None):
@@ -717,11 +726,11 @@ class VirtualGarage(Node):
         self.setDriver('GV0', self.data['light'])
         self.reportCmd("LT_OFF", 2)
         if self.data['lightId'] > 0:
-            self.pushTheValue(self.data['lightT'], self.data['lightId'], self.data['light'])
+            self.push_the_value(self.data['lightT'], self.data['lightId'], self.data['light'])
         post = f"{self.ratgdo}{LIGHT}{TURN_OFF}"
-        self.ratgdoPost(post)
+        self.ratgdo_post(post)
         store_values(self)
-        self.resetTime()
+        self.reset_time()
 
         
     def door_command(self, post):
@@ -730,11 +739,11 @@ class VirtualGarage(Node):
         send motor command to ISY, post motor command to Ratgdo, reset last update time
         """
         if self.data['dcommandId'] > 0:
-            self.pushTheValue(self.data['dcommandT'], self.data['dcommandId'], self.data['dcommand'])
+            self.push_the_value(self.data['dcommandT'], self.data['dcommandId'], self.data['dcommand'])
         self.setDriver('GV2', self.data['dcommand'])
-        self.ratgdoPost(post)
+        self.ratgdo_post(post)
         store_values(self)
-        self.resetTime()
+        self.reset_time()
 
         
     def dr_open_cmd(self, command = None):
@@ -795,11 +804,11 @@ class VirtualGarage(Node):
         self.setDriver('GV4', self.data['lock'])
         self.reportCmd("LOCK",2)
         if self.data['lockId'] > 0:
-            self.pushTheValue(self.data['lockT'], self.data['lockId'], self.data['lock'])
+            self.push_the_value(self.data['lockT'], self.data['lockId'], self.data['lock'])
         post = f"{self.ratgdo}{LOCK_REMOTES}{LOCK}"
-        self.ratgdoPost(post)
+        self.ratgdo_post(post)
         store_values(self)
-        self.resetTime()
+        self.reset_time()
         
         
     def lk_unlock_cmd(self, command = None):
@@ -812,14 +821,14 @@ class VirtualGarage(Node):
         self.setDriver('GV4', self.data['lock'])
         self.reportCmd("UNLOCK",2)
         if self.data['lockId'] > 0:
-            self.pushTheValue(self.data['lockT'], self.data['lockId'], self.data['lock'])
+            self.push_the_value(self.data['lockT'], self.data['lockId'], self.data['lock'])
         post = f"{self.ratgdo}{LOCK_REMOTES}{UNLOCK}"
-        self.ratgdoPost(post)
+        self.ratgdo_post(post)
         store_values(self)
-        self.resetTime()
+        self.reset_time()
 
         
-    def pushTheValue(self, type, id, value):
+    def push_the_value(self, type, id, value):
         """
         Push to ISY variable the value,
         based on variable type (1 = integer, 2 = state),
@@ -833,7 +842,7 @@ class VirtualGarage(Node):
         self.isy.cmd('/rest/vars' + _type + _id + '/' + str(value))
 
         
-    def updateVars(self) -> None:
+    def update_vars(self) -> None:
         """
         Uses FIELDS definitions to pulling data from ISY, then storing values
         """
@@ -846,13 +855,13 @@ class VirtualGarage(Node):
 
                 # Only proceed if both type and ID are present and non-zero
                 if var_type and var_id:
-                    new_val = self.updateVar_from_id(var_type, var_id)
+                    new_val = self.update_var_from_id(var_type, var_id)
                     if new_val is not None:
                         self.data[var_name] = new_val
         store_values(self)
 
 
-    def updateVar_from_id(self, var_type: Any, var_id: Any) -> int | float | None:
+    def update_var_from_id(self, var_type: Any, var_id: Any) -> int | float | None:
         """
         Pulls data using pull_from_id and handles errors.
         """
@@ -955,7 +964,7 @@ class VirtualGarage(Node):
             return
 
     
-    def pullFromRatgdo(self, get):
+    def pull_from_ratgdo(self, get):
         """
         Generic get function to return Ratgdo data to calling function.
         Not currently used.  Was written to test.
@@ -977,7 +986,7 @@ class VirtualGarage(Node):
             return False, {}
 
         
-    def getRatgdoDirect(self):
+    def get_ratgdo_direct(self):
         """
         Main function to poll Ratgdo for current status of immportant
         garage variables. Status of Light, door, motion in space, motor movement,
@@ -990,7 +999,7 @@ class VirtualGarage(Node):
                 LOGGER.error(f"LIGHT: res.status_code = {res.status_code}")
                 return False
             else:
-                self.setRatgdoLight(res.json())
+                self.set_ratgdo_light(res.json())
         except Exception as ex:
             LOGGER.error(f"LIGHT error: {ex}")
             return False
@@ -1003,7 +1012,7 @@ class VirtualGarage(Node):
                 LOGGER.error(f"DOOR: res.status_code = {res.status_code}")
                 return False
             else:
-                self.setRatgdoDoor(res.json())
+                self.set_ratgdo_door(res.json())
         except Exception as ex:
             LOGGER.error(f"DOOR error: {ex}")
             return False
@@ -1016,7 +1025,7 @@ class VirtualGarage(Node):
                 LOGGER.error(f"MOTION: res.status_code = {res.status_code}")
                 return False
             else:
-                self.setRatgdoMotion(res.json())
+                self.set_ratgdo_motion(res.json())
         except Exception as ex:
             LOGGER.error(f"MOTION error: {ex}")
             return False
@@ -1029,7 +1038,7 @@ class VirtualGarage(Node):
                 LOGGER.error(f"MOTOR: res.status_code = {res.status_code}")
                 return False
             else:
-                self.setRatgdoMotor(res.json())
+                self.set_ratgdo_motor(res.json())
         except Exception as ex:
             LOGGER.error(f"MOTOR error: {ex}")
             return False
@@ -1042,7 +1051,7 @@ class VirtualGarage(Node):
                 LOGGER.error(f"LOCK_REMOTES: res.status_code = {res.status_code}")
                 return False
             else:
-                self.setRatgdoLock(res.json())
+                self.set_ratgdo_lock(res.json())
         except Exception as ex:
             LOGGER.error(f"LOCK_REMOTES error: {ex}")
             return False
@@ -1055,16 +1064,16 @@ class VirtualGarage(Node):
                 LOGGER.error(f"OBSTRUCT: res.status_code = {res.status_code}")
                 return False
             else:
-                self.setRatgdoObstruct(res.json())
+                self.set_ratgdo_obstruct(res.json())
         except Exception as ex:
             LOGGER.error(f"OBSTRUCT error: {ex}")
             return False
 
-        LOGGER.info('getRatgdoDirect success!')
+        LOGGER.info('get_ratgdo_direct success!')
         return True
     
                                 
-    def setRatgdoLight(self, _data):
+    def set_ratgdo_light(self, _data):
         """
         Update persistent data as well as send command.
         Called by either poll or event.
@@ -1077,7 +1086,7 @@ class VirtualGarage(Node):
             self.data['light'] = 0
             
 
-    def setRatgdoDoor(self, _data):
+    def set_ratgdo_door(self, _data):
         """
         Update persistent data as well as send command.
         Called by either poll or event.
@@ -1115,7 +1124,7 @@ class VirtualGarage(Node):
             self.data['position'] = 101
 
             
-    def setRatgdoMotor(self, _data):
+    def set_ratgdo_motor(self, _data):
         """
         Update persistent data as well as send command.
         Called by either poll or event.
@@ -1130,7 +1139,7 @@ class VirtualGarage(Node):
             self.reportCmd('MOTOROFF',2)
 
             
-    def setRatgdoMotion(self, _data):
+    def set_ratgdo_motion(self, _data):
         """
         Update persistent data as well as send command.
         Called by either poll or event.
@@ -1145,7 +1154,7 @@ class VirtualGarage(Node):
             self.reportCmd('NOMOTION',2)
 
             
-    def setRatgdoLock(self, _data):
+    def set_ratgdo_lock(self, _data):
         """
         Update persistent data as well as send command.
         Called by either poll or event.
@@ -1158,7 +1167,7 @@ class VirtualGarage(Node):
             self.data['lock'] = 0
 
             
-    def setRatgdoObstruct(self, _data):
+    def set_ratgdo_obstruct(self, _data):
         """
         Update persistent data as well as send command.
         Called by either poll or event.
@@ -1173,7 +1182,7 @@ class VirtualGarage(Node):
             self.reportCmd('NOOBSTRUCTION',2)
 
             
-    def updateISY(self):
+    def update_isy(self):
         """
         Update ISY drivers and process both lastUpdateTime & door openTime.
         First pass is signaled by and event, which then pushes all the fields to their drivers.
@@ -1186,7 +1195,7 @@ class VirtualGarage(Node):
                 return  # Skip config-only fields
             if self.getDriver(spec.driver) != self.data[field_name]:
                 self.setDriver(spec.driver, self.data[field_name])
-                self.resetTime()
+                self.reset_time()
 
         if self.first_pass_event.is_set():
             for field_name, spec in FIELDS.items():
@@ -1194,7 +1203,7 @@ class VirtualGarage(Node):
                     self.setDriver(spec.driver, self.data[field_name])
             if self.getDriver(FIELDS["door"].driver) != self.data["door"]:
                 self.data["dcommand"] = 0
-            self.resetTime()
+            self.reset_time()
             self.first_pass_event.clear()
         else:
             # Door change logic
@@ -1209,7 +1218,7 @@ class VirtualGarage(Node):
 
         # Time since last update
         if self.data['lastUpdateTime'] == 0.0:
-            self.resetTime()
+            self.reset_time()
         since_last_update = round(((current_time - self.data["lastUpdateTime"]).total_seconds())/60,1)
         self.setDriver(FIELDS["lastUpdateTime"].driver, min(since_last_update, 9999))
 
@@ -1230,11 +1239,11 @@ class VirtualGarage(Node):
         """
         LOGGER.info(f"{self.name}, {command}")
         self.first_pass_event.set() # reset first pass to push values
-        self.resetTime()
+        self.reset_time()
         store_values(self)
 
 
-    def resetTime(self):
+    def reset_time(self):
         """
         Reset the last update time to now
         """
