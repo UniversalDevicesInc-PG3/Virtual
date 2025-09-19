@@ -15,7 +15,7 @@ from udi_interface import Node, LOGGER
 # constants
 
 # local imports
-from utils.node_funcs import FieldSpec, _apply_state
+from utils.node_funcs import FieldSpec, load_persistent_data, store_values
 
 # constants
 
@@ -95,18 +95,18 @@ class VirtualGeneric(Node):
         self.controller.ready_event.wait()
         
         # get persistent data from polyglot or depreciated: old db file, then delete db file
-        #load_persistent_data(self)
-        persistence = self.controller.Data.get(self.name)
-        if persistence:
-            _apply_state(self,persistence, FIELDS)
+        load_persistent_data(self, FIELDS)
+        # persistence = self.controller.Data.get(self.name)
+        # if persistence:
+        #     _apply_state(self,persistence, FIELDS)
         LOGGER.info(f"data:{self.data}")
 
-    def store_values(self) -> None:
-        """
-        Store persistent data to Polyglot Data structure.
-        """
-        self.controller.Data[self.name] = self.data
-        LOGGER.info(f"Data:{self.controller.Data[self.name]} , data:{self.data}")
+    # def store_values(self) -> None:
+    #     """
+    #     Store persistent data to Polyglot Data structure.
+    #     """
+    #     self.controller.Data[self.name] = self.data
+    #     LOGGER.info(f"Data:{self.controller.Data[self.name]} , data:{self.data}")
                     
 
     def DON_cmd(self, command=None):
@@ -117,7 +117,7 @@ class VirtualGeneric(Node):
             self.data['level'] = 100
         self.setDriver('OL', self.data.get('level'))
         self.reportCmd("DON")
-        self.store_values()
+        store_values(self)
         LOGGER.debug("Exit")
 
 
@@ -129,7 +129,7 @@ class VirtualGeneric(Node):
         self.data['level'] = 0
         self.setDriver('OL', 0)
         self.reportCmd("DOF")
-        self.store_values()
+        store_values(self)
         LOGGER.debug("Exit")
 
 
@@ -138,7 +138,7 @@ class VirtualGeneric(Node):
         self.data['level'] = 100
         self.setDriver('OL', 100)
         self.reportCmd("DFON")
-        self.store_values()
+        store_valuess(self)
         LOGGER.debug("Exit")
 
 
@@ -150,7 +150,7 @@ class VirtualGeneric(Node):
         self.data['level'] = 0
         self.setDriver('OL', 0)
         self.reportCmd("DFOF")
-        self.store_values()
+        store_values(self)
         LOGGER.debug("Exit")
 
 
@@ -162,7 +162,7 @@ class VirtualGeneric(Node):
         self.data['level'] = level
         self.setDriver('OL', level)
         self.reportCmd("BRT")
-        self.store_values()
+        store_values(self)
         LOGGER.debug("Exit")
 
 
@@ -177,7 +177,7 @@ class VirtualGeneric(Node):
         self.data['level'] = level
         self.setDriver('OL', level)
         self.reportCmd("DIM")
-        self.store_values()
+        store_values(self)
         LOGGER.debug("Exit")
 
 
@@ -191,7 +191,7 @@ class VirtualGeneric(Node):
         self.data['level'] = level
         self.setDriver('OL', level)
         self.reportCmd("OL", value=level)
-        self.store_values()
+        store_values(self)
         LOGGER.debug("Exit")
 
 
