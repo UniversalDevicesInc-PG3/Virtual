@@ -1162,7 +1162,7 @@ class VirtualGarage(Node):
             since_last_update = round(((current_time - self.lastUpdateTime).total_seconds())/60,1)
             self.data['lastUpdateTime'] = since_last_update
             self.setDriver(FIELDS["lastUpdateTime"].driver, min(since_last_update, 9999))
-            LOGGER.info(f"slu:{since_last_update}")
+            LOGGER.info(f"slt:{self.lastUpdateTime}, slu:{since_last_update}, data:{self.data['lastUpdataTime']}")
         except Exception as ex:
             LOGGER.error(f"slu error {ex}", exc_info=True)
 
@@ -1175,9 +1175,9 @@ class VirtualGarage(Node):
             open_time_delta = round((current_time - self.openTime).total_seconds(),1)
             self.data['openTime'] = min(open_time_delta, 9999)
             self.setDriver(FIELDS["openTime"].driver, self.data['openTime'])
-            LOGGER.info(f"slu:{self.openTime}")
+            LOGGER.info(f"O-T:{self.openTime}, data:{self.data['openTime']}")
         except Exception as ex:
-            LOGGER.error(f"slu error {ex}", exc_info=True)
+            LOGGER.error(f"T-T error {ex}", exc_info=True)
 
 
        
