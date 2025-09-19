@@ -1158,8 +1158,9 @@ class VirtualGarage(Node):
         # Time since last update
         if self.data['lastUpdateTime'] == 0.0:
             self.reset_time()
-        since_last_update = round(((current_time - self.data["lastUpdateTime"]).total_seconds())/60,1)
+        since_last_update = round(((current_time - self.lastUpdateTime).total_seconds())/60,1)
         self.setDriver(FIELDS["lastUpdateTime"].driver, min(since_last_update, 9999))
+        self.data['lastUpdateTime'] = since_last_update
 
         # Door open time tracking
         if not self.data["openTime"] or self.data["openTime"] == 0.0:
@@ -1186,7 +1187,8 @@ class VirtualGarage(Node):
         """
         Reset the last update time to now
         """
-        self.data['lastUpdateTime'] = datetime.now()
+        self.lastUpdateTime = datetime.now()
+        self.data['lastUpdateTime'] = 0.0
         self.setDriver('GV6', 0.0)
 
         

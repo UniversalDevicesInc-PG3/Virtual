@@ -127,7 +127,7 @@ class VirtualGeneric(Node):
         self.data['level'] = 100
         self.setDriver('OL', 100)
         self.reportCmd("DFON")
-        store_valuess(self)
+        store_values(self)
         LOGGER.debug("Exit")
 
 
