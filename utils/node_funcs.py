@@ -19,14 +19,11 @@ class FieldSpec:
 
 # Single source of truth for field names, driver codes, and defaults
 # below is an example
-try:
-    FIELDS
-except NameError:
-    FIELDS: dict[str, FieldSpec] = {
-        #State variables (pushed to drivers)
-        "name":           FieldSpec(driver="GV0", default=0, data_type="state"),
-        "nameT":          FieldSpec(driver=None, default=0, data_type="config"),
-    }
+    # FIELDS: dict[str, FieldSpec] = {
+    #     #State variables (pushed to drivers)
+    #     "name":           FieldSpec(driver="GV0", default=0, data_type="state"),
+    #     "nameT":          FieldSpec(driver=None, default=0, data_type="config"),
+    # }
 
 
 def get_valid_node_address(name,max_length=14):
@@ -75,11 +72,11 @@ def load_persistent_data(self) -> None:
     _push_drivers(self)
 
 
-def _apply_state(self, src: Dict[str, Any]) -> None:
+def _apply_state(self, src: Dict[str, Any], FIELDS) -> None:
     """
     Apply values from src; fall back to per-instance defaults
     """
-    for field in self.FIELDS.keys():
+    for field in FIELDS.keys():
         self.data[field] = src.get(field, self.data[field])
 
         

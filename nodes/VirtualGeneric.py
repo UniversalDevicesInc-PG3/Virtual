@@ -98,7 +98,7 @@ class VirtualGeneric(Node):
         #load_persistent_data(self)
         persistence = self.controller.Data.get(self.name)
         if persistence:
-            _apply_state(self,persistence)
+            _apply_state(self,persistence, FIELDS)
         LOGGER.info(f"data:{self.data}")
 
     # def _apply_state(self, src: Dict[str, Any]) -> None:
