@@ -6,8 +6,8 @@ udi-Virtual-pg3 NodeServer/Plugin for EISY/Polisy
 VirtualGeneric class
 """
 # std libraries
-from typing import Any, Optional, Dict
-from dataclasses import dataclass
+#from typing import Any, Optional, Dict
+#from dataclasses import dataclass
 
 #external libraries
 from udi_interface import Node, LOGGER
@@ -15,18 +15,18 @@ from udi_interface import Node, LOGGER
 # constants
 
 # local imports
-#from utils.node_funcs import FieldSpec, load_persist
+from utils.node_funcs import FieldSpec, _apply_state
 
 # constants
 
-@dataclass(frozen=True)
-class FieldSpec:
-    driver: Optional[str]  # e.g., "GV1" or None if not pushed to a driver
-    default: Any           # per-field default
-    data_type: str         # denote data type (state or config)
-    def should_update(self) -> bool:
-            """Return True if this field should be pushed to a driver."""
-            return self.driver is not None and self.data_type == "state"
+# @dataclass(frozen=True)
+# class FieldSpec:
+#     driver: Optional[str]  # e.g., "GV1" or None if not pushed to a driver
+#     default: Any           # per-field default
+#     data_type: str         # denote data type (state or config)
+#     def should_update(self) -> bool:
+#             """Return True if this field should be pushed to a driver."""
+#             return self.driver is not None and self.data_type == "state"
 
 # Single source of truth for field names, driver codes, and defaults
 FIELDS: dict[str, FieldSpec] = {
@@ -98,15 +98,15 @@ class VirtualGeneric(Node):
         #load_persistent_data(self)
         persistence = self.controller.Data.get(self.name)
         if persistence:
-            self._apply_state(persistence)
+            _apply_state(self,persistence)
         LOGGER.info(f"data:{self.data}")
 
-    def _apply_state(self, src: Dict[str, Any]) -> None:
-        """
-        Apply values from src; fall back to per-instance defaults
-        """
-        for field in FIELDS.keys():
-            self.data[field] = src.get(field, self.data[field])
+    # def _apply_state(self, src: Dict[str, Any]) -> None:
+    #     """
+    #     Apply values from src; fall back to per-instance defaults
+    #     """
+    #     for field in FIELDS.keys():
+    #         self.data[field] = src.get(field, self.data[field])
 
     def store_values(self) -> None:
         """

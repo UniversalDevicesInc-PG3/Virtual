@@ -19,11 +19,14 @@ class FieldSpec:
 
 # Single source of truth for field names, driver codes, and defaults
 # below is an example
-# FIELDS: dict[str, FieldSpec] = {
-    # State variables (pushed to drivers)
-    # "name":           FieldSpec(driver="GV0", default=0, data_type="state"),
-    # "nameT":          FieldSpec(driver=None, default=0, data_type="config"),
-# }
+try:
+    FIELDS
+except NameError:
+    FIELDS: dict[str, FieldSpec] = {
+        #State variables (pushed to drivers)
+        "name":           FieldSpec(driver="GV0", default=0, data_type="state"),
+        "nameT":          FieldSpec(driver=None, default=0, data_type="config"),
+    }
 
 
 def get_valid_node_address(name,max_length=14):
@@ -76,10 +79,10 @@ def _apply_state(self, src: Dict[str, Any]) -> None:
     """
     Apply values from src; fall back to per-instance defaults
     """
-    for field, spec in self.FIELDS.items():
-        self.data[field] = src.get(field, spec.default)
+    for field in FIELDS.keys():
+        self.data[field] = src.get(field, self.data[field])
 
-
+        
 def _check_db_files_and_migrate(self) -> Tuple[bool, Dict[str, Any] | None]:
     """
     Check for deprecated shelve DB files, migrate data, then delete old files.
