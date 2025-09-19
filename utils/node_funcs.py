@@ -48,28 +48,28 @@ def get_valid_node_name(name,max_length=32):
     return sname[offset:]
 
 
-def load_persistent_data(self) -> None:
+def load_persistent_data(self, FIELDS) -> None:
     """
     Load state from Polyglot persistence or migrate from old shelve DB files.
     """
     data = self.controller.Data.get(self.name)
 
     if data is not None:
-        #_apply_state(self, data)
+        _apply_state(self, data, FIELDS)
         LOGGER.info("%s, Loaded from persistence", self.name)
     else:
         LOGGER.info("%s, No persistent data found. Checking for old DB files...", self.name)
         migrated, old_data = _check_db_files_and_migrate(data)
         if migrated and old_data is not None:
-            _apply_state(self, old_data)
+            _apply_state(self, old_data, FIELDS)
             LOGGER.info("%s, Migrated from old DB files.", self.name)
         else:
-            _apply_state(self,{})  # initialize from defaults
+            _apply_state(self,{}, FIELDS)  # initialize from defaults
             LOGGER.info("%s, No old DB files found.", self.name)
 
     # Persist and push drivers
     store_values(self)
-    _push_drivers(self)
+    _push_drivers(self, FIELDS)
 
 
 def _apply_state(self, src: Dict[str, Any], FIELDS) -> None:
@@ -128,11 +128,11 @@ def store_values(self) -> None:
 
 
 
-def _push_drivers(self) -> None:
+def _push_drivers(self, FIELDS) -> None:
     """
     Push only fields that have a driver mapping
     """
-    for field, spec in self.FIELDS.items():
+    for field, spec in FIELDS.items():
         if spec.driver and spec.data_type == "state":
             self.setDriver(spec.driver, self.data[field], report=True, force=True)
 

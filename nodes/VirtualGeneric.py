@@ -101,13 +101,6 @@ class VirtualGeneric(Node):
             _apply_state(self,persistence, FIELDS)
         LOGGER.info(f"data:{self.data}")
 
-    # def _apply_state(self, src: Dict[str, Any]) -> None:
-    #     """
-    #     Apply values from src; fall back to per-instance defaults
-    #     """
-    #     for field in FIELDS.keys():
-    #         self.data[field] = src.get(field, self.data[field])
-
     def store_values(self) -> None:
         """
         Store persistent data to Polyglot Data structure.
