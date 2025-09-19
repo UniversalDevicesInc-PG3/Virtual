@@ -79,7 +79,7 @@ def _apply_state(self, src: Dict[str, Any]) -> None:
     """
     Apply values from src; fall back to per-instance defaults
     """
-    for field in FIELDS.keys():
+    for field in self.FIELDS.keys():
         self.data[field] = src.get(field, self.data[field])
 
         
