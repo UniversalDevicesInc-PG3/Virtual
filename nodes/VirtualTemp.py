@@ -119,7 +119,7 @@ class VirtualTemp(Node):
         self.name = name
 
         # default variables and drivers
-        self._init_defaults(default_ovr)
+        self._init_defaults()
 
         self.poly.subscribe(self.poly.START, self.start, address)
         

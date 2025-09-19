@@ -96,8 +96,9 @@ class VirtualGeneric(Node):
         
         # get persistent data from polyglot or depreciated: old db file, then delete db file
         #load_persistent_data(self)
-        if self.controller.Data.get(self.name):
-            self._apply_state(self.data)
+        persistence = self.controller.Data.get(self.name)
+        if persistence:
+            self._apply_state(persistence)
         LOGGER.info(f"data:{self.data}")
 
     def _apply_state(self, src: Dict[str, Any]) -> None:
@@ -105,7 +106,7 @@ class VirtualGeneric(Node):
         Apply values from src; fall back to per-instance defaults
         """
         for field in FIELDS.keys():
-            setattr(self, field, src.get(field, self.data[field]))
+            self.data[field] = src.get(field, self.data[field])
 
     def store_values(self) -> None:
         """
