@@ -1166,9 +1166,9 @@ class VirtualGarage(Node):
 
         try:
             # Door open time tracking
-            if type(self.data["openTime"]) != int:
+            if type(self.data["openTime"]) != float:
                 self.openTime = current_time
-                self.data['openTime'] = 0
+                self.data['openTime'] = 0.0
             if self.data["door"] == 0:
                 self.openTime = current_time
             open_time_delta = min(round((current_time - self.openTime).total_seconds(),1), 9999)
