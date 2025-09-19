@@ -1162,7 +1162,7 @@ class VirtualGarage(Node):
             since_last_update = round(((current_time - self.lastUpdateTime).total_seconds())/60,1)
             self.data['lastUpdateTime'] = since_last_update
             self.setDriver(FIELDS["lastUpdateTime"].driver, min(since_last_update, 9999))
-            LOGGER.info(f"slt:{self.lastUpdateTime}, slu:{since_last_update}, data:{self.data['lastUpdataTime']}")
+            LOGGER.info(f"slt:{self.lastUpdateTime}, slu:{since_last_update}, data:{self.data['lastUpdateTime']}")
         except Exception as ex:
             LOGGER.error(f"slu error {ex}", exc_info=True)
 
