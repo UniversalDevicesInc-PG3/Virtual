@@ -142,17 +142,11 @@ class VirtualTemp(Node):
         self.poly.subscribe(self.poly.POLL, self.poll)
         
 
-    def _init_defaults(self, default_ovr: Optional[Dict[str, Any]] = None) -> None:
+    def _init_defaults(self) -> None:
         """
         Build per-instance defaults from FIELDS, then overlay optional overrides
         """
         self._defaults: Dict[str, Any] = {field: spec.default for field, spec in FIELDS.items()}
-        if default_ovr:
-            for k, v in default_ovr.items():
-                if k in FIELDS:
-                    self._defaults[k] = v
-                else:
-                    LOGGER.warning("Ignoring unknown default override key: %s", k)
                     
 
     def poll(self, flag):

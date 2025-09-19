@@ -6,7 +6,7 @@ udi-Virtual-pg3 NodeServer/Plugin for EISY/Polisy
 VirtualGeneric class
 """
 # std libraries
-from typing import Any, Optional
+from typing import Any, Optional, Dict
 from dataclasses import dataclass
 
 #external libraries
@@ -96,8 +96,16 @@ class VirtualGeneric(Node):
         
         # get persistent data from polyglot or depreciated: old db file, then delete db file
         #load_persistent_data(self)
-        self.data = self.controller.Data.get(self.name)
+        if self.controller.Data.get(self.name):
+            self._apply_state(self.data)
         LOGGER.info(f"data:{self.data}")
+
+    def _apply_state(self, src: Dict[str, Any]) -> None:
+        """
+        Apply values from src; fall back to per-instance defaults
+        """
+        for field in FIELDS.keys():
+            setattr(self, field, src.get(field, self.data[field]))
 
     def store_values(self) -> None:
         """
