@@ -96,18 +96,7 @@ class VirtualGeneric(Node):
         
         # get persistent data from polyglot or depreciated: old db file, then delete db file
         load_persistent_data(self, FIELDS)
-        # persistence = self.controller.Data.get(self.name)
-        # if persistence:
-        #     _apply_state(self,persistence, FIELDS)
         LOGGER.info(f"data:{self.data}")
-
-    # def store_values(self) -> None:
-    #     """
-    #     Store persistent data to Polyglot Data structure.
-    #     """
-    #     self.controller.Data[self.name] = self.data
-    #     LOGGER.info(f"Data:{self.controller.Data[self.name]} , data:{self.data}")
-                    
 
     def DON_cmd(self, command=None):
         LOGGER.info(f"{self.name}, {command}")

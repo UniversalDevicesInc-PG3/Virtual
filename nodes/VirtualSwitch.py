@@ -100,7 +100,8 @@ class VirtualSwitch(Node):
         self.controller.ready_event.wait()
 
         # get persistent data from polyglot or depreciated: old db file, then delete db file
-        load_persistent_data(self)
+        load_persistent_data(self, FIELDS)
+        LOGGER.info(f"data:{self.data}")
         
 
     def set_on_cmd(self, command=None):

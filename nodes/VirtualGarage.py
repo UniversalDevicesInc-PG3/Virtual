@@ -226,7 +226,8 @@ class VirtualGarage(Node):
         self.connect_thread.start()
 
         # get persistent data from polyglot or depreciated: old db file, then delete db file
-        load_persistent_data(self)
+        load_persistent_data(self, FIELDS)
+        LOGGER.info(f"data:{self.data}")
 
         # retrieve configuration data
         self.get_config_data()
