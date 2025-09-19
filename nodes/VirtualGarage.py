@@ -48,8 +48,8 @@ FIELDS: dict[str, FieldSpec] = {
     "motion":          FieldSpec(driver="GV3", default=0, data_type="state"),
     "lock":            FieldSpec(driver="GV4", default=0, data_type="state"),
     "obstruct":        FieldSpec(driver="GV5", default=0, data_type="state"),
-    "lastUpdateTime":  FieldSpec(driver="GV6", default=0.0, data_type="calc"),
-    "openTime":        FieldSpec(driver="GV7", default=0.0, data_type="calc"),
+    "lastUpdateTime":  FieldSpec(driver="GV6", default=0.0, data_type="state"),
+    "openTime":        FieldSpec(driver="GV7", default=0.0, data_type="state"),
     "motor":           FieldSpec(driver="GV8", default=0, data_type="state"),
     "position":        FieldSpec(driver="GV9", default=0, data_type="state"),
     
@@ -1166,12 +1166,13 @@ class VirtualGarage(Node):
 
         try:
             # Door open time tracking
-            if not self.data["openTime"]:
-                self.openTime = current_time            
+            if type(self.data["openTime"]) != int:
+                self.openTime = current_time
+                self.data['openTime'] = 0
             if self.data["door"] == 0:
                 self.openTime = current_time
-            open_time_delta = round((current_time - self.openTime).total_seconds(),1)
-            self.data['openTime'] = min(open_time_delta, 9999)
+            open_time_delta = min(round((current_time - self.openTime).total_seconds(),1), 9999)
+            self.data['openTime'] = open_time_delta
             self.setDriver(FIELDS["openTime"].driver, self.data['openTime'])
             LOGGER.info(f"O-T:{self.openTime}, data:{self.data['openTime']}")
         except Exception as ex:
