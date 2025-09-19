@@ -1164,13 +1164,14 @@ class VirtualGarage(Node):
 
         # Door open time tracking
         if not self.data["openTime"] or self.data["openTime"] == 0.0:
-            self.data["openTime"] = current_time
+            self.openTime = current_time
             
         if self.data["door"] == 0:
-            self.data["openTime"] = current_time
+            self.openTime = current_time
 
-        open_time_delta = round((current_time - self.data['openTime']).total_seconds(),1)
-        self.setDriver(FIELDS["openTime"].driver, min(open_time_delta, 9999))
+        open_time_delta = round((current_time - self.openTime).total_seconds(),1)
+        self.data['openTime'] = min(open_time_delta, 9999)
+        self.setDriver(FIELDS["openTime"].driver, self.data['openTime'])
 
        
     def reset_stats_cmd(self, command = None):
