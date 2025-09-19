@@ -6,15 +6,37 @@ udi-Virtual-pg3 NodeServer/Plugin for EISY/Polisy
 VirtualGeneric class
 """
 # std libraries
-import os.path, shelve
+from typing import Any, Optional
+from dataclasses import dataclass
 
 #external libraries
-import udi_interface
+from udi_interface import Node, LOGGER
 
 # constants
-LOGGER = udi_interface.LOGGER
 
-class VirtualGeneric(udi_interface.Node):
+# local imports
+#from utils.node_funcs import FieldSpec, load_persist
+
+# constants
+
+@dataclass(frozen=True)
+class FieldSpec:
+    driver: Optional[str]  # e.g., "GV1" or None if not pushed to a driver
+    default: Any           # per-field default
+    data_type: str         # denote data type (state or config)
+    def should_update(self) -> bool:
+            """Return True if this field should be pushed to a driver."""
+            return self.driver is not None and self.data_type == "state"
+
+# Single source of truth for field names, driver codes, and defaults
+FIELDS: dict[str, FieldSpec] = {
+    # State variables (pushed to drivers)
+    "level":           FieldSpec(driver="OL", default=0, data_type="state"),
+    "level_stored":    FieldSpec(driver=None, default=100, data_type="state"),
+}
+
+
+class VirtualGeneric(Node):
     id = 'virtualgeneric'
 
     """ This class represents a simple virtual generic or dimmer switch / relay.
@@ -56,9 +78,9 @@ class VirtualGeneric(udi_interface.Node):
         self.controller = polyglot.getNode(self.primary)
         self.address = address
         self.name = name
-
-        self.level = 0 # create as zero
-        self.level_stored = 100 # create as zero
+        
+        # default variables and drivers
+        self.data = {field: spec.default for field, spec in FIELDS.items()}
 
         self.poly.subscribe(self.poly.START, self.start, address)
 
@@ -73,158 +95,99 @@ class VirtualGeneric(udi_interface.Node):
         self.controller.ready_event.wait()
         
         # get persistent data from polyglot or depreciated: old db file, then delete db file
-        self.load_persistent_data()
-        
+        #load_persistent_data(self)
+        self.data = self.controller.Data.get(self.name)
 
-    def _checkDBfile_and_migrate(self):
-        """
-        Checks for the deprecated DB file, migrates data to Polyglot's
-        persistent storage, and then deletes the old file.
-        This helper function is called by load_persistent_data once during startup.
-        """
-        _name = str(self.name).replace(" ","_")
-        old_file_path = os.path.join("db", f"{_name}.db")
-
-        if not os.path.exists(old_file_path):
-            LOGGER.info(f'[{self.name}] No old DB file found at: {old_file_path}')
-            return False, None
-
-        LOGGER.info(f'[{self.name}] Old DB file found, migrating data...')
-
-        _key = 'key' + str(self.address)
-        try:
-            with shelve.open(os.path.join("db", _name), flag='r') as s:
-                existing_data = s.get(_key)
-        except Exception as ex:
-            LOGGER.error(f"[{self.name}] Error opening or reading old shelve DB: {ex}")
-            return False, None
-
-        if existing_data:
-            # Delete the old file after successful read
-            try:
-                LOGGER.info(f'[{self.name}] Deleting old DB file: {old_file_path}')
-                os.remove(old_file_path)
-            except OSError as ex:
-                LOGGER.error(f"[{self.name}] Error deleting old DB file: {ex}")
-
-        return True, existing_data
-    
-
-    def load_persistent_data(self):
-        """
-        Load state from Polyglot persistence or migrate from old DB file.
-        """
-        # Try to load from new persistence format first
-        data = self.controller.Data.get(self.name)
-
-        if data:
-            self.level = data.get('switchStatus', 0)
-            self.level_stored = data.get('switchStored', 0)
-            LOGGER.info(f"{self.name}, Loaded from persistence: level={self.level}, stored={self.level_stored}")
-        else:
-            LOGGER.info(f"switch:{self.name}, No persistent data found. Checking for old DB file...")
-            is_migrated, old_data = self._checkDBfile_and_migrate()
-            if is_migrated and old_data:
-                self.level = old_data.get('switchStatus', 0)
-                self.level_stored = old_data.get('switchStored', 0)
-                LOGGER.info(f"{self.name}, Migrated from old DB file. level={self.level}, stored={self.level_stored}")
-            else:
-                LOGGER.info(f"{self.name}, No old DB file found.")
-        # Store the migrated data in the new persistence format
-        self.store_values()
-        # Initial setting of ISY
-        self.setDriver('OL', self.level)
-                
-
-    def store_values(self):
+    def store_values(self) -> None:
         """
         Store persistent data to Polyglot Data structure.
         """
-        data_to_store = {
-            'switchStatus': self.level,
-            'switchStored': self.level_stored
-        }
-        self.controller.Data[self.name] = data_to_store
-        LOGGER.debug(f'Values stored for {self.name}: {data_to_store}')
+        self.controller.Data[self.name] = self.data
+        LOGGER.info(f"Data:{self.controller.Data[self.name]} , data:{self.data}")
+                    
 
-             
     def DON_cmd(self, command=None):
         LOGGER.info(f"{self.name}, {command}")
-        if self.level_stored > 0:
-            self.level = self.level_stored
+        if self.data.get('level_stored', 0) > 0:
+            self.data['level'] = self.data.get('level_stored')
         else:
-            self.level = 100
-        self.setDriver('OL', self.level)
-        self.reportCmd("DON", 2)
+            self.data['level'] = 100
+        self.setDriver('OL', self.data.get('level'))
+        self.reportCmd("DON")
         self.store_values()
         LOGGER.debug("Exit")
 
 
     def DOF_cmd(self, command=None):
         LOGGER.info(f"{self.name}, {command}")
-        if self.level not in [0, 100]:
-            self.level_stored = self.level
-        self.level = 0
-        self.setDriver('OL', self.level)
-        self.reportCmd("DOF", 2)
+        level = self.data.get('level', 0)
+        if level not in [0, 100]:
+            self.data['level_stored'] = level
+        self.data['level'] = 0
+        self.setDriver('OL', 0)
+        self.reportCmd("DOF")
         self.store_values()
         LOGGER.debug("Exit")
 
 
     def DFON_cmd(self, command=None):
         LOGGER.info(f"{self.name}, {command}")
-        self.level = 100
-        self.setDriver('OL', self.level)
-        self.reportCmd("DFON", 2)
+        self.data['level'] = 100
+        self.setDriver('OL', 100)
+        self.reportCmd("DFON")
         self.store_values()
         LOGGER.debug("Exit")
 
 
     def DFOF_cmd(self, command=None):
         LOGGER.info(f"{self.name}, {command}")
-        if self.level not in [0, 100]:
-            self.level_stored = self.level
-        self.level = 0
-        self.setDriver('OL', self.level)
-        self.reportCmd("DFOF", 2)
+        level = self.data.get('level', 0)
+        if level not in [None, 0, 100]:
+            self.data['level_stored'] = level 
+        self.data['level'] = 0
+        self.setDriver('OL', 0)
+        self.reportCmd("DFOF")
         self.store_values()
         LOGGER.debug("Exit")
 
 
     def BRT_cmd(self, command=None):
         LOGGER.info(f"{self.name}, {command}")
-        self.level = int(self.level) + 2
-        if self.level > 100: self.level = 100
-        self.level_stored = self.level
-        self.setDriver('OL', self.level)
-        self.reportCmd("BRT",2)
+        level = int(self.data.get('level', 0)) + 2
+        if level > 100: level = 100
+        self.data['level_stored'] = level
+        self.data['level'] = level
+        self.setDriver('OL', level)
+        self.reportCmd("BRT")
         self.store_values()
         LOGGER.debug("Exit")
 
 
     def DIM_cmd(self, command=None):
         LOGGER.info(f"{self.name}, {command}")
-        self.level = int(self.level) - 2
-        if self.level <= 0:
-            self.level = 0
-            self.level_stored = 10
+        level = int(self.data.get('level', 100)) - 2
+        if level <= 0:
+            level = 0
+            self.data['level_stored'] = 10 # keep stored to a minimum level
         else:
-            self.level_stored = self.level
-        self.setDriver('OL', self.level)
-        self.reportCmd("DIM",2)
+            self.data['level_stored'] = level
+        self.data['level'] = level
+        self.setDriver('OL', level)
+        self.reportCmd("DIM")
         self.store_values()
         LOGGER.debug("Exit")
 
 
     def set_OL_cmd(self, command):
         LOGGER.info(f"{self.name}, {command}")
-        self.level = int(command.get('value'))
-        if self.level != 0:
-            self.level_stored = self.level
+        level = int(command.get('value'))
+        if level != 0:
+            self.data['level_stored'] = level
         else:
-            self.level_stored = 10
-        self.setDriver('OL', self.level)
-        self.reportCmd("OL", value=self.level)
+            self.data['level_stored'] = 10
+        self.data['level'] = level
+        self.setDriver('OL', level)
+        self.reportCmd("OL", value=level)
         self.store_values()
         LOGGER.debug("Exit")
 

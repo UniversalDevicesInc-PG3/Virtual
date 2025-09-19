@@ -6,15 +6,33 @@ udi-Virtual-pg3 NodeServer/Plugin for EISY/Polisy
 VirtualSwitch class
 """
 # std libraries
-import os.path, shelve
+pass
 
 # external libraries
-import udi_interface
+from udi_interface import Node, LOGGER
+
+# local imports
+from utils.node_funcs import FieldSpec, load_persistent_data, store_values
 
 # constants
-LOGGER = udi_interface.LOGGER
 
-class VirtualSwitch(udi_interface.Node):
+# @dataclass(frozen=True)
+# class FieldSpec:
+#     driver: Optional[str]  # e.g., "GV1" or None if not pushed to a driver
+#     default: Any           # per-field default
+#     data_type: str         # denote data type (state or config)
+#     def should_update(self) -> bool:
+#             """Return True if this field should be pushed to a driver."""
+#             return self.driver is not None and self.data_type == "state"
+
+# Single source of truth for field names, driver codes, and defaults
+FIELDS: dict[str, FieldSpec] = {
+	# State variables (pushed to drivers)
+	"switch":           FieldSpec(driver="ST", default=0, data_type="state"),
+}
+
+
+class VirtualSwitch(Node):
     id = 'virtualswitch'
 
     """ This class represents a simple virtual switch / relay / light.
@@ -48,7 +66,7 @@ class VirtualSwitch(udi_interface.Node):
         :param name: This nodes name
         
         class variables:
-        self.switchStatus internal storage of 0,1 ON/OFF
+        self.data['switch'] internal storage of 0,1 ON/OFF
 
         subscribes:
         START: used to create/check/load DB file
@@ -66,7 +84,8 @@ class VirtualSwitch(udi_interface.Node):
         self.address = address
         self.name = name
 
-        self.switchStatus = 0 # create as OFF
+        # default variables and drivers
+        self.data = {field: spec.default for field, spec in FIELDS.items()}
 
         self.poly.subscribe(self.poly.START, self.start, address)
 
@@ -81,87 +100,18 @@ class VirtualSwitch(udi_interface.Node):
         self.controller.ready_event.wait()
 
         # get persistent data from polyglot or depreciated: old db file, then delete db file
-        self.load_persistent_data()
+        load_persistent_data(self)
         
 
-    def _checkDBfile_and_migrate(self):
-        """
-        Checks for the deprecated DB file, migrates data to Polyglot's
-        persistent storage, and then deletes the old file.
-        This helper function is called by load_persistent_data once during startup.
-        """
-        _name = str(self.name).replace(" ","_")
-        old_file_path = os.path.join("db", f"{_name}.db")
-
-        if not os.path.exists(old_file_path):
-            LOGGER.info(f'[{self.name}] No old DB file found at: {old_file_path}')
-            return False, None
-
-        LOGGER.info(f'[{self.name}] Old DB file found, migrating data...')
-
-        _key = 'key' + str(self.address)
-        try:
-            with shelve.open(os.path.join("db", _name), flag='r') as s:
-                existing_data = s.get(_key)
-        except Exception as ex:
-            LOGGER.error(f"[{self.name}] Error opening or reading old shelve DB: {ex}")
-            return False, None
-
-        if existing_data:
-            # Delete the old file after successful read
-            try:
-                LOGGER.info(f'[{self.name}] Deleting old DB file: {old_file_path}')
-                os.remove(old_file_path)
-            except OSError as ex:
-                LOGGER.error(f"[{self.name}] Error deleting old DB file: {ex}")
-
-        return True, existing_data
-
-
-    def load_persistent_data(self):
-        """
-        Load state from Polyglot persistence or migrate from old DB file.
-        """
-        # Try to load from new persistence format first
-        data = self.controller.Data.get(self.name)
-
-        if data:
-            self.switchStatus = data.get('switchStatus', 0)
-            LOGGER.info(f"{self.name}, Loaded from persistence: status={self.switchStatus}")
-        else:
-            LOGGER.info(f"{self.name}, No persistent data found. Checking for old DB file...")
-            is_migrated, old_data = self._checkDBfile_and_migrate()
-            if is_migrated and old_data:
-                self.switchStatus = old_data.get('switchStatus', 0)
-                LOGGER.info(f"{self.name}, Migrated from old DB file. status={self.switchStatus}")
-            else:
-                LOGGER.info(f"{self.name}, No old DB file found.")
-        # Store the migrated data in the new persistence format
-        self.store_values()
-        # Initial of ISY
-        self.setDriver('ST', self.switchStatus)
-
-
-    def store_values(self):
-        """
-        Store persistent data to Polyglot Data structure.
-        """
-        data_to_store = {
-            'switchStatus': self.switchStatus
-        }
-        self.controller.Data[self.name] = data_to_store
-        LOGGER.debug(f'Values stored for {self.name}: {data_to_store}')
-        
-        
     def set_on_cmd(self, command=None):
         """
         Turn the driver on, report cmd DON, store values in db for persistence.
         """
         LOGGER.info(f"{self.name}, {command}")
-        self.switchStatus = 1
+        self.data['switch'] = 1
         self.setDriver('ST', 1)
-        self.reportCmd("DON", 2)
-        self.store_values()
+        self.reportCmd("DON")
+        store_values(self)
         LOGGER.debug("Exit")
 
         
@@ -170,10 +120,10 @@ class VirtualSwitch(udi_interface.Node):
         Turn the driver off, report cmd DOF, store values in db for persistence.
         """
         LOGGER.info(f"{self.name}, {command}")
+        self.data['switch'] = 0
         self.setDriver('ST', 0)
-        self.reportCmd("DOF", 2)
-        self.switchStatus = 0
-        self.store_values()
+        self.reportCmd("DOF")
+        store_values(self)
         LOGGER.debug("Exit")
 
         
@@ -182,7 +132,7 @@ class VirtualSwitch(udi_interface.Node):
         Toggle the driver, report cmd DON/DOF as appropriate, store values in db for persistence.
         """
         LOGGER.info(f"{self.name}, {command}")
-        if self.switchStatus:
+        if self.data.get('switch'):
             self.set_off_cmd()
         else:
             self.set_on_cmd()                

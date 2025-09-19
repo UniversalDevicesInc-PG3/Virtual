@@ -19,11 +19,11 @@ class FieldSpec:
 
 # Single source of truth for field names, driver codes, and defaults
 # below is an example
-FIELDS: dict[str, FieldSpec] = {
+# FIELDS: dict[str, FieldSpec] = {
     # State variables (pushed to drivers)
     # "name":           FieldSpec(driver="GV0", default=0, data_type="state"),
     # "nameT":          FieldSpec(driver=None, default=0, data_type="config"),
-}
+# }
 
 
 def get_valid_node_address(name,max_length=14):
@@ -55,7 +55,7 @@ def load_persistent_data(self) -> None:
     data = self.controller.Data.get(self.name)
 
     if data is not None:
-        _apply_state(self, data)
+        #_apply_state(self, data)
         LOGGER.info("%s, Loaded from persistence", self.name)
     else:
         LOGGER.info("%s, No persistent data found. Checking for old DB files...", self.name)
@@ -76,8 +76,8 @@ def _apply_state(self, src: Dict[str, Any]) -> None:
     """
     Apply values from src; fall back to per-instance defaults
     """
-    for field in FIELDS.keys():
-        self.data[field] = src.get(field, self.data.get(field))
+    for field, spec in self.FIELDS.items():
+        self.data[field] = src.get(field, spec.default)
 
 
 def _check_db_files_and_migrate(self) -> Tuple[bool, Dict[str, Any] | None]:
@@ -124,16 +124,15 @@ def store_values(self) -> None:
     """
     Store persistent data to Polyglot Data structure.
     """
-    data_to_store = {field: self.data[field] for field in FIELDS.keys()}
-    self.controller.Data[self.name] = data_to_store
-    LOGGER.debug("Values stored for %s: %s", self.name, data_to_store)
+    self.controller.Data[self.name] = self.data
+
 
 
 def _push_drivers(self) -> None:
     """
     Push only fields that have a driver mapping
     """
-    for field, spec in FIELDS.items():
+    for field, spec in self.FIELDS.items():
         if spec.driver and spec.data_type == "state":
             self.setDriver(spec.driver, self.data[field], report=True, force=True)
 
