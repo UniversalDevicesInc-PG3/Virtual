@@ -9,11 +9,14 @@ VirtualTemp class
 import time, shelve
 import xml.etree.ElementTree as ET
 from typing import Any, Dict, Iterable, Optional, Tuple
-from dataclasses import dataclass
+# from dataclasses import dataclass
 from pathlib import Path
 
 # external libraries
 from udi_interface import LOGGER, ISY, Node
+
+# local imports
+from utils.node_funcs import FieldSpec, load_persistent_data, store_values
 
 # Dispatch map to select the correct tag and index based on var_type.
 # Using a dictionary for dispatch is more extensible and readable than a long if/elif chain.
@@ -25,31 +28,35 @@ _VARIABLE_TYPE_MAP = {
     '4': ('1', 'init', 'init'),
 }
 
-@dataclass(frozen=True)
-class FieldSpec:
-    driver: Optional[str]  # e.g., "GV1" or None if not pushed to a driver
-    default: Any           # per-field default
+# @dataclass(frozen=True)
+# class FieldSpec:
+#     driver: Optional[str]  # e.g., "GV1" or None if not pushed to a driver
+#     default: Any           # per-field default
+#     data_type: str         # denote data type (state or config)
+#     def should_update(self) -> bool:
+#             """Return True if this field should be pushed to a driver."""
+#             return self.driver is not None and self.data_type == "state"
 
 # Single source of truth for field names, driver codes, and defaults
 FIELDS: dict[str, FieldSpec] = {
-    "tempVal":         FieldSpec(driver="ST",  default=0.0), # 'ST'  : current temperature        
-    "prevVal":         FieldSpec(driver="GV1", default=0.0), # 'GV1' : previous temperature
-    "lastUpdateTime":  FieldSpec(driver="GV2", default=0.0), # 'GV2' : time since last update
-    "highTemp":        FieldSpec(driver="GV3", default=None), # 'GV3' : high temperature     
-    "lowTemp":         FieldSpec(driver="GV4", default=None), # 'GV4' : low temperature            
-    "previousHigh":    FieldSpec(driver=None,  default=None), # bucket for previous high
-    "previousLow":     FieldSpec(driver=None,  default=None), # bucket for previous low
-    "prevAvgTemp":     FieldSpec(driver=None,  default=0.0), # bucket for previous avg
-    "currentAvgTemp":  FieldSpec(driver="GV5", default=0.0), # 'GV5' : average of  high to low 
-    "action1":         FieldSpec(driver="GV6", default=0), # 'GV6' : action1 push to or pull from variable   
-    "action1type":     FieldSpec(driver="GV7", default=0), # 'GV7' : variable type integer or state
-    "action1id":       FieldSpec(driver="GV8", default=0), # 'GV8' : variable id
-    "action2":         FieldSpec(driver="GV9", default=0), # 'GV9' : action 2 push to or pull from variable  
-    "action2type":     FieldSpec(driver="GV10", default=0),# 'GV10': variable type 2 int or state, curr or init
-    "action2id":       FieldSpec(driver="GV11", default=0),# 'GV11': variable id 2   
-    "RtoPrec":         FieldSpec(driver="GV12", default=0),# 'GV12': raw to precision
-    "CtoF":            FieldSpec(driver="GV13", default=0),# 'GV13': Fahrenheit to Celsius
-    "FtoC":            FieldSpec(driver="GV13", default=0),# 'GV13': Celsius to Fahrenheit
+    "tempVal":         FieldSpec(driver="ST",  default=0.0, data_type="state"), # 'ST'  : current temperature        
+    "prevVal":         FieldSpec(driver="GV1", default=0.0, data_type="state"), # 'GV1' : previous temperature
+    "lastUpdateTime":  FieldSpec(driver="GV2", default=0.0, data_type="state"), # 'GV2' : time since last update
+    "highTemp":        FieldSpec(driver="GV3", default=None, data_type="state"), # 'GV3' : high temperature     
+    "lowTemp":         FieldSpec(driver="GV4", default=None, data_type="state"), # 'GV4' : low temperature            
+    "previousHigh":    FieldSpec(driver=None,  default=None, data_type="state"), # bucket for previous high
+    "previousLow":     FieldSpec(driver=None,  default=None, data_type="state"), # bucket for previous low
+    "prevAvgTemp":     FieldSpec(driver=None,  default=0.0, data_type="state"), # bucket for previous avg
+    "currentAvgTemp":  FieldSpec(driver="GV5", default=0.0, data_type="state"), # 'GV5' : average of  high to low 
+    "action1":         FieldSpec(driver="GV6", default=0, data_type="state"), # 'GV6' : action1 push to or pull from variable   
+    "action1type":     FieldSpec(driver="GV7", default=0, data_type="state"), # 'GV7' : variable type integer or state
+    "action1id":       FieldSpec(driver="GV8", default=0, data_type="state"), # 'GV8' : variable id
+    "action2":         FieldSpec(driver="GV9", default=0, data_type="state"), # 'GV9' : action 2 push to or pull from variable  
+    "action2type":     FieldSpec(driver="GV10", default=0, data_type="state"),# 'GV10': variable type 2 int or state, curr or init
+    "action2id":       FieldSpec(driver="GV11", default=0, data_type="state"),# 'GV11': variable id 2   
+    "RtoPrec":         FieldSpec(driver="GV12", default=0, data_type="state"),# 'GV12': raw to precision
+    "CtoF":            FieldSpec(driver="GV13", default=0, data_type="state"),# 'GV13': Fahrenheit to Celsius
+    "FtoC":            FieldSpec(driver="GV13", default=0, data_type="state"),# 'GV13': Celsius to Fahrenheit
 }
 
 def _transform_value(raw: int | float, r_to_prec: int | bool, c_to_f: int | bool, f_to_c: int | bool) -> float | int:
@@ -94,17 +101,17 @@ class VirtualTemp(Node):
         :param address: This nodes address
         :param name: This nodes name
 
-        class variables:
-        self.prevVal, tempVal storage of last, current temperature value
-        self.lastUpdateTime timestamp
-        self.highTemp, lowTemp range of high temp, set to None on init
-         self.previousHigh, previousLow storage of previous range
-        self.prevAvgTemp, currentAvgTemp storage of averages
-        self.action1, action2 none, push, pull
-        self.action1id, action1id id of variable,  0=None, 1 - 400
-        self.action1type, action2type  State var or init, Int var or init, 1 - 4
-        self.RtoPrec Raw to precision conversion
-        self.CtoF Celsius to Fahrenheit conversion
+        data[''] class variables:
+        prevVal, tempVal storage of last, current temperature value
+        lastUpdateTime timestamp
+        highTemp, lowTemp range of high temp, set to None on init
+        previousHigh, previousLow storage of previous range
+        prevAvgTemp, currentAvgTemp storage of averages
+        action1, action2 none, push, pull
+        action1id, action1id id of variable,  0=None, 1 - 400
+        action1type, action2type  State var or init, Int var or init, 1 - 4
+        RtoPrec Raw to precision conversion
+        CtoF Celsius to Fahrenheit conversion
 
         subscribes:
         START: used to create/check/load DB file
@@ -119,7 +126,9 @@ class VirtualTemp(Node):
         self.name = name
 
         # default variables and drivers
-        self._init_defaults()
+        #self._init_defaults()
+        # default variables and drivers
+        self.data = {field: spec.default for field, spec in FIELDS.items()}
 
         self.poly.subscribe(self.poly.START, self.start, address)
         
@@ -133,21 +142,18 @@ class VirtualTemp(Node):
         # wait for controller start ready
         self.controller.ready_event.wait()
 
-        # get persistent data from polyglot or depreciated: old db file, then delete db file
-        self.load_persistent_data()
-
+        # get isy address
         self.isy = ISY(self.poly)
-        self.lastUpdateTime = time.time()
-        self.setDriver('GV2', 0.0)
-        self.poly.subscribe(self.poly.POLL, self.poll)
         
+        # get persistent data from polyglot or depreciated: old db file, then delete db file
+        load_persistent_data(self, FIELDS)
 
-    def _init_defaults(self) -> None:
-        """
-        Build per-instance defaults from FIELDS, then overlay optional overrides
-        """
-        self._defaults: Dict[str, Any] = {field: spec.default for field, spec in FIELDS.items()}
-                    
+        self.reset_time()
+
+        # start polling & exit
+        self.poly.subscribe(self.poly.POLL, self.poll)
+        LOGGER.info(f"{self.name} exit start")
+        
 
     def poll(self, flag):
         """
@@ -162,125 +168,19 @@ class VirtualTemp(Node):
         """
         Called by shortPoll to update last update and action list.
         """
-        _sinceLastUpdate = round(((time.time() - self.lastUpdateTime) / 60), 1)
+        _sinceLastUpdate = round(((time.time() - self.data['lastUpdateTime']) / 60), 1)
         if _sinceLastUpdate < 1440:
                 self.setDriver('GV2', _sinceLastUpdate)
         else:
                 self.setDriver('GV2', 1440)
-        if self.action1 == 1:
-            self.push_the_value(self.action1type, self.action1id)
-        if self.action2 == 1:
-            self.push_the_value(self.action2type, self.action2id)
-        if self.action1 == 2:
-            self.pull_from_id(self.action1type, self.action1id)
-        if self.action2 == 2:
-            self.pull_from_id(self.action2type, self.action2id)
-
-
-    def _apply_state(self, src: Dict[str, Any]) -> None:
-        """
-        Apply values from src; fall back to per-instance defaults
-        """
-        for field in FIELDS.keys():
-            setattr(self, field, src.get(field, self._defaults[field]))
-            
-
-    def _push_drivers(self) -> None:
-        """
-        Push only fields that have a driver mapping
-        """
-        for field, spec in FIELDS.items():
-            if spec.driver is not None:
-                self.setDriver(spec.driver, getattr(self, field))
-                
-
-    def _shelve_file_candidates(self, base: Path) -> Iterable[Path]:
-        """
-        Include the base and any shelve artifacts (base, base.*)
-        """
-        patterns = [base.name, f"{base.name}.*"]
-        seen: set[Path] = set()
-        for pattern in patterns:
-            for p in base.parent.glob(pattern):
-                if p.exists():
-                    seen.add(p)
-        return sorted(seen)
-    
-
-    def _check_db_files_and_migrate(self) -> Tuple[bool, Dict[str, Any] | None]:
-        """
-        Check for deprecated shelve DB files, migrate data, then delete old files.
-        Called by load_persistent_data once during startup.
-        """
-        name_safe = self.name.replace(" ", "_")
-        base = Path("db") / name_safe  # shelve base path (no extension)
-
-        candidates = list(self._shelve_file_candidates(base))
-        if not candidates:
-            LOGGER.info("[%s] No old DB files found at base: %s", self.name, base)
-            return False, None
-
-        LOGGER.info("[%s] Old DB files found, migrating data...", self.name)
-
-        key = f"key{self.address}"
-        try:
-            with shelve.open(str(base), flag="r") as s:
-                existing_data = s.get(key)
-        except Exception as ex:
-            LOGGER.error("[%s] Error opening/reading old shelve DB: %s", self.name, ex)
-            return False, None
-
-        # Delete all shelve artifacts after a successful read attempt
-        errors = []
-        for p in candidates:
-            try:
-                p.unlink()
-            except OSError as ex:
-                errors.append((p, ex))
-        if errors:
-            for p, ex in errors:
-                LOGGER.warning("[%s] Could not delete shelve file %s: %s", self.name, p, ex)
-        else:
-            LOGGER.info("[%s] Deleted old shelve files for base: %s", self.name, base)
-
-        return True, existing_data
-    
-
-    def load_persistent_data(self) -> None:
-        """
-        Load state from Polyglot persistence or migrate from old shelve DB files.
-        """
-        # Ensure defaults are initialized (safe if called multiple times)
-        if not hasattr(self, "_defaults"):
-            self._init_defaults()
-
-        data = self.controller.Data.get(self.name)
-
-        if data is not None:
-            self._apply_state(data)
-            LOGGER.info("%s, Loaded from persistence", self.name)
-        else:
-            LOGGER.info("%s, No persistent data found. Checking for old DB files...", self.name)
-            migrated, old_data = self._check_db_files_and_migrate()
-            if migrated and old_data is not None:
-                self._apply_state(old_data)
-                LOGGER.info("%s, Migrated from old DB files.", self.name)
-            else:
-                self._apply_state({})  # initialize from defaults
-                LOGGER.info("%s, No old DB files found.", self.name)
-
-        # Persist and push drivers
-        self.store_values()
-        self._push_drivers()
-
-        
-    def store_values(self) -> None:
-        """
-        Store persistent data to Polyglot Data structure.
-        """
-        data_to_store = {field: getattr(self, field) for field in FIELDS.keys()}
-        self.controller.Data[self.name] = data_to_store
-        LOGGER.debug("Values stored for %s: %s", self.name, data_to_store)
+        if self.data['action1'] == 1:
+            self.push_the_value(self.data['action1type'], self.data['action1id'])
+        if self.data['action2'] == 1:
+            self.push_the_value(self.data['action2type'], self.data['action2id'])
+        if self.data['action1'] == 2:
+            self.pull_from_id(self.data['action1type'], self.data['action1id'])
+        if self.data['action2'] == 2:
+            self.pull_from_id(self.data['action2type'], self.data['action2id'])
 
 
     def set_action1_cmd(self, command):
@@ -288,9 +188,9 @@ class VirtualTemp(Node):
         Based on program or admin console set action1
         """
         LOGGER.info(f"{self.name}, {command}")
-        self.action1 = int(command.get('value'))
-        self.setDriver('GV6', self.action1)
-        self.store_values()
+        self.data['action1'] = int(command.get('value'),0)
+        self.setDriver('GV6', self.data['action1'])
+        store_values(self)
         LOGGER.debug('Exit')
         
 
@@ -299,9 +199,9 @@ class VirtualTemp(Node):
         Based on program or admin console set action1 id
         """
         LOGGER.info(f"{self.name}, {command}")
-        self.action1id = int(command.get('value'))
-        self.setDriver('GV8', self.action1id)
-        self.store_values()
+        self.data['action1id'] = int(command.get('value'),0)
+        self.setDriver('GV8', self.data['action1id'])
+        store_values(self)
         LOGGER.debug('Exit')
         
 
@@ -310,9 +210,9 @@ class VirtualTemp(Node):
         Based on program or admin console set action1 type
         """
         LOGGER.info(f"{self.name}, {command}")
-        self.action1type = int(command.get('value'))
-        self.setDriver('GV7', self.action1type)
-        self.store_values()
+        self.data['action1type'] = int(command.get('value'),0)
+        self.setDriver('GV7', self.data['action1type'])
+        store_values(self)
         LOGGER.debug('Exit')
         
 
@@ -321,9 +221,9 @@ class VirtualTemp(Node):
         Based on program or admin console set action2
         """
         LOGGER.info(f"{self.name}, {command}")
-        self.action2 = int(command.get('value'))
-        self.setDriver('GV9', self.action2)
-        self.store_values()
+        self.data['action2'] = int(command.get('value',0))
+        self.setDriver('GV9', self.data['action2'])
+        store_values(self)
         LOGGER.debug('Exit')
         
 
@@ -332,9 +232,9 @@ class VirtualTemp(Node):
         Based on program or admin console set action2 id
         """
         LOGGER.info(f"{self.name}, {command}")
-        self.action2id = int(command.get('value'))
-        self.setDriver('GV11', self.action2id)
-        self.store_values()
+        self.data['action2id'] = int(command.get('value',0))
+        self.setDriver('GV11', self.data['action2id'])
+        store_values(self)
         LOGGER.debug('Exit')
         
 
@@ -343,9 +243,9 @@ class VirtualTemp(Node):
         Based on program or admin console set action2 type
         """
         LOGGER.info(f"{self.name}, {command}")
-        self.action2type = int(command.get('value'))
-        self.setDriver('GV10', self.action2type)
-        self.store_values()
+        self.data['action2type'] = int(command.get('value'),0)
+        self.setDriver('GV10', self.data['action2type'])
+        store_values(self)
         LOGGER.debug("Exit")
         
 
@@ -354,10 +254,10 @@ class VirtualTemp(Node):
         Based on program or admin console set c_to_f flag
         """
         LOGGER.info(f"{self.name}, {command}")
-        self.CtoF = int(command.get('value'))
-        self.setDriver('GV13', self.CtoF)
+        self.data['CtoF'] = int(command.get('value'),0)
+        self.setDriver('GV13', self.data['CtoF'])
         self.reset_stats_cmd()
-        self.store_values()
+        store_values(self)
         LOGGER.debug("Exit")
         
 
@@ -366,10 +266,10 @@ class VirtualTemp(Node):
         Based on program or admin console set f_to_c flag
         """
         LOGGER.info(f"{self.name}, {command}")
-        self.FtoC = int(command.get('value'))
-        self.setDriver('GV13', self.FtoC)
+        self.data['FtoC'] = int(command.get('value'),0)
+        self.setDriver('GV13', self.data['FtoC'])
         self.reset_stats_cmd()
-        self.store_values()
+        store_values(self)
         LOGGER.debug("Exit")
 
 
@@ -378,10 +278,10 @@ class VirtualTemp(Node):
         Based on program or admin console set raw_to_prec flac
         """
         LOGGER.info(f"{self.name}, {command}")
-        self.RtoPrec = int(command.get('value'))
-        self.setDriver('GV12', self.RtoPrec)
+        self.data['RtoPrec'] = int(command.get('value',0))
+        self.setDriver('GV12', self.data['RtoPrec'])
         self.reset_stats_cmd()
-        self.store_values()
+        store_values(self)
         LOGGER.debug('Exit')
         
 
@@ -403,7 +303,7 @@ class VirtualTemp(Node):
             return
 
         # Validate value to push
-        value = getattr(self, "tempVal", None)
+        value = self.data.get('tempVal', None)
         if value is None:
             LOGGER.error("tempVal is None; nothing to push for var_id=%s", vid)
             return
@@ -521,11 +421,11 @@ class VirtualTemp(Node):
 
         # Compute the transformed display value based on current flags
         new_display = _transform_value(new_raw,
-                                      getattr(self, "RtoPrec", 0),
-                                      getattr(self, "CtoF", 0),
-                                      getattr(self, "FtoC", 0))
+                                      self.data.get('RtoPrec', 0),
+                                      self.data.get('CtoF', 0),
+                                      self.data.get('FtoC', 0))
 
-        current = getattr(self, "tempVal", None)
+        current = self.data.get('tempVal', None)
         if current != new_display:
             self.set_temp_cmd({"cmd": "data", "value": new_raw})
             LOGGER.info("Updated value for var_type=%s var_id=%s from %r to %r", vtype_str, vid, current, new_display)
@@ -539,50 +439,50 @@ class VirtualTemp(Node):
         """
         LOGGER.info(f"{self.name}, {command}")
         self.setDriver('GV2', 0.0)
-        self.lastUpdateTime = time.time()
-        self.prevVal = self.tempVal
-        self.setDriver('GV1', self.prevVal)
-        self.tempVal = float(command.get('value'))
+        self.data['lastUpdateTime'] = time.time()
+        self.data['prevVal'] = self.data['tempVal']
+        self.setDriver('GV1', self.data['prevVal'])
+        self.data['tempVal'] = float(command.get('value'))
 
         if command.get('cmd') == 'data':
-            self.tempVal = _transform_value(self.tempVal,
-                                            getattr(self, "RtoPrec", 0),
-                                            getattr(self, "CtoF", 0),
-                                            getattr(self, "FtoC", 0))
+            self.tempVal = _transform_value(self.data['tempVal'],
+                                            self.data.get('RtoPrec', 0),
+                                            self.data.get('CtoF', 0),
+                                            self.data.get('FtoC', 0))
             
-        self.setDriver('ST', self.tempVal)
-        self.check_high_low(self.tempVal)
-        self.store_values()
+        self.setDriver('ST', self.data['tempVal'])
+        self.check_high_low(self.data['tempVal'])
+        store_values(self)
             
 
     def check_high_low(self, value):
         """
         Move high & low temp based on current temp.
         """
-        LOGGER.info(f"{value}, low:{self.lowTemp}, high:{self.highTemp}")
+        LOGGER.info(f"{value}, low:{self.data['lowTemp']}, high:{self.data['highTemp']}")
 
         if value is None:
             return
 
         # Save previous high/low
-        self.previousHigh = self.highTemp
-        self.previousLow = self.lowTemp
+        self.data['previousHigh'] = self.data['highTemp']
+        self.data['previousLow'] = self.data['lowTemp']
 
         # Update highTemp if needed
-        if self.highTemp is None or value > self.highTemp:
-            self.highTemp = value
+        if self.data['highTemp'] is None or value > self.data['highTemp']:
+            self.data['highTemp'] = value
             self.setDriver('GV3', value)
 
         # Update lowTemp if needed
-        if self.lowTemp is None or value < self.lowTemp:
-            self.lowTemp = value
+        if self.data['lowTemp'] is None or value < self.data['lowTemp']:
+            self.data['lowTemp'] = value
             self.setDriver('GV4', value)
 
         # Update average if both high and low are set
-        if self.highTemp is not None and self.lowTemp is not None:
-            self.prevAvgTemp = self.currentAvgTemp
-            self.currentAvgTemp = round((self.highTemp + self.lowTemp) / 2, 1)
-            self.setDriver('GV5', self.currentAvgTemp)
+        if self.data['highTemp'] is not None and self.data['lowTemp'] is not None:
+            self.data['prevAvgTemp'] = self.data['currentAvgTemp']
+            self.data['currentAvgTemp'] = round((self.data['highTemp'] + self.data['lowTemp']) / 2, 1)
+            self.setDriver('GV5', self.data['currentAvgTemp'])
         LOGGER.debug('Exit')
 
 
@@ -591,18 +491,28 @@ class VirtualTemp(Node):
         Command to reset stats for the device.
         """
         LOGGER.info(f"{self.name}, {command}")
-        self.lowTemp = None
-        self.highTemp = None
-        self.prevAvgTemp = 0
-        self.currentAvgTemp = 0
-        self.prevTemp = None
-        self.tempVal = None
+        self.data['lowTemp'] = None
+        self.data['highTemp'] = None
+        self.data['prevAvgTemp'] = 0
+        self.data['currentAvgTemp'] = 0
+        self.data['prevTemp'] = None
+        self.data['tempVal'] = None
         # Reset drivers
         for driver in ['GV1', 'GV3', 'GV4', 'GV5', 'ST']:
             self.setDriver(driver, 0)
-        self.store_values()
+        self.reset_time()
+        store_values(self)
         LOGGER.debug('Exit')
         
+
+    def reset_time(self):
+        """
+        Reset the last update time to now
+        """
+        self.lastUpdateTime = time.time()
+        self.data['lastUpdateTime'] = 0.0
+        self.setDriver('GV2', 0.0)
+
 
     def query(self, command=None):
         """

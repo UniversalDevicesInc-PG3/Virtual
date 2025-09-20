@@ -34,7 +34,7 @@ DONE consolidate temp, tempC, tempRC into one module
 DONE temp variable writing now with shortPoll (only upon change, considers precision)
 DONE refactor function naming
 DONE refactor garage, fix persistence, sse client
-TODO backfeed garage improvements to other devices
+INPROCESS backfeed garage improvements to switch(done), generic(done), temperature()
 
 3.1.15
 DONE generic, dimmer, change ST to OL, memory of level for DON, DFON/DFOF, command

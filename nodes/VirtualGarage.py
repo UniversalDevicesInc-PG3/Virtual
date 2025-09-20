@@ -1,7 +1,7 @@
 """
 udi-Virtual-pg3 NodeServer/Plugin for EISY/Polisy
 
-(C) 2024 Stephen Jenkins
+(C) 2025 Stephen Jenkins
 
 VirtualGarage class
 """
@@ -200,7 +200,6 @@ class VirtualGarage(Node):
 
         # subscriptions
         self.poly.subscribe(self.poly.START, self.start, address)
-        self.poly.subscribe(self.poly.POLL, self.poll)
         self.poly.subscribe(self.poly.BONJOUR, self.bonjour)
         
 
@@ -245,6 +244,8 @@ class VirtualGarage(Node):
             # start event polling loop    
             self.start_event_polling()
 
+        # start polling & exit
+        self.poly.subscribe(self.poly.POLL, self.poll)
         LOGGER.info(f"{self.name} exit start")
                 
                     
@@ -1160,7 +1161,7 @@ class VirtualGarage(Node):
             since_last_update = round(((current_time - self.lastUpdateTime).total_seconds())/60,1)
             self.data['lastUpdateTime'] = since_last_update
             self.setDriver(FIELDS["lastUpdateTime"].driver, min(since_last_update, 9999))
-            LOGGER.info(f"slt:{self.lastUpdateTime}, slu:{since_last_update}, data:{self.data['lastUpdateTime']}")
+            LOGGER.debug(f"slt:{self.lastUpdateTime}, slu:{since_last_update}, data:{self.data['lastUpdateTime']}")
         except Exception as ex:
             LOGGER.error(f"slu error {ex}", exc_info=True)
 
@@ -1174,10 +1175,9 @@ class VirtualGarage(Node):
             open_time_delta = min(round((current_time - self.openTime).total_seconds(),1), 9999)
             self.data['openTime'] = open_time_delta
             self.setDriver(FIELDS["openTime"].driver, self.data['openTime'])
-            LOGGER.info(f"O-T:{self.openTime}, data:{self.data['openTime']}")
+            LOGGER.debug(f"O-T:{self.openTime}, data:{self.data['openTime']}")
         except Exception as ex:
             LOGGER.error(f"T-T error {ex}", exc_info=True)
-
 
        
     def reset_stats_cmd(self, command = None):
