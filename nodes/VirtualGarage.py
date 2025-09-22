@@ -7,9 +7,8 @@ VirtualGarage class
 """
 # standard imports
 import time, ipaddress, asyncio, json
-import xml.etree.ElementTree as ET
 from datetime import datetime, timezone, timedelta
-from typing import Any, Dict, Optional, Tuple, Union
+from typing import Any, Dict, Optional
 from threading import Thread, Event, Lock, Condition
 
 # external imports
@@ -18,17 +17,7 @@ import requests
 import aiohttp
 
 # local imports
-from utils.node_funcs import FieldSpec, load_persistent_data, store_values
-
-# Dispatch map to select the correct tag and index based on var_type.
-# Using a dictionary for dispatch is more extensible and readable than a long if/elif chain.
-_VARIABLE_TYPE_MAP = {
-    # Key: ISY var_type, Value : (INDEX, XML_TAG, SET_TAG)
-    '1': ('2', 'val', 'set'),
-    '2': ('2', 'init', 'init'),
-    '3': ('1', 'val', 'set'),
-    '4': ('1', 'init', 'init'),
-}
+from utils.node_funcs import FieldSpec, load_persistent_data, store_values, push_to_isy_var, pull_from_isy_var
 
 # @dataclass(frozen=True)
 # class FieldSpec:
@@ -710,7 +699,7 @@ class VirtualGarage(Node):
         self.setDriver('GV0', self.data['light'])
         self.reportCmd("LT_ON", 2)
         if self.data['lightId'] > 0: # type: ignore
-            self.push_the_value(self.data['lightT'], self.data['lightId'], self.data['light'])
+            push_to_isy_var(self, self.data['lightT'], self.data['lightId'], self.data['light'])
         post = f"{self.ratgdo}{LIGHT}{TURN_ON}"
         self.ratgdo_post(post)
         store_values(self)
@@ -727,7 +716,7 @@ class VirtualGarage(Node):
         self.setDriver('GV0', self.data['light'])
         self.reportCmd("LT_OFF", 2)
         if self.data['lightId'] > 0:
-            self.push_the_value(self.data['lightT'], self.data['lightId'], self.data['light'])
+            push_to_isy_var(self, self.data['lightT'], self.data['lightId'], self.data['light'])
         post = f"{self.ratgdo}{LIGHT}{TURN_OFF}"
         self.ratgdo_post(post)
         store_values(self)
@@ -740,7 +729,7 @@ class VirtualGarage(Node):
         send motor command to ISY, post motor command to Ratgdo, reset last update time
         """
         if self.data['dcommandId'] > 0:
-            self.push_the_value(self.data['dcommandT'], self.data['dcommandId'], self.data['dcommand'])
+            push_to_isy_var(self, self.data['dcommandT'], self.data['dcommandId'], self.data['dcommand'])
         self.setDriver('GV2', self.data['dcommand'])
         self.ratgdo_post(post)
         store_values(self)
@@ -805,7 +794,7 @@ class VirtualGarage(Node):
         self.setDriver('GV4', self.data['lock'])
         self.reportCmd("LOCK",2)
         if self.data['lockId'] > 0:
-            self.push_the_value(self.data['lockT'], self.data['lockId'], self.data['lock'])
+            push_to_isy_var(self, self.data['lockT'], self.data['lockId'], self.data['lock'])
         post = f"{self.ratgdo}{LOCK_REMOTES}{LOCK}"
         self.ratgdo_post(post)
         store_values(self)
@@ -822,25 +811,11 @@ class VirtualGarage(Node):
         self.setDriver('GV4', self.data['lock'])
         self.reportCmd("UNLOCK",2)
         if self.data['lockId'] > 0:
-            self.push_the_value(self.data['lockT'], self.data['lockId'], self.data['lock'])
+            push_to_isy_var(self, self.data['lockT'], self.data['lockId'], self.data['lock'])
         post = f"{self.ratgdo}{LOCK_REMOTES}{UNLOCK}"
         self.ratgdo_post(post)
         store_values(self)
         self.reset_time()
-
-        
-    def push_the_value(self, type, id, value):
-        """
-        Push to ISY variable the value,
-        based on variable type (1 = integer, 2 = state),
-        variable id (1 - defined var)
-        Access to do this is based on plugin configuration tick-box
-        which is currently below the shortPoll/longPoll fields"""
-        _type = str(type)
-        _id = str(id)
-        _value = str(value)
-        LOGGER.info(f'Pushing to {self.isy}, type: {_type}, id: {_id}, value: {_value}')
-        self.isy.cmd('/rest/vars' + _type + _id + '/' + str(value))
 
         
     def update_vars(self) -> None:
@@ -856,111 +831,12 @@ class VirtualGarage(Node):
 
                 # Only proceed if both type and ID are present and non-zero
                 if var_type and var_id:
-                    new_val = self.update_var_from_id(var_type, var_id)
+                    new_val = pull_from_isy_var(self, var_type, var_id)
                     if new_val is not None:
                         self.data[var_name] = new_val
         store_values(self)
 
 
-    def update_var_from_id(self, var_type: Any, var_id: Any) -> int | float | None:
-        """
-        Pulls data using pull_from_id and handles errors.
-        """
-        # Guard clause for invalid input
-        if not var_type or not var_id:
-            return None
-
-        try:
-            result: Tuple[bool, int | float] | None = self.pull_from_id(var_type, var_id)
-            if result is None:
-                return None
-
-            success, _data = result
-            if success:
-                return _data
-            return None
-        except Exception as ex:
-            LOGGER.error(f"Error pulling from ID {var_id} with type {var_type}: {ex}", exc_info=True)
-            return None
-
-
-    def pull_from_id(self, var_type: int | str, var_id: int | str,
-                     prec_flag = False) -> Optional[Tuple[bool, Union[int, float]]]:
-        """
-        Pull a variable from ISY using path segments,
-        parse the XML, and update state if the transformed value changed.
-        """
-
-        LOGGER.debug(f"Pulling from ID: var_type={var_type}, var_id={var_id}")
-        try:
-            vid = int(var_id)
-            if vid == 0:
-                LOGGER.debug("var_id is 0; skipping pull.")
-                return None
-        except (TypeError, ValueError):
-            LOGGER.error(f"Invalid var_id:{var_id}")
-            return None
-
-        vtype_str = str(var_type).strip()
-
-        # Use dictionary dispatch to get both the index and the XML tag.
-        try:
-            getlist_segment, tag_to_find, _ = _VARIABLE_TYPE_MAP[vtype_str]
-        except KeyError:
-            LOGGER.error("Invalid or unsupported var_type: %r", vtype_str)
-            return None
-
-        path = f"/rest/vars/get/{getlist_segment}/{vid}"
-
-        # Fetch
-        try:
-            resp = self.isy.cmd(path)
-        except RuntimeError as exc:
-            if 'ISY info not available' in str(exc):
-                LOGGER.info(f"{self.name}: ISY info not available on {path}")
-            else:
-                LOGGER.exception("RuntimeError on path {path}")
-            return None
-        except Exception as exc:
-            LOGGER.exception("%s:, ISY push failed for %s: %s", self.name, path, exc)
-            return None
-
-        text = resp.decode("utf-8", errors="replace") if isinstance(resp, (bytes, bytearray)) else str(resp)
-        LOGGER.debug("ISY response for %s: %s", path, text)
-
-        # Parse XML based on the determined tag
-        val_str: Optional[str] = None
-        prec_str: Optional[str] = None
-        try:
-            root = ET.fromstring(text)
-            # parse val or init
-            val_str = root.findtext(f".//{tag_to_find}")
-            if val_str is None:
-                LOGGER.error("No <%s> element in ISY response for %s", tag_to_find, path)
-                return None
-            new_raw = int(val_str.strip())
-
-            # consider precision of ISY variable only if prec_flag == True
-            if prec_flag:
-                prec_str = root.findtext(f".//prec")
-                prec_div = max(int(prec_str.strip()) * 10, 1) if prec_str else 1
-                calc = new_raw / prec_div
-                LOGGER.debug(f"NO UPDATE: raw:{new_raw}, prec:{prec_div}, calc{calc}")
-                return True, calc
-            else:
-                return True, new_raw
-
-        except ET.ParseError as exc:
-            LOGGER.exception("Failed to parse XML for {path}: {exc}")
-            return None
-        except ValueError as exc:
-            LOGGER.exception(f"Value in {tag_to_find} is not an int for {path} (val={val_str}): {exc}")
-            return None
-        except Exception as ex:
-            LOGGER.error(f"{self.name}: parse error {ex}", exc_info = True)
-            return None
-
-    
     def pull_from_ratgdo(self, get):
         """
         Generic get function to return Ratgdo data to calling function.
