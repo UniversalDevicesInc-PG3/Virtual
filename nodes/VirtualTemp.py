@@ -7,24 +7,13 @@ VirtualTemp class
 """
 # std libraries
 import time
-import xml.etree.ElementTree as ET
 from typing import Any, Dict, Optional
 
 # external libraries
 from udi_interface import LOGGER, ISY, Node
 
 # local imports
-from utils.node_funcs import FieldSpec, load_persistent_data, store_values
-
-# Dispatch map to select the correct tag and index based on var_type.
-# Using a dictionary for dispatch is more extensible and readable than a long if/elif chain.
-_VARIABLE_TYPE_MAP = {
-    # Key: ISY var_type, Value : (INDEX, XML_TAG, SET_TAG)
-    '1': ('2', 'val', 'set'),
-    '2': ('2', 'init', 'init'),
-    '3': ('1', 'val', 'set'),
-    '4': ('1', 'init', 'init'),
-}
+from utils.node_funcs import FieldSpec, load_persistent_data, store_values, push_to_isy_var, pull_from_isy_var
 
 # @dataclass(frozen=True)
 # class FieldSpec:
@@ -56,21 +45,6 @@ FIELDS: dict[str, FieldSpec] = {
     "CtoF":            FieldSpec(driver="GV13", default=0, data_type="state"),# 'GV13': Fahrenheit to Celsius
     "FtoC":            FieldSpec(driver="GV13", default=0, data_type="state"),# 'GV13': Celsius to Fahrenheit
 }
-
-def _transform_value(raw: int | float, r_to_prec: int | bool, c_to_f: int | bool, f_to_c: int | bool) -> float | int:
-    """
-    Transform raw value according to flags.
-    r_to_prec: if truthy, treat raw as tenths (divide by 10).
-    c_to_f: if truthy, convert Celsius to Fahrenheit and round to 1 decimal.
-    """
-    val: float | int = raw
-    if r_to_prec:
-        val = raw / 10  # becomes float
-    if c_to_f:
-        val = round(val * 1.8 + 32, 1)  # keep one decimal when converting to F
-    if f_to_c:
-        val = round((val - 32) / 1.8, 1)  # keep one decimal when converting to C
-    return val
 
 
 class VirtualTemp(Node):
@@ -172,14 +146,14 @@ class VirtualTemp(Node):
         else:
                 self.setDriver('GV2', 1440)
         if self.data['action1'] == 1:
-            self.push_to_isy_var(self.data['action1type'], self.data['action1id'], self.data['tempVal'])
+            push_to_isy_var(self, self.data['action1type'], self.data['action1id'], self.data['tempVal'])
         if self.data['action2'] == 1:
-            self.push_to_isy_var(self.data['action2type'], self.data['action2id'], self.data['tempVal'])
+            push_to_isy_var(self, self.data['action2type'], self.data['action2id'], self.data['tempVal'])
         if self.data['action1'] == 2:
-            var = self.pull_from_isy_var(self.data['action1type'], self.data['action1id'])
+            var = pull_from_isy_var(self, self.data['action1type'], self.data['action1id'])
             if var: self.set_temp_cmd({"cmd": "data", "value": var})
         if self.data['action2'] == 2:
-            var = self.pull_from_isy_var(self.data['action2type'], self.data['action2id'])
+            var = pull_from_isy_var(self, self.data['action2type'], self.data['action2id'])
             if var: self.set_temp_cmd({"cmd": "data", "value": var})
 
 
@@ -285,148 +259,6 @@ class VirtualTemp(Node):
         LOGGER.debug('Exit')
         
 
-    def push_to_isy_var(self, var_type: str | int, var_id: int | str, var_value: int | float | str) -> None:
-        """
-        Push self.tempVal to an ISY variable.
-        var_type = 0-4
-        var_id should be a positive integer, within the bounds of defined ISY variables.
-        """
-        LOGGER.debug(f"Push to isy var_type:{var_type}, var_id:{var_id}, var_value:{var_value}")
-
-        # validate var_type
-        var_type_str = str(var_type).strip()
-
-        # Use dictionary dispatch to get both the index and the XML tag.
-        try:
-            get_type_segment, _, tag_to_set = _VARIABLE_TYPE_MAP[var_type_str]
-        except KeyError:
-            LOGGER.error("Invalid or unsupported var_type: %r", var_type_str)
-            return
-
-        # validate var_id
-        try:
-            var_id_int = int(var_id)
-        except (TypeError, ValueError):
-            LOGGER.error("Invalid var_id: %r", var_id)
-            return
-        if var_id_int <= 0:
-            LOGGER.error("var_id must be positive, got: %s", var_id)
-            return
-
-        # Validate value to push
-        try:
-            float(var_value)
-        except (TypeError, ValueError):
-            LOGGER.error(f"Value: {var_value} is not valid or None; nothing to push for var_id={var_id}")
-            return
-
-        # check if there is a change to write location
-        current_val= self.pull_from_isy_var(var_type, var_id, UPDATE = False)
-
-        # only write if required
-        if current_val != float(var_value):        
-            # Build canonical path without double slashes
-            path = f"/rest/vars/{tag_to_set}/{get_type_segment}/{var_id}/{var_value}"
-            LOGGER.info(f"Pushing cur:{current_val} new:{var_value} path:{path}")
-            try:
-                resp = self.isy.cmd(path)
-                # Optional: log response for diagnostics
-                rtxt = resp.decode("utf-8", errors="replace") if isinstance(resp, (bytes, bytearray)) else str(resp)
-                LOGGER.debug("ISY push response for %s: %s", path, rtxt)
-            except RuntimeError as exc:
-                if 'ISY info not available' in str(exc):
-                    LOGGER.info(f"ISY info not available on {path}")
-                else:
-                    LOGGER.exception("RuntimeError on path {path}")
-                return
-            except Exception as exc:
-                LOGGER.exception("%s:, ISY push failed for %s: %s", self.name, path, exc)
-
-
-    def pull_from_isy_var(self, var_type: int | str, var_id: int | str, UPDATE = True):
-        """
-        Pull a variable from ISY using path segments,
-        parse the XML, and update state if the transformed value changed.
-        """
-        LOGGER.debug(f"Pull from isy var_type:{var_type}, var_id:{var_id}, UPDATE={UPDATE}")
-
-        # validate var_type
-        var_type_str = str(var_type).strip()
-
-        # Use dictionary dispatch to get both the index and the XML tag.
-        try:
-            get_type_segment, tag_to_find, _ = _VARIABLE_TYPE_MAP[var_type_str]
-        except KeyError:
-            LOGGER.error("Invalid or unsupported var_type: %r", var_type_str)
-            return
-
-        # validate var_id
-        try:
-            var_id_int = int(var_id)
-        except (TypeError, ValueError):
-            LOGGER.error("Invalid var_id: %r", var_id)
-            return
-        if var_id_int <= 0:
-            LOGGER.error("var_id must be positive, got: %s", var_id)
-            return
-
-        path = f"/rest/vars/get/{get_type_segment}/{var_id}"
-
-        # Fetch
-        try:
-            resp = self.isy.cmd(path)
-            # Optional: log response for diagnostics
-            rtxt = resp.decode("utf-8", errors="replace") if isinstance(resp, (bytes, bytearray)) else str(resp)
-            LOGGER.debug("ISY get response for %s: %s", path, rtxt)
-        except RuntimeError as exc:
-            if 'ISY info not available' in str(exc):
-                LOGGER.info(f"ISY info not available on {path}")
-            else:
-                LOGGER.exception("RuntimeError on path {path}")
-            return
-        except Exception as exc:
-            LOGGER.exception("%s:, ISY get failed for %s", path, exc)
-            return
-
-        # Parse XML based on the determined tag
-        val_str: Optional[str] = None
-        prec_str: Optional[str] = None
-        try:
-            root = ET.fromstring(rtxt)
-            # parse val or init
-            val_str = root.findtext(f".//{tag_to_find}")
-            if val_str is None:
-                LOGGER.error("No <%s> element in ISY response for %s", tag_to_find, path)
-                return
-            new_raw = int(val_str.strip())
-
-            # parse prec            
-            prec_div = 1
-            prec_str = root.findtext(f".//prec")
-            if prec_str:
-                prec_div = int(prec_str.strip()) * 10
-                if prec_div <= 0:
-                    prec_div = 1
-            calc = new_raw / prec_div
-
-            # Update only if UPDATE == True & changed versus the currently stored transformed value
-            if UPDATE:
-                return new_raw
-            else:
-                LOGGER.debug(f"NO UPDATE: raw:{new_raw}, prec:{prec_div}, calc{calc}")
-                return calc
-            
-        except ET.ParseError as exc:
-            LOGGER.exception("Failed to parse XML for %s: %s", path, exc)
-            return
-        except ValueError as exc:
-            LOGGER.exception("Value in <%s> is not an int for %s (val=%r): %s", tag_to_find, path, val_str, exc)
-            return
-        except Exception as ex:
-            LOGGER.error(f"{self.name}: parse error {ex}", exc_info = True)
-            return
-
-        
     def set_temp_cmd(self, command):
         """
         Set temperature based on actions set-up.
@@ -439,7 +271,7 @@ class VirtualTemp(Node):
         value = float(command.get('value'))
 
         if command.get('cmd') == 'data':
-            newValue = _transform_value(value,
+            newValue = self._transform_value(value,
                                        self.data.get('RtoPrec', 0),
                                        self.data.get('CtoF', 0),
                                        self.data.get('FtoC', 0))
@@ -452,7 +284,24 @@ class VirtualTemp(Node):
         self.setDriver('ST', self.data['tempVal'])
         self.check_high_low(self.data['tempVal'])
         store_values(self)
-            
+
+
+    def _transform_value(self, raw: int | float, r_to_prec: int | bool,
+                         c_to_f: int | bool, f_to_c: int | bool) -> float | int:
+        """
+        Transform raw value according to flags.
+        r_to_prec: if truthy, treat raw as tenths (divide by 10).
+        c_to_f: if truthy, convert Celsius to Fahrenheit and round to 1 decimal.
+        """
+        val: float | int = raw
+        if r_to_prec:
+            val = raw / 10  # becomes float
+        if c_to_f:
+            val = round(val * 1.8 + 32, 1)  # keep one decimal when converting to F
+        if f_to_c:
+            val = round((val - 32) / 1.8, 1)  # keep one decimal when converting to C
+        return val
+        
 
     def check_high_low(self, value):
         """
