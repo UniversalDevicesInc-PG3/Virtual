@@ -172,13 +172,15 @@ class VirtualTemp(Node):
         else:
                 self.setDriver('GV2', 1440)
         if self.data['action1'] == 1:
-            self.push_the_value(self.data['action1type'], self.data['action1id'])
+            self.push_to_isy_var(self.data['action1type'], self.data['action1id'], self.data['tempVal'])
         if self.data['action2'] == 1:
-            self.push_the_value(self.data['action2type'], self.data['action2id'])
+            self.push_to_isy_var(self.data['action2type'], self.data['action2id'], self.data['tempVal'])
         if self.data['action1'] == 2:
-            self.pull_from_id(self.data['action1type'], self.data['action1id'])
+            var = self.pull_from_isy_var(self.data['action1type'], self.data['action1id'])
+            if var: self.set_temp_cmd(var)
         if self.data['action2'] == 2:
-            self.pull_from_id(self.data['action2type'], self.data['action2id'])
+            var = self.pull_from_isy_var(self.data['action2type'], self.data['action2id'])
+            if var: self.set_temp_cmd(var)
 
 
     def set_action1_cmd(self, command):
@@ -283,46 +285,49 @@ class VirtualTemp(Node):
         LOGGER.debug('Exit')
         
 
-    def push_the_value(self, var_type: str | int, var_id: int | str) -> None:
+    def push_to_isy_var(self, var_type: str | int, var_id: int | str, var_value: int | float | str) -> None:
         """
         Push self.tempVal to an ISY variable.
         var_type = 0-4
         var_id should be a positive integer, within the bounds of defined ISY variables.
         """
-        LOGGER.debug(f"Push the value")
-        # Validate var_id
+        LOGGER.debug(f"Push to isy var_type:{var_type}, var_id:{var_id}, var_value:{var_value}")
+
+        # validate var_type
+        var_type_str = str(var_type).strip()
+
+        # Use dictionary dispatch to get both the index and the XML tag.
         try:
-            vid = int(var_id)
+            get_type_segment, _, tag_to_set = _VARIABLE_TYPE_MAP[var_type_str]
+        except KeyError:
+            LOGGER.error("Invalid or unsupported var_type: %r", var_type_str)
+            return
+
+        # validate var_id
+        try:
+            var_id_int = int(var_id)
         except (TypeError, ValueError):
             LOGGER.error("Invalid var_id: %r", var_id)
             return
-        if vid <= 0:
-            LOGGER.error("var_id must be positive, got: %s", vid)
+        if var_id_int <= 0:
+            LOGGER.error("var_id must be positive, got: %s", var_id)
             return
 
         # Validate value to push
-        value = self.data.get('tempVal', None)
-        if value is None:
-            LOGGER.error("tempVal is None; nothing to push for var_id=%s", vid)
-            return
-
-        vtype_str = str(var_type).strip()
-
-        # Use dictionary dispatch to get both the GETLIST index and the XML tag.
         try:
-            getlist_segment, _, tag_to_set = _VARIABLE_TYPE_MAP[vtype_str]
-        except KeyError:
-            LOGGER.error("Invalid or unsupported var_type: %r", vtype_str)
+            float(var_value)
+        except (TypeError, ValueError):
+            LOGGER.error(f"Value: {var_value} is not valid or None; nothing to push for var_id={var_id}")
             return
 
         # check if there is a change to write location
-        current_val= self.pull_from_id(var_type, var_id, UPDATE = False)
+        current_val= self.pull_from_isy_var(var_type, var_id, UPDATE = False)
 
         # only write if required
-        if current_val != float(value):        
+        if current_val != float(var_value):        
             # Build canonical path without double slashes
-            path = f"/rest/vars/{tag_to_set}/{getlist_segment}/{vid}/{value}"
-            LOGGER.info(f"Pushing cur:{current_val} new:{value} path:{path}")
+            path = f"/rest/vars/{tag_to_set}/{get_type_segment}/{var_id}/{var_value}"
+            LOGGER.info(f"Pushing cur:{current_val} new:{var_value} path:{path}")
             try:
                 resp = self.isy.cmd(path)
                 # Optional: log response for diagnostics
@@ -330,7 +335,7 @@ class VirtualTemp(Node):
                 LOGGER.debug("ISY push response for %s: %s", path, rtxt)
             except RuntimeError as exc:
                 if 'ISY info not available' in str(exc):
-                    LOGGER.info(f"{self.name}: ISY info not available on {path}")
+                    LOGGER.info(f"ISY info not available on {path}")
                 else:
                     LOGGER.exception("RuntimeError on path {path}")
                 return
@@ -338,54 +343,56 @@ class VirtualTemp(Node):
                 LOGGER.exception("%s:, ISY push failed for %s: %s", self.name, path, exc)
 
 
-    def pull_from_id(self, var_type: int | str, var_id: int | str, UPDATE = True):
+    def pull_from_isy_var(self, var_type: int | str, var_id: int | str, UPDATE = True):
         """
         Pull a variable from ISY using path segments,
         parse the XML, and update state if the transformed value changed.
         """
-        LOGGER.debug(f"Pull from ID")
-        try:
-            vid = int(var_id)
-        except (TypeError, ValueError):
-            LOGGER.error("Invalid var_id: %r", var_id)
-            return
+        LOGGER.debug(f"Pull from isy var_type:{var_type}, var_id:{var_id}, UPDATE={UPDATE}")
 
-        if vid == 0:
-            LOGGER.debug("var_id is 0; skipping pull.")
-            return
-
-        vtype_str = str(var_type).strip()
+        # validate var_type
+        var_type_str = str(var_type).strip()
 
         # Use dictionary dispatch to get both the index and the XML tag.
         try:
-            getlist_segment, tag_to_find, _ = _VARIABLE_TYPE_MAP[vtype_str]
+            get_type_segment, tag_to_find, _ = _VARIABLE_TYPE_MAP[var_type_str]
         except KeyError:
-            LOGGER.error("Invalid or unsupported var_type: %r", vtype_str)
+            LOGGER.error("Invalid or unsupported var_type: %r", var_type_str)
             return
 
-        path = f"/rest/vars/get/{getlist_segment}/{vid}"
+        # validate var_id
+        try:
+            var_id_int = int(var_id)
+        except (TypeError, ValueError):
+            LOGGER.error("Invalid var_id: %r", var_id)
+            return
+        if var_id_int <= 0:
+            LOGGER.error("var_id must be positive, got: %s", var_id)
+            return
+
+        path = f"/rest/vars/get/{get_type_segment}/{var_id}"
 
         # Fetch
         try:
             resp = self.isy.cmd(path)
+            # Optional: log response for diagnostics
+            rtxt = resp.decode("utf-8", errors="replace") if isinstance(resp, (bytes, bytearray)) else str(resp)
+            LOGGER.debug("ISY get response for %s: %s", path, rtxt)
         except RuntimeError as exc:
             if 'ISY info not available' in str(exc):
-                LOGGER.info(f"{self.name}: ISY info not available on {path}")
+                LOGGER.info(f"ISY info not available on {path}")
             else:
                 LOGGER.exception("RuntimeError on path {path}")
             return
         except Exception as exc:
-            LOGGER.exception("%s:, ISY push failed for %s: %s", self.name, path, exc)
+            LOGGER.exception("%s:, ISY get failed for %s", path, exc)
             return
-
-        text = resp.decode("utf-8", errors="replace") if isinstance(resp, (bytes, bytearray)) else str(resp)
-        LOGGER.debug("ISY response for %s: %s", path, text)
 
         # Parse XML based on the determined tag
         val_str: Optional[str] = None
         prec_str: Optional[str] = None
         try:
-            root = ET.fromstring(text)
+            root = ET.fromstring(rtxt)
             # parse val or init
             val_str = root.findtext(f".//{tag_to_find}")
             if val_str is None:
@@ -402,8 +409,10 @@ class VirtualTemp(Node):
                     prec_div = 1
             calc = new_raw / prec_div
 
-            # Update only if UDATE == True & changed versus the currently stored transformed value
-            if not UPDATE:
+            # Update only if UPDATE == True & changed versus the currently stored transformed value
+            if UPDATE:
+                return new_raw
+            else:
                 LOGGER.debug(f"NO UPDATE: raw:{new_raw}, prec:{prec_div}, calc{calc}")
                 return calc
             
@@ -417,19 +426,6 @@ class VirtualTemp(Node):
             LOGGER.error(f"{self.name}: parse error {ex}", exc_info = True)
             return
 
-        # Compute the transformed display value based on current flags
-        new_display = _transform_value(new_raw,
-                                      self.data.get('RtoPrec', 0),
-                                      self.data.get('CtoF', 0),
-                                      self.data.get('FtoC', 0))
-
-        current = self.data.get('tempVal', None)
-        if current != new_display:
-            self.set_temp_cmd({"cmd": "data", "value": new_display})
-            LOGGER.info("Updated value for var_type=%s var_id=%s from %r to %r", vtype_str, vid, current, new_display)
-        else:
-            LOGGER.debug("No change for var_type=%s var_id=%s (value %r)", vtype_str, vid, new_display)
-            
 
     def set_temp_cmd(self, command):
         """
@@ -440,14 +436,17 @@ class VirtualTemp(Node):
         self.data['lastUpdateTime'] = time.time()
         self.data['prevVal'] = self.data['tempVal']
         self.setDriver('GV1', self.data['prevVal'])
-        self.data['tempVal'] = float(command.get('value'))
+        value = float(command.get('value'))
 
         if command.get('cmd') == 'data':
-            self.tempVal = _transform_value(self.data['tempVal'],
-                                            self.data.get('RtoPrec', 0),
-                                            self.data.get('CtoF', 0),
-                                            self.data.get('FtoC', 0))
+            newValue = _transform_value(value,
+                                       self.data.get('RtoPrec', 0),
+                                       self.data.get('CtoF', 0),
+                                       self.data.get('FtoC', 0))
+            if newValue != self.data['tempVal']:
+                value = newValue
             
+        self.data['tempVal'] = value
         self.setDriver('ST', self.data['tempVal'])
         self.check_high_low(self.data['tempVal'])
         store_values(self)
