@@ -426,21 +426,7 @@ class VirtualTemp(Node):
             LOGGER.error(f"{self.name}: parse error {ex}", exc_info = True)
             return
 
-        # Compute the transformed display value based on current flags
-        # new_display = _transform_value(new_raw,
-        #                               self.data.get('RtoPrec', 0),
-        #                               self.data.get('CtoF', 0),
-        #                               self.data.get('FtoC', 0))
-
-#         current = self.data.get('tempVal', None)
-        # if current != new_display:
-        #     self.set_temp_cmd({"cmd": "data", "value": new_display})
-        #     LOGGER.info("Updated value for var_type=%s var_id=%s from %r to %r", var_type_str, var_id, current, new_display)
-        # else:
-        #     LOGGER.debug("No change for var_type=%s var_id=%s (value %r)", var_type_str, var_id, new_display)
-
-
-
+        
     def set_temp_cmd(self, command):
         """
         Set temperature based on actions set-up.
@@ -457,8 +443,8 @@ class VirtualTemp(Node):
                                        self.data.get('RtoPrec', 0),
                                        self.data.get('CtoF', 0),
                                        self.data.get('FtoC', 0))
-            if newValue != self.data['tempVal']:
-                value = newValue
+            if newValue == self.data['tempVal']:
+                return
             
         self.data['tempVal'] = value
         self.setDriver('ST', self.data['tempVal'])
