@@ -20,9 +20,9 @@ import udi_interface
 
 LOGGER = udi_interface.LOGGER
 
-VERSION = '3.1.16'
+VERSION = '3.1.20'
 """
-3.1.16
+3.1.20
 DONE fix controller ST "status" on at start, off at stop / delete, "control" still heartbeat
 DONE garage send CMDs, motor, motion, obstruction ; get naming consistent
 DONE standardize startup sequence
@@ -34,7 +34,7 @@ DONE consolidate temp, tempC, tempRC into one module
 DONE temp variable writing now with shortPoll (only upon change, considers precision)
 DONE refactor function naming
 DONE refactor garage, fix persistence, sse client
-INPROCESS backfeed garage improvements to switch(done), generic(done), temperature()
+DONE backfeed garage improvements to switch(done), generic(done), temperature()
 
 3.1.15
 DONE generic, dimmer, change ST to OL, memory of level for DON, DFON/DFOF, command
