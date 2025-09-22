@@ -264,10 +264,6 @@ class VirtualTemp(Node):
         Set temperature based on actions set-up.
         """
         LOGGER.debug(f"{self.name}, {command}")
-        self.setDriver('GV2', 0.0)
-        self.data['lastUpdateTime'] = time.time()
-        self.data['prevVal'] = self.data['tempVal']
-        self.setDriver('GV1', self.data['prevVal'])
         value = float(command.get('value'))
 
         if command.get('cmd') == 'data':
@@ -279,7 +275,11 @@ class VirtualTemp(Node):
                 return
             else:
                 value = newValue
-            
+        LOGGER.info(f"{self.name}, {command}")
+        self.setDriver('GV2', 0.0)
+        self.data['lastUpdateTime'] = time.time()
+        self.data['prevVal'] = self.data['tempVal']
+        self.setDriver('GV1', self.data['prevVal'])            
         self.data['tempVal'] = value
         self.setDriver('ST', self.data['tempVal'])
         self.check_high_low(self.data['tempVal'])
