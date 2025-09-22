@@ -19,14 +19,18 @@ CTD-2 = Failed
 ND-virtualswitch-NAME = Virtual Switch
 ND-virtualswitch-ICON = Switch
 ST-vswitch-ST-NAME = Switch Status
-CMD-vswitch-DON-NAME = ON
-CMD-vswitch-DOF-NAME = OFF
-CMD-vswitch-TOGGLE-NAME = TOGGLE
+CMD-vswitch-DON-NAME = On
+CMD-vswitch-DOF-NAME = Off
+CMD-vswitch-TOGGLE-NAME = Toggle
 
 # virtualgeneric
 ND-virtualgeneric-NAME = Virtual Generic
 ND-virtualgeneric-ICON = Switch
 ST-vgeneric-OL-NAME = Level
+CMD-vgeneric-DON-NAME = On
+CMD-vgeneric-DOF-NAME = Off
+CMD-vgeneric-DFON-NAME = Fast On
+CMD-vgeneric-DFOF-NAME = Fast Off
 CMD-vgeneric-BRT-NAME = Brighten
 CMD-vgeneric-DIM-NAME = Dim
 CMD-vgeneric-setDim-NAME = Set Level
