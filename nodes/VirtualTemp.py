@@ -6,11 +6,9 @@ udi-Virtual-pg3 NodeServer/Plugin for EISY/Polisy
 VirtualTemp class
 """
 # std libraries
-import time, shelve
+import time
 import xml.etree.ElementTree as ET
-from typing import Any, Dict, Iterable, Optional, Tuple
-# from dataclasses import dataclass
-from pathlib import Path
+from typing import Any, Dict, Optional
 
 # external libraries
 from udi_interface import LOGGER, ISY, Node
@@ -509,8 +507,7 @@ class VirtualTemp(Node):
         """
         Reset the last update time to now
         """
-        self.lastUpdateTime = time.time()
-        self.data['lastUpdateTime'] = 0.0
+        self.data['lastUpdateTime'] = time.time()
         self.setDriver('GV2', 0.0)
 
 
