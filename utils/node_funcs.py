@@ -197,7 +197,7 @@ def push_to_isy_var(self, var_type: str | int, var_id: int | str, var_value: int
         return
 
     # check if there is a change to write location
-    current_val= self.pull_from_isy_var(var_type, var_id, UPDATE = False)
+    current_val= pull_from_isy_var(self, var_type, var_id, CALC = True)
 
     # only write if required
     if current_val != float(var_value):        
@@ -219,12 +219,12 @@ def push_to_isy_var(self, var_type: str | int, var_id: int | str, var_value: int
             LOGGER.exception("%s:, ISY push failed for %s: %s", self.name, path, exc)
 
 
-def pull_from_isy_var(self, var_type: int | str, var_id: int | str, UPDATE = True):
+def pull_from_isy_var(self, var_type: int | str, var_id: int | str, CALC = False):
     """
     Pull a variable from ISY using path segments,
     parse the XML, and update state if the transformed value changed.
     """
-    LOGGER.debug(f"Pull from isy var_type:{var_type}, var_id:{var_id}, UPDATE={UPDATE}")
+    LOGGER.debug(f"Pull from isy var_type:{var_type}, var_id:{var_id}, CALC={CALC}")
 
     # validate var_type
     var_type_str = str(var_type).strip()
@@ -286,11 +286,11 @@ def pull_from_isy_var(self, var_type: int | str, var_id: int | str, UPDATE = Tru
         calc = new_raw / prec_div
 
         # Update only if UPDATE == True & changed versus the currently stored transformed value
-        if UPDATE:
-            return new_raw
-        else:
-            LOGGER.debug(f"NO UPDATE: raw:{new_raw}, prec:{prec_div}, calc{calc}")
+        LOGGER.debug(f"NO UPDATE: raw:{new_raw}, prec:{prec_div}, calc{calc}")
+        if CALC:
             return calc
+        else:
+            return new_raw
 
     except ET.ParseError as exc:
         LOGGER.exception("Failed to parse XML for %s: %s", path, exc)
