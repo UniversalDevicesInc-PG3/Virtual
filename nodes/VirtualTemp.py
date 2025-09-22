@@ -427,7 +427,7 @@ class VirtualTemp(Node):
 
         current = self.data.get('tempVal', None)
         if current != new_display:
-            self.set_temp_cmd({"cmd": "data", "value": new_raw})
+            self.set_temp_cmd({"cmd": "data", "value": new_display})
             LOGGER.info("Updated value for var_type=%s var_id=%s from %r to %r", vtype_str, vid, current, new_display)
         else:
             LOGGER.debug("No change for var_type=%s var_id=%s (value %r)", vtype_str, vid, new_display)
