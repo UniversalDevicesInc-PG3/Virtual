@@ -445,6 +445,8 @@ class VirtualTemp(Node):
                                        self.data.get('FtoC', 0))
             if newValue == self.data['tempVal']:
                 return
+            else:
+                value = newValue
             
         self.data['tempVal'] = value
         self.setDriver('ST', self.data['tempVal'])
