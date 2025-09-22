@@ -6,13 +6,10 @@ udi-Virtual-pg3 NodeServer/Plugin for EISY/Polisy
 VirtualGeneric class
 """
 # std libraries
-#from typing import Any, Optional, Dict
-#from dataclasses import dataclass
+pass
 
 #external libraries
 from udi_interface import Node, LOGGER
-
-# constants
 
 # local imports
 from utils.node_funcs import FieldSpec, load_persistent_data, store_values
