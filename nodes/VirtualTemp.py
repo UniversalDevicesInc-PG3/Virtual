@@ -263,7 +263,7 @@ class VirtualTemp(Node):
         """
         Set temperature based on actions set-up.
         """
-        LOGGER.info(f"{self.name}, {command}")
+        LOGGER.debug(f"{self.name}, {command}")
         self.setDriver('GV2', 0.0)
         self.data['lastUpdateTime'] = time.time()
         self.data['prevVal'] = self.data['tempVal']
