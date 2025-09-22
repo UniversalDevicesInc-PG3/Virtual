@@ -177,10 +177,10 @@ class VirtualTemp(Node):
             self.push_to_isy_var(self.data['action2type'], self.data['action2id'], self.data['tempVal'])
         if self.data['action1'] == 2:
             var = self.pull_from_isy_var(self.data['action1type'], self.data['action1id'])
-            if var: self.set_temp_cmd(var)
+            if var: self.set_temp_cmd({"cmd": "data", "value": var})
         if self.data['action2'] == 2:
             var = self.pull_from_isy_var(self.data['action2type'], self.data['action2id'])
-            if var: self.set_temp_cmd(var)
+            if var: self.set_temp_cmd({"cmd": "data", "value": var})
 
 
     def set_action1_cmd(self, command):
@@ -425,6 +425,20 @@ class VirtualTemp(Node):
         except Exception as ex:
             LOGGER.error(f"{self.name}: parse error {ex}", exc_info = True)
             return
+
+        # Compute the transformed display value based on current flags
+        # new_display = _transform_value(new_raw,
+        #                               self.data.get('RtoPrec', 0),
+        #                               self.data.get('CtoF', 0),
+        #                               self.data.get('FtoC', 0))
+
+#         current = self.data.get('tempVal', None)
+        # if current != new_display:
+        #     self.set_temp_cmd({"cmd": "data", "value": new_display})
+        #     LOGGER.info("Updated value for var_type=%s var_id=%s from %r to %r", var_type_str, var_id, current, new_display)
+        # else:
+        #     LOGGER.debug("No change for var_type=%s var_id=%s (value %r)", var_type_str, var_id, new_display)
+
 
 
     def set_temp_cmd(self, command):
