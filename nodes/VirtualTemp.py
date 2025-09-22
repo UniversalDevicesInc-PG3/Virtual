@@ -98,8 +98,6 @@ class VirtualTemp(Node):
         self.name = name
 
         # default variables and drivers
-        #self._init_defaults()
-        # default variables and drivers
         self.data = {field: spec.default for field, spec in FIELDS.items()}
 
         self.poly.subscribe(self.poly.START, self.start, address)
