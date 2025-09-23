@@ -12,7 +12,7 @@ pass
 from udi_interface import Node, LOGGER
 
 # local imports
-from utils.node_funcs import FieldSpec, load_persistent_data, _push_drivers, store_values
+from utils.node_funcs import FieldSpec, load_persistent_data, store_values
 
 # constants
 
@@ -78,7 +78,6 @@ class VirtualGeneric(Node):
         
         # default variables and drivers
         self.data = {field: spec.default for field, spec in FIELDS.items()}
-        _push_drivers(self, FIELDS)
 
         self.poly.subscribe(self.poly.START, self.start, address)
 
@@ -94,6 +93,7 @@ class VirtualGeneric(Node):
         
         # get persistent data from polyglot or depreciated: old db file, then delete db file
         load_persistent_data(self, FIELDS)
+        self.query()
         LOGGER.info(f"data:{self.data}")
 
     def DON_cmd(self, command=None):
