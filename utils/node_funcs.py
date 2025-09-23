@@ -70,7 +70,7 @@ def load_persistent_data(self, FIELDS) -> None:
         LOGGER.info("%s, Loaded from persistence", self.name)
     else:
         LOGGER.info("%s, No persistent data found. Checking for old DB files...", self.name)
-        migrated, old_data = _check_db_files_and_migrate(data)
+        migrated, old_data = _check_db_files_and_migrate(self)
         if migrated and old_data is not None:
             _apply_state(self, old_data, FIELDS)
             LOGGER.info("%s, Migrated from old DB files.", self.name)
