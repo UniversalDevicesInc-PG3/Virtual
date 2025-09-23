@@ -144,7 +144,7 @@ def _push_drivers(self, FIELDS) -> None:
     Push only fields that have a driver mapping
     """
     for field, spec in FIELDS.items():
-        if spec.driver and spec.data_type == "state":
+        if spec.should_update():
             self.setDriver(spec.driver, self.data[field], report=True, force=True)
 
 

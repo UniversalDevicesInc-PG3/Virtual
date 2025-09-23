@@ -12,7 +12,7 @@ pass
 from udi_interface import Node, LOGGER
 
 # local imports
-from utils.node_funcs import FieldSpec, load_persistent_data, store_values
+from utils.node_funcs import FieldSpec, load_persistent_data, _push_drivers, store_values
 
 # constants
 
@@ -28,7 +28,7 @@ from utils.node_funcs import FieldSpec, load_persistent_data, store_values
 # Single source of truth for field names, driver codes, and defaults
 FIELDS: dict[str, FieldSpec] = {
     # State variables (pushed to drivers)
-    "level":           FieldSpec(driver="OL", default=0, data_type="state"),
+    "level":           FieldSpec(driver="OL", default=-1, data_type="state"),
     "level_stored":    FieldSpec(driver=None, default=100, data_type="state"),
 }
 
@@ -78,6 +78,7 @@ class VirtualGeneric(Node):
         
         # default variables and drivers
         self.data = {field: spec.default for field, spec in FIELDS.items()}
+        _push_drivers(self, FIELDS)
 
         self.poly.subscribe(self.poly.START, self.start, address)
 
