@@ -66,7 +66,7 @@ class VirtualTemp(Node):
     'resetStats'        : reset Statistics
     """
     
-    def __init__(self, polyglot, primary, address, name, *, default_ovr: Optional[Dict[str, Any]] = None):
+    def __init__(self, poly, primary, address, name, *, default_ovr: Optional[Dict[str, Any]] = None):
         """ Sent by the Controller class node.
         :param polyglot: Reference to the Interface class
         :param primary: Parent address
@@ -89,11 +89,11 @@ class VirtualTemp(Node):
         START: used to create/check/load DB file
         POLL: shortPoll for updates
         """
-        super().__init__(polyglot, primary, address, name)
+        super().__init__(poly, primary, address, name)
 
-        self.poly = polyglot
+        self.poly = poly
         self.primary = primary
-        self.controller = polyglot.getNode(self.primary)
+        self.controller = poly.getNode(self.primary)
         self.address = address
         self.name = name
 

@@ -1,6 +1,6 @@
 
 # standard imports
-import re, shelve
+import shelve
 import xml.etree.ElementTree as ET
 from typing import Any, Dict, Iterable, Tuple, Optional
 from pathlib import Path
@@ -35,28 +35,6 @@ _VARIABLE_TYPE_MAP = {
     '3': ('1', 'val', 'set'),
     '4': ('1', 'init', 'init'),
 }
-
-
-def get_valid_node_address(name,max_length=14):
-    offset = max_length * -1
-    # Only allow utf-8 characters
-    #  https://stackoverflow.com/questions/26541968/delete-every-non-utf-8-symbols-froms-string
-    name = bytes(name, 'utf-8').decode('utf-8','ignore')
-    # Remove <>`~!@#$%^&*(){}[]?/\;:"'` characters from name
-    sname = re.sub(r"[<>`~!@#$%^&*(){}[\]?/\\;:\"']+", "", name)
-    # And return last part of name of over max_length
-    return sname[offset:].lower()
-
-
-def get_valid_node_name(name,max_length=32):
-    offset = max_length * -1
-    # Only allow utf-8 characters
-    #  https://stackoverflow.com/questions/26541968/delete-every-non-utf-8-symbols-froms-string
-    name = bytes(name, 'utf-8').decode('utf-8','ignore')
-    # Remove <>`~!@#$%^&*(){}[]?/\;:"'` characters from name
-    sname = re.sub(r"[<>`~!@#$%^&*(){}[\]?/\\;:\"']+", "", name)
-    # And return last part of name of over max_length
-    return sname[offset:]
 
 
 def load_persistent_data(self, FIELDS) -> None:

@@ -20,8 +20,13 @@ import udi_interface
 
 LOGGER = udi_interface.LOGGER
 
-VERSION = '3.1.20'
+VERSION = '3.1.21'
 """
+3.1.21
+DONE name & address check using poly interface
+DONE consistent use of poly versus polyglot
+DONE fix nagging error check in main()
+
 3.1.20
 DONE fix controller ST "status" on at start, off at stop / delete, "control" still heartbeat
 DONE garage send CMDs, motor, motion, obstruction ; get naming consistent
@@ -54,7 +59,7 @@ DONE rewrite sse events collection
 DONE poll on longPoll, events sse
 DONE add motor, door position
 DONE update docs
-TODO Bonjour discovery is sometimes slow
+NOTE Bonjour discovery is sometimes slow
 
 3.1.10
 DONE rewrite switch, dimmer, temp, tempc, garage
@@ -113,6 +118,7 @@ see versionHistory.md
 from nodes import Controller
 
 if __name__ == "__main__":
+    polyglot = None
     try:
         """
         Instantiates the Interface to Polyglot.
@@ -150,7 +156,8 @@ if __name__ == "__main__":
         """
         Catch SIGTERM or Control-C and exit cleanly.
         """
-        polyglot.stop()
+        if polyglot is not None:
+            polyglot.stop()
     except Exception as err:
         LOGGER.error('Excption: {0}'.format(err), exc_info=True)
     sys.exit(0)

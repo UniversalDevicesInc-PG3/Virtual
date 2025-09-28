@@ -16,7 +16,7 @@ from udi_interface import Node, LOGGER, Custom, LOG_HANDLER
 import yaml
 
 # personal libraries
-from utils.node_funcs import get_valid_node_name # not using  get_valid_node_address as id's seem to behave
+pass
 
 
 # Nodes
@@ -37,7 +37,7 @@ DEVICE_TYPE_TO_NODE_CLASS = {
 class Controller(Node):
     id = 'controller'
 
-    def __init__(self, polyglot, primary, address, name):
+    def __init__(self, poly, primary, address, name):
         """
         super
         self definitions
@@ -46,7 +46,7 @@ class Controller(Node):
         ready
         we exist!
         """
-        super().__init__(polyglot, primary, address, name)
+        super().__init__(poly, primary, address, name)
         # importand flags, timers, vars
         self.hb = 0 # heartbeat
         self.numNodes = 0
@@ -69,11 +69,11 @@ class Controller(Node):
         self.handler_discover_st = None
 
         # Create data storage classes
-        self.Notices         = Custom(polyglot, 'notices')
-        self.Parameters      = Custom(polyglot, 'customparams')
-        self.Data            = Custom(self.poly, 'customdata')
-        self.TypedParameters = Custom(polyglot, 'customtypedparams')
-        self.TypedData       = Custom(polyglot, 'customtypeddata')
+        self.Notices         = Custom(poly, 'notices')
+        self.Parameters      = Custom(poly, 'customparams')
+        self.Data            = Custom(poly, 'customdata')
+        self.TypedParameters = Custom(poly, 'customtypedparams')
+        self.TypedData       = Custom(poly, 'customtypeddata')
 
         # Subscribe to various events from the Interface class.
         # The START event is unique in that you can subscribe to 
@@ -292,7 +292,7 @@ class Controller(Node):
                 continue
 
             if val in {'switch', 'temperature', 'temperaturec', 'temperaturecr', 'generic', 'dimmer'}:
-                name = get_valid_node_name(f"{val} {key}")
+                name = self.poly.getValidName(f"{val} {key}")
                 device = {'id': key, 'type': val, 'name': name}
                 self.devlist.append(device)
             elif val:
@@ -379,7 +379,7 @@ class Controller(Node):
         """
         if 'name' in dev:
             return dev['name']
-        return get_valid_node_name(f"{dev['type']} {dev['id']}")
+        return self.poly.getValidVame(f"{dev['type']} {dev['id']}")
 
     
     def discoverNodes(self):

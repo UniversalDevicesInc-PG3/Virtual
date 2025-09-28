@@ -58,7 +58,7 @@ class VirtualSwitch(Node):
         specific node.
     """
     
-    def __init__(self, polyglot, primary, address, name):
+    def __init__(self, poly, primary, address, name):
         """ Sent by the Controller class node.
         :param polyglot: Reference to the Interface class
         :param primary: Parent address
@@ -76,11 +76,11 @@ class VirtualSwitch(Node):
         Controller node calls:
           self.deleteDB() when ISY deletes the node or discovers it gone
         """
-        super().__init__(polyglot, primary, address, name)
+        super().__init__(poly, primary, address, name)
 
-        self.poly = polyglot
+        self.poly = poly
         self.primary = primary
-        self.controller = polyglot.getNode(self.primary)
+        self.controller = poly.getNode(self.primary)
         self.address = address
         self.name = name
 
