@@ -414,12 +414,11 @@ class Controller(Node):
             if "id" not in dev or "type" not in dev:
                 LOGGER.error(f"Invalid device definition: {dev}")
                 continue
-
+            
             dev_id = str(dev.get("id"))
             dev_type = str(dev.get("type"))
             node_name = self._get_node_name(dev)
             node_class = DEVICE_TYPE_TO_NODE_CLASS.get(dev_type)
-            
             if not node_class:
                 LOGGER.error(f"Device type '{dev_type}' is not yet supported.")
                 continue
@@ -428,10 +427,8 @@ class Controller(Node):
             if dev_id not in nodes_existing:
                 node = node_class(self.poly, self.address, dev_id, node_name)
                 self.poly.addNode(node)
-                self.wait_for_node_done()                
-            elif nodes_existing['dev_id'].get('name') != node_name:
-                nodes_existing['dev_id'].rename(node_name)
-            
+                self.wait_for_node_done()
+
 
     def _get_node_name(self, dev: Dict[str, Any]) -> str:
         """
