@@ -234,7 +234,7 @@ def pull_from_isy_var(self, var_type: int | str, var_id: int | str, CALC = False
         LOGGER.debug("ISY get response for %s: %s", path, rtxt)
     except PermissionError as exc:
         LOGGER.exception(f"Permission Error on path {path}")
-        self.Notices['permission'] = 'Access to ISY is not Authorized. Go to node configuration and click Allow.'
+        self.controller.Notices['permission'] = 'Access to ISY is not Authorized. Go to node configuration and click Allow.'
         return
     except RuntimeError as exc:
         if 'ISY info not available' in str(exc):
