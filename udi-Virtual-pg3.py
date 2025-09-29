@@ -28,6 +28,7 @@ DONE name & address check using poly interface
 DONE consistent use of poly versus polyglot
 DONE fix nagging error check in main()
 DONE controller discover refactor
+DONE add notice for ISY authorized error (was only in logs)
 
 3.1.20
 DONE fix controller ST "status" on at start, off at stop / delete, "control" still heartbeat
