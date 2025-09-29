@@ -28,8 +28,8 @@ from utils.node_funcs import FieldSpec, load_persistent_data, store_values
 # Single source of truth for field names, driver codes, and defaults
 FIELDS: dict[str, FieldSpec] = {
     # State variables (pushed to drivers)
-    "level":           FieldSpec(driver="OL", default=-1, data_type="state"),
-    "level_stored":    FieldSpec(driver=None, default=100, data_type="state"),
+    "status":           FieldSpec(driver="OL", default=-1, data_type="state"),
+    "onlevel":    FieldSpec(driver=None, default=100, data_type="state"),
 }
 
 
@@ -98,11 +98,12 @@ class VirtualGeneric(Node):
 
     def DON_cmd(self, command=None):
         LOGGER.info(f"{self.name}, {command}")
-        if self.data.get('level_stored', 0) > 0:
-            self.data['level'] = self.data.get('level_stored')
+        if self.data.get('onlevel', 0) > 0:
+            self.data['status'] = self.data.get('onlevel')
         else:
-            self.data['level'] = 100
-        self.setDriver('OL', self.data.get('level'))
+            self.data['status'] = 100
+        self.setDriver('ST', self.data.get('status'))
+        self.setDriver('OL', self.data.get('onlevel'))
         self.reportCmd("DON")
         store_values(self)
         LOGGER.debug("Exit")
@@ -110,11 +111,12 @@ class VirtualGeneric(Node):
 
     def DOF_cmd(self, command=None):
         LOGGER.info(f"{self.name}, {command}")
-        level = self.data.get('level', 0)
-        if level not in [0, 100]:
-            self.data['level_stored'] = level
-        self.data['level'] = 0
-        self.setDriver('OL', 0)
+        status = self.data.get('status', 0)
+        if status not in [0, 100]:
+            self.data['onlevel'] = status
+        self.data['status'] = 0
+        self.setDriver('ST', 0)
+        self.setDriver('OL', self.data.get('onlevel'))
         self.reportCmd("DOF")
         store_values(self)
         LOGGER.debug("Exit")
@@ -122,8 +124,9 @@ class VirtualGeneric(Node):
 
     def DFON_cmd(self, command=None):
         LOGGER.info(f"{self.name}, {command}")
-        self.data['level'] = 100
-        self.setDriver('OL', 100)
+        self.data['status'] = 100
+        self.setDriver('ST', 100)
+        self.setDriver('OL', self.data.get('onlevel'))
         self.reportCmd("DFON")
         store_values(self)
         LOGGER.debug("Exit")
@@ -131,11 +134,12 @@ class VirtualGeneric(Node):
 
     def DFOF_cmd(self, command=None):
         LOGGER.info(f"{self.name}, {command}")
-        level = self.data.get('level', 0)
-        if level not in [None, 0, 100]:
-            self.data['level_stored'] = level 
-        self.data['level'] = 0
-        self.setDriver('OL', 0)
+        status = self.data.get('status', 0)
+        if status not in [None, 0, 100]:
+            self.data['onlevel'] = status 
+        self.data['status'] = 0
+        self.setDriver('ST', 0)
+        self.setDriver('OL', self.data.get('onlevel'))
         self.reportCmd("DFOF")
         store_values(self)
         LOGGER.debug("Exit")
@@ -143,11 +147,12 @@ class VirtualGeneric(Node):
 
     def BRT_cmd(self, command=None):
         LOGGER.info(f"{self.name}, {command}")
-        level = int(self.data.get('level', 0)) + 2
-        if level > 100: level = 100
-        self.data['level_stored'] = level
-        self.data['level'] = level
-        self.setDriver('OL', level)
+        status = int(self.data.get('status', 0)) + 2
+        if status > 100: status = 100
+        self.data['onlevel'] = status
+        self.data['status'] = status
+        self.setDriver('ST', status)
+        self.setDriver('OL', self.data.get('onlevel'))
         self.reportCmd("BRT")
         store_values(self)
         LOGGER.debug("Exit")
@@ -155,15 +160,31 @@ class VirtualGeneric(Node):
 
     def DIM_cmd(self, command=None):
         LOGGER.info(f"{self.name}, {command}")
-        level = int(self.data.get('level', 100)) - 2
-        if level <= 0:
-            level = 0
-            self.data['level_stored'] = 10 # keep stored to a minimum level
+        status = int(self.data.get('status', 100)) - 2
+        if status <= 0:
+            status = 0
+            self.data['onlevel'] = 10 # keep stored to a minimum level
         else:
-            self.data['level_stored'] = level
-        self.data['level'] = level
-        self.setDriver('OL', level)
+            self.data['onlevel'] = status
+        self.data['status'] = status
+        self.setDriver('ST', status)
+        self.setDriver('OL', self.data.get('onlevel'))
         self.reportCmd("DIM")
+        store_values(self)
+        LOGGER.debug("Exit")
+
+
+    def set_ST_cmd(self, command):
+        LOGGER.info(f"{self.name}, {command}")
+        status = int(command.get('value'))
+        if status != 0:
+            self.data['status'] = status
+        else:
+            self.data['status'] = 10
+        self.data['status'] = status
+        self.setDriver('ST', status)
+        self.setDriver('OL', self.data.get('onlevel'))
+        self.reportCmd("ST", value=status)
         store_values(self)
         LOGGER.debug("Exit")
 
@@ -172,10 +193,10 @@ class VirtualGeneric(Node):
         LOGGER.info(f"{self.name}, {command}")
         level = int(command.get('value'))
         if level != 0:
-            self.data['level_stored'] = level
+            self.data['onlevel'] = level
         else:
-            self.data['level_stored'] = 10
-        self.data['level'] = level
+            self.data['onlevel'] = 10
+        self.data['onlevel'] = level
         self.setDriver('OL', level)
         self.reportCmd("OL", value=level)
         store_values(self)
@@ -205,6 +226,7 @@ class VirtualGeneric(Node):
     UOM 2 is boolean so the ISY will display 'True/False'
     """
     drivers = [
+        {'driver': 'ST', 'value': 0, 'uom': 56, 'name': "Level"},
         {'driver': 'OL', 'value': 0, 'uom': 56, 'name': "Level"},
     ]
 
@@ -219,7 +241,8 @@ class VirtualGeneric(Node):
                     'DFOF': DFOF_cmd,
                     'BRT': BRT_cmd,
                     'DIM': DIM_cmd,
-                    'OL': set_OL_cmd,
+                    'SETST': set_ST_cmd,
+                    'SETOL': set_OL_cmd,
                     'QUERY': query,
                 }
 

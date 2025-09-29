@@ -23,9 +23,11 @@ LOGGER = udi_interface.LOGGER
 VERSION = '3.1.21'
 """
 3.1.21
+DONE generic/dimmer to model dimmer ST & OL
 DONE name & address check using poly interface
 DONE consistent use of poly versus polyglot
 DONE fix nagging error check in main()
+DONE controller discover refactor
 
 3.1.20
 DONE fix controller ST "status" on at start, off at stop / delete, "control" still heartbeat

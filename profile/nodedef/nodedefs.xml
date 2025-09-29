@@ -147,6 +147,7 @@
     <nodeDef id="virtualgeneric" nls="vgeneric">
       <editors />
       <sts>
+        <st id="ST" editor="value" />
         <st id="OL" editor="value" />
       </sts>
       <cmds>
@@ -157,7 +158,9 @@
 		  <cmd id="DFOF" />
 		  <cmd id="BRT" />
 		  <cmd id="DIM" />
-		  <cmd id="OL" />
+		  <cmd id="ST" />
+		  <cmd id="SETST" />
+		  <cmd id="SETOL" />
         </sends>
         <accepts>
           <cmd id="DON" />
@@ -166,9 +169,12 @@
 		  <cmd id="DFOF" />
           <cmd id="BRT" />
           <cmd id="DIM" />
-		  <cmd id="OL">
-			<p id="" editor="value" init="OL" />
+		  <cmd id="SETST">
+			<p id="" editor="value" init="ST" />
           </cmd>
+		  <cmd id="SETOL">
+			<p id="" editor="value" init="OL" />
+		  </cmd>
         </accepts>
       </cmds>
     </nodeDef>

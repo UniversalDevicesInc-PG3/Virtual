@@ -7,7 +7,7 @@ Controller class
 """
 
 # std libraries
-import time, json, logging
+import json, logging
 from threading import Event, Condition
 from typing import Dict, Any, List
 
@@ -56,17 +56,17 @@ class Controller(Node):
         self.queue_condition = Condition()
         self.last = 0.0
 
-        # Events
+        # Events & in
         self.ready_event = Event()
         self.all_handlers_st_event = Event()
         self.stop_sse_client_event = Event()
-
+        self.discovery_in = False
+        
         # startup completion flags
         self.handler_params_st = None
         self.handler_data_st = None
         self.handler_typedparams_st = None
         self.handler_typeddata_st = None
-        self.handler_discover_st = None
 
         # Create data storage classes
         self.Notices         = Custom(poly, 'notices')
@@ -85,7 +85,7 @@ class Controller(Node):
         self.poly.subscribe(self.poly.CUSTOMPARAMS,      self.parameterHandler)
         self.poly.subscribe(self.poly.CUSTOMDATA,        self.dataHandler)
         self.poly.subscribe(self.poly.STOP,              self.stop)
-        self.poly.subscribe(self.poly.DISCOVER,          self.discover)
+        self.poly.subscribe(self.poly.DISCOVER,          self.discover_cmd)
         self.poly.subscribe(self.poly.CUSTOMTYPEDDATA,   self.typedDataHandler)
         self.poly.subscribe(self.poly.CUSTOMTYPEDPARAMS, self.typedParameterHandler)
         self.poly.subscribe(self.poly.ADDNODEDONE,       self.node_queue)
@@ -122,14 +122,22 @@ class Controller(Node):
         self.Notices['waiting'] = 'Waiting on valid configuration'
         self.all_handlers_st_event.wait(timeout=60)
         if not self.all_handlers_st_event.is_set():
+            # start-up failed
             LOGGER.error("Timed out waiting for handlers to startup")
             self.setDriver('ST', 2) # start-up failed
+            self.Notices['error'] = 'Error start-up timeout.  Check config & restart'
             return        
 
-        # Wait for discovery
-        self.discover()
-        while not self.handler_discover_st:
-            time.sleep(1)
+        # Discover and wait for discovery to complete
+        discoverSuccess = self.discover_cmd()
+
+        # first update from Gateway
+        if not discoverSuccess:
+            # start-up failed
+            LOGGER.error(f'First discovery failed!!! exit {self.name}')
+            self.Notices['error'] = 'Error first discovery.  Check config & restart'
+            self.setDriver('ST', 2)
+            return
 
         self.Notices.delete('waiting')        
         LOGGER.info('Started Virtual Device NodeServer v%s', self.poly.serverdata)
@@ -191,8 +199,7 @@ class Controller(Node):
     def typedParameterHandler(self, params):
         """
         Called via the CUSTOMTYPEDPARAMS event. This event is sent When
-        the Custom Typed Parameters are created.  See the checkParams()
-        below.  Generally, this event can be ignored.
+        the Custom Typed Parameters are created.
         """
         LOGGER.debug('Loading typed parameters now')
         self.TypedParameters.load(params)
@@ -226,26 +233,54 @@ class Controller(Node):
             self.all_handlers_st_event.set()
 
 
-    def _handle_json_device(self, key: str, val: str) -> Dict[str, Any] | None:
-        """Parses a JSON device configuration, handling ID logic."""
-        try:
-            device = json.loads(val)
-            if not isinstance(device, dict):
-                raise TypeError("JSON content must be a dictionary.")
+    def checkParams(self) -> bool:
+        """
+        Checks and processes device parameters from `self.Parameters`.
+        """
+        self.Notices.delete('config')
+        self.devlist = []
+        has_error = False
 
-            if "id" not in device:
-                device["id"] = key
-                LOGGER.debug(f"no id: inserting id: {key} into device: {device}")
-            elif device["id"] != key:
-                device["id"] = key
-                LOGGER.error(f"error id: {key} != deviceID: {device['id']}; fixed device: {device}")
+        for key, val in self.Parameters.items():
+            if not key.isdigit():
+                # handle config file
+                if key in ["devFile", "devfile"]:
+                    if val:
+                        devices_from_file = self._handle_file_devices(val)
+                        if devices_from_file is not None:
+                            self.devlist.extend(devices_from_file)
+                        else:
+                            has_error = True
+                    else:
+                        LOGGER.error('checkParams: devFile missing filename')
+                        has_error = True
+                else:
+                    LOGGER.error(f"unknown keyfield: '{key}'")
+                    has_error = True
+                continue
+            # handle simple single device
+            if val in {'switch', 'temperature', 'temperaturec', 'temperaturecr', 'generic', 'dimmer'}:
+                name = self.poly.getValidName(f"{val} {key}")
+                device = {'id': key, 'type': val, 'name': name}
+                self.devlist.append(device)
+            # handle json single device
+            elif val:
+                json_device = self._handle_json_device(key, val)
+                if json_device:
+                    self.devlist.append(json_device)
+                else:
+                    has_error = True
 
-            return device
-        except (json.JSONDecodeError, TypeError) as ex:
-            LOGGER.error(f"JSON parse error for key '{key}' with value '{val}': {ex}")
-            return None
+        if has_error:
+            self.Notices['config'] = 'Bad configuration, please re-check.'
+            LOGGER.info('checkParams finished with errors.')
+            return False
 
-
+        LOGGER.info('checkParams is complete')
+        LOGGER.info(f'checkParams: self.devlist: {self.devlist}')
+        return True
+    
+        
     def _handle_file_devices(self, filename: str) -> List[Dict[str, Any]] | None:
         """Loads and returns devices from a YAML file."""
         try:
@@ -266,52 +301,26 @@ class Controller(Node):
             return None
 
 
-    def checkParams(self) -> bool:
-        """
-        Checks and processes device parameters from `self.Parameters`.
-        """
-        self.Notices.delete('config')
-        self.devlist = []
-        has_error = False
+    def _handle_json_device(self, key: str, val: str) -> Dict[str, Any] | None:
+        """Parses a JSON device configuration, handling ID logic."""
+        try:
+            device = json.loads(val)
+            if not isinstance(device, dict):
+                raise TypeError("JSON content must be a dictionary.")
 
-        for key, val in self.Parameters.items():
-            if not key.isdigit():
-                if key in ["devFile", "devfile"]:
-                    if val:
-                        devices_from_file = self._handle_file_devices(val)
-                        if devices_from_file is not None:
-                            self.devlist.extend(devices_from_file)
-                        else:
-                            has_error = True
-                    else:
-                        LOGGER.error('checkParams: devFile missing filename')
-                        has_error = True
-                else:
-                    LOGGER.error(f"unknown keyfield: '{key}'")
-                    has_error = True
-                continue
+            if "id" not in device:
+                device["id"] = key
+                LOGGER.debug(f"no id: inserting id: {key} into device: {device}")
+            elif device["id"] != key:
+                device["id"] = key
+                LOGGER.error(f"error id: {key} != deviceID: {device['id']}; fixed device: {device}")
 
-            if val in {'switch', 'temperature', 'temperaturec', 'temperaturecr', 'generic', 'dimmer'}:
-                name = self.poly.getValidName(f"{val} {key}")
-                device = {'id': key, 'type': val, 'name': name}
-                self.devlist.append(device)
-            elif val:
-                json_device = self._handle_json_device(key, val)
-                if json_device:
-                    self.devlist.append(json_device)
-                else:
-                    has_error = True
+            return device
+        except (json.JSONDecodeError, TypeError) as ex:
+            LOGGER.error(f"JSON parse error for key '{key}' with value '{val}': {ex}")
+            return None
 
-        if has_error:
-            self.Notices['config'] = 'Bad configuration, please re-check.'
-            LOGGER.info('checkParams finished with errors.')
-            return False
 
-        LOGGER.info('checkParams is complete')
-        LOGGER.info(f'checkParams: self.devlist: {self.devlist}')
-        return True
-    
-        
     def handleLevelChange(self, level):
         """
         Called via the LOGLEVEL event, to handle log level change.
@@ -351,86 +360,108 @@ class Controller(Node):
         LOGGER.debug(f"Exit")
 
 
-    def updateProfile(self,command = None):
-        """
-        Update the profile.
-        """
-        LOGGER.info(f"Enter {command}")
-        st = self.poly.updateProfile()
-        LOGGER.debug(f"Exit")
-        return st
-
-
-    def discover(self, command = None):
+    def discover_cmd(self, command = None):
         """
         Call node discovery here. Called from controller start method
         and from DISCOVER command received from ISY.
         Calls checkParams, so can be used after update of devFile or config
         """
         LOGGER.info(command)
-        self.checkParams()
-        self.discoverNodes()
-        LOGGER.debug("Exit")
-        
+        success = False
+        if self.discovery_in:
+            LOGGER.info('Discover already running.')
+            return success
+
+        self.discovery_in = True
+        LOGGER.info("In Discovery...")
+
+        if self.checkParams() and self._discover():
+            success = True
+            LOGGER.info("Discovery Success")
+        else:
+            LOGGER.error("Discovery Failure")
+        self.discovery_in = False            
+        return success
+
+    
+    def _discover(self):
+        """
+        Discover all nodes from the gateway.
+        """
+        success = False
+        nodes_existing = self.poly.getNodes()
+        LOGGER.debug(f"current nodes = {nodes_existing}")
+        nodes_old = [node for node in nodes_existing if node != self.id]
+        nodes_new = []
+
+        try:
+            self._discover_nodes(nodes_existing, nodes_new)
+            self._cleanup_nodes(nodes_new, nodes_old)
+            self.numNodes = len(nodes_new)
+            self.setDriver('GV0', self.numNodes)
+            success = True
+            LOGGER.info(f"Discovery complete. success = {success}")
+        except Exception as ex:
+            LOGGER.error(f'Discovery Failure: {ex}', exc_info=True)            
+        return success
+
+
+    def _discover_nodes(self, nodes_existing, nodes_new):
+        """
+        Adds and updates nodes based on the device list.
+        """
+        for dev in self.devlist:
+            if "id" not in dev or "type" not in dev:
+                LOGGER.error(f"Invalid device definition: {dev}")
+                continue
+
+            dev_id = str(dev.get("id"))
+            dev_type = str(dev.get("type"))
+            node_name = self._get_node_name(dev)
+            node_class = DEVICE_TYPE_TO_NODE_CLASS.get(dev_type)
+            
+            if not node_class:
+                LOGGER.error(f"Device type '{dev_type}' is not yet supported.")
+                continue
+
+            nodes_new.append(dev_id)
+            if dev_id not in nodes_existing:
+                node = node_class(self.poly, self.address, dev_id, node_name)
+                self.poly.addNode(node)
+                self.wait_for_node_done()                
+            elif nodes_existing['dev_id'].get('name') != node_name:
+                nodes_existing['dev_id'].rename(node_name)
+            
 
     def _get_node_name(self, dev: Dict[str, Any]) -> str:
         """
         Helper to get the node name from a device definition.
         """
         if 'name' in dev:
-            return dev['name']
-        return self.poly.getValidVame(f"{dev['type']} {dev['id']}")
+            return self.poly.getValidName(dev.get('name'))
+        return self.poly.getValidVame(f"{dev.get('type')} {dev.get('id')}")
 
-    
-    def discoverNodes(self):
-        """
-        Discovers, adds, updates, and removes nodes based on the device list.
-        """
-        self.handler_discover_st = False
-        LOGGER.info("In Discovery...")
 
-        current_nodes_ids = {node for node in self.poly.getNodes() if node != self.id}
-        new_nodes_ids = set()
+    def _cleanup_nodes(self, nodes_new, nodes_old):
+        nodes_db = self.poly.getNodesFromDb()
+        LOGGER.debug(f"db nodes = {nodes_db}")
 
-        # Step 1: Add or update new nodes
-        for dev in self.devlist:
-            if "id" not in dev or "type" not in dev:
-                LOGGER.error(f"Invalid device definition: {json.dumps(dev)}")
-                continue
+        nodes_current = self.poly.getNodes()
+        nodes_get = {key: nodes_current[key] for key in nodes_current if key != self.id}
 
-            dev_id = str(dev["id"])
-            dev_type = str(dev["type"])
-            node_name = self._get_node_name(dev)
+        LOGGER.debug(f"old nodes = {nodes_old}")
+        LOGGER.debug(f"new nodes = {nodes_new}")
+        LOGGER.debug(f"pre-delete nodes = {nodes_get}")
 
-            node_class = DEVICE_TYPE_TO_NODE_CLASS.get(dev_type)
-            if not node_class:
-                LOGGER.error(f"Device type '{dev_type}' is not yet supported.")
-                continue
+        for node in nodes_get:
+            if node not in nodes_new:
+                LOGGER.info(f"need to delete node {node}")
+                self.poly.delNode(node)
 
-            node_exists = self.poly.getNode(dev_id)
-            if not node_exists:
-                self.poly.addNode(node_class(self.poly, self.address, dev_id, node_name))
-                self.wait_for_node_done()
-            elif node_exists.name != node_name:
-                node_exists.rename(node_name)
+        if set(nodes_get) == set(nodes_new):
+            LOGGER.info('Discovery NO NEW activity')
 
-            new_nodes_ids.add(dev_id)
 
-        # Step 2: Remove old nodes
-        nodes_to_delete = current_nodes_ids - new_nodes_ids
-        for node_id in nodes_to_delete:
-            LOGGER.info(f"Deleting old node with id: '{node_id}'")
-            self.poly.delNode(node_id) # Using delNode with id
-
-        if not nodes_to_delete and not (new_nodes_ids - current_nodes_ids):
-            LOGGER.warning('Discovery NO NEW activity')
-
-        self.numNodes = len(new_nodes_ids)
-        self.setDriver('GV0', self.numNodes)        
-        self.handler_discover_st = True
-        LOGGER.info('Discovery complete.')
-
-        
     def delete(self, command = None):
         """
         This is called by Polyglot upon deletion of the NodeServer. If the
@@ -477,6 +508,5 @@ class Controller(Node):
     # 'accepts' section of the nodedef file.
     commands = {
         'QUERY': query,
-        'DISCOVER': discover,
-        'UPDATE_PROFILE': updateProfile,
+        'DISCOVER': discover_cmd,
     }

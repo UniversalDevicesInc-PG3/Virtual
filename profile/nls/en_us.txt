@@ -5,9 +5,6 @@ ND-controller-ICON = Switch
 ST-GV0-NAME = NumberOfNodes
 CMD-ctl-QUERY"-NAME = Query
 CMD-ctl-DISCOVER-NAME = Discover
-CMD-ctl-UPDATE_PROFILE-NAME = Update Profile
-CMD-ctl-REMOVE_NOTICES_ALL-NAME = Remove All Notices
-CMD-ctl-REMOVE_NOTICE_TEST-NAME = Remove Notice Test
 ST-ctl-ST-NAME = NodeServer Online
 
 # ctd
@@ -26,14 +23,16 @@ CMD-vswitch-TOGGLE-NAME = Toggle
 # virtualgeneric
 ND-virtualgeneric-NAME = Virtual Generic
 ND-virtualgeneric-ICON = Switch
-ST-vgeneric-OL-NAME = Level
+ST-vgeneric-ST-NAME = Status
+ST-vgeneric-OL-NAME = On Level
 CMD-vgeneric-DON-NAME = On
 CMD-vgeneric-DOF-NAME = Off
 CMD-vgeneric-DFON-NAME = Fast On
 CMD-vgeneric-DFOF-NAME = Fast Off
 CMD-vgeneric-BRT-NAME = Brighten
 CMD-vgeneric-DIM-NAME = Dim
-CMD-vgeneric-setDim-NAME = Set Level
+CMD-vgeneric-SETST-NAME = Set Status
+CMD-vgeneric-SETOL-NAME = Set On Level
 
 # virtualtemp
 ND-virtualtemp-NAME = Virtual Temperature
