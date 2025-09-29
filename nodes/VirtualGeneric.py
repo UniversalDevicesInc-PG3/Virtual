@@ -28,7 +28,7 @@ from utils.node_funcs import FieldSpec, load_persistent_data, store_values
 # Single source of truth for field names, driver codes, and defaults
 FIELDS: dict[str, FieldSpec] = {
     # State variables (pushed to drivers)
-    "status":           FieldSpec(driver="OL", default=-1, data_type="state"),
+    "status":           FieldSpec(driver="OL", default=100, data_type="state"),
     "onlevel":    FieldSpec(driver=None, default=100, data_type="state"),
 }
 
