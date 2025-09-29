@@ -232,11 +232,15 @@ def pull_from_isy_var(self, var_type: int | str, var_id: int | str, CALC = False
         # Optional: log response for diagnostics
         rtxt = resp.decode("utf-8", errors="replace") if isinstance(resp, (bytes, bytearray)) else str(resp)
         LOGGER.debug("ISY get response for %s: %s", path, rtxt)
+    except PermissionError as exc:
+        LOGGER.exception(f"Permission Error on path {path}")
+        self.Notices['permission'] = 'Access to ISY is not Authorized. Go to node configuration and click Allow.'
+        return
     except RuntimeError as exc:
         if 'ISY info not available' in str(exc):
             LOGGER.info(f"ISY info not available on {path}")
         else:
-            LOGGER.exception("RuntimeError on path {path}")
+            LOGGER.exception(f"Runtime Error on path {path}")
         return
     except Exception as exc:
         LOGGER.exception("%s:, ISY get failed for %s", path, exc)
