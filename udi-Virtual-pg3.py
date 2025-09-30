@@ -162,5 +162,5 @@ if __name__ == "__main__":
         if polyglot is not None:
             polyglot.stop()
     except Exception as err:
-        LOGGER.error('Excption: {0}'.format(err), exc_info=True)
+        LOGGER.error(f'Excption: {err}', exc_info=True)
     sys.exit(0)

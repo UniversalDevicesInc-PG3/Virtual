@@ -483,13 +483,13 @@ class VirtualGarage(Node):
 
             # retry
             if event.get('retry'):
-                LOGGER.info('retry - {}'.format(event))
+                LOGGER.info(f'retry - {event}')
                 self.remove_ratgdo_event(event)
                 acted_upon = True
 
             # id
             if event.get('id'):
-                LOGGER.info('id - {}'.format(event))
+                LOGGER.info(f'id - {event}')
                 self.remove_ratgdo_event(event)
                 acted_upon = True
 
@@ -498,19 +498,19 @@ class VirtualGarage(Node):
             if is_event:
                     # event - ping
                     if is_event == "ping":
-                        LOGGER.info('event - ping - {}'.format(event))
+                        LOGGER.info(f'event - ping - {event}')
                         self.remove_ratgdo_event(event)
                         acted_upon = True
 
                     # event - error
                     elif is_event == "error":
-                        LOGGER.info('event - eror -{}'.format(event))
+                        LOGGER.info(f'event - eror -{event}')
                         self.remove_ratgdo_event(event)
                         acted_upon = True
 
                     # event - log
                     elif is_event == "log":
-                        LOGGER.info('event - log -{}'.format(event))
+                        LOGGER.info(f'event - log -{event}')
                         if 'No clients: rebooting' in event['data']:
                             LOGGER.warning('API Rebooting...')
                         self.remove_ratgdo_event(event)
@@ -518,7 +518,7 @@ class VirtualGarage(Node):
 
                     # event - unknown
                     elif is_event == "unknown":
-                        LOGGER.info('event - unknown -{}'.format(event))
+                        LOGGER.info(f'event - unknown -{event}')
                         self.remove_ratgdo_event(event)
                         acted_upon = True
                         
@@ -530,32 +530,32 @@ class VirtualGarage(Node):
                                 id = msg.get('id')
                                 if id == 'light-light':
                                     self.set_ratgdo_light(msg)
-                                    LOGGER.info('event:state - processed id:{}'.format(id))
+                                    LOGGER.info(f'event:state - processed id:{id}')
                                 elif id == 'cover-door':
                                     self.set_ratgdo_door(msg)
-                                    LOGGER.info('event:state - processed id:{}'.format(id))
+                                    LOGGER.info(f'event:state - processed id:{id}')
                                 elif id == 'binary_sensor-motor':
                                     self.set_ratgdo_motor(msg)
-                                    LOGGER.info('event:state - processed id:{}'.format(id))
+                                    LOGGER.info(f'event:state - processed id:{id}')
                                 elif id == 'binary_sensor-motion':
                                     self.set_ratgdo_motion(msg)
-                                    LOGGER.info('event:state - processed id:{}'.format(id))
+                                    LOGGER.info(f'event:state - processed id:{id}')
                                 elif id == 'lock-lock_remotes':
                                     self.set_ratgdo_lock(msg)
-                                    LOGGER.info('event:state - processed id:{}'.format(id))
+                                    LOGGER.info(f'event:state - processed id:{id}')
                                 elif id == 'binary_sensor-obstruction': 
                                     self.set_ratgdo_obstruct(msg)
-                                    LOGGER.info('event:state - processed id:{}'.format(id))
+                                    LOGGER.info(f'event:state - processed id:{id}')
                                 else:
                                     LOGGER.info(f'event:state - no action - {id}')                    
                             else:
-                                LOGGER.info('event - state data bad:{}'.format(event))
+                                LOGGER.info('event - state data bad:{event}')
                         except Exception as ex:
                             LOGGER.error(f"bad json {event.get('data')}  ex:{ex}", exc_info=True)                
                         self.remove_ratgdo_event(event)
                         acted_upon = True
                     else:
-                        LOGGER.info('event - REALLY unknown -{}'.format(event))
+                        LOGGER.info('event - REALLY unknown -{event}')
                         self.remove_ratgdo_event(event)
                         acted_upon = True
                         
