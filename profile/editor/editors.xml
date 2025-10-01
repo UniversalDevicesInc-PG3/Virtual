@@ -3,12 +3,18 @@
 	<editor id="CTD">
 		<range uom="25" subset="0,1,2" nls="CTD" />
 	</editor>
+	
 	<editor id="ID">
 	  <range uom="107" min="0" max="9999"/>
 	</editor>
+	
     <editor id="bool">
         <range uom="2" subset="0,1" />
     </editor>
+
+	<editor id="ONLEVELTYPE">
+	    <range uom="2" subset="0,1" />
+	</editor>
 
     <editor id="on_off">
         <range uom="25" subset="0,1" nls="ON_OFF" />
@@ -53,21 +59,27 @@
     <editor id="GLIGHT">
         <range uom="2" subset="0,1" nls="GLIGHT" />
     </editor>
+	
     <editor id="GDOOR">
         <range uom="25" subset="0,1,2,3,4" nls="GDOOR" />
     </editor>
+	
     <editor id="GCOMMAND">
         <range uom="25" subset="0,1,2,3,4" nls="GCOMMAND" />
     </editor>
+	
     <editor id="GMOTOR">
         <range uom="2" subset="0,1" nls="GMOTOR" />
     </editor>
+	
     <editor id="GMOTION">
         <range uom="2" subset="0,1" nls="GMOTION" />
     </editor>
+	
     <editor id="GLOCK">
         <range uom="2" subset="0,1" nls="GLOCK" />
     </editor>
+	
     <editor id="GOBST">
         <range uom="2" subset="0,1" nls="GOBST" />
     </editor>

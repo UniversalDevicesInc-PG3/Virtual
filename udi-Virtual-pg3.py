@@ -20,8 +20,11 @@ import udi_interface
 
 LOGGER = udi_interface.LOGGER
 
-VERSION = '3.1.21'
+VERSION = '3.1.22'
 """
+3.1.22
+INPROCESS generic/dimmer static/dynamic behaviour
+
 3.1.21
 DONE generic/dimmer to model dimmer ST & OL
 DONE name & address check using poly interface

@@ -25,6 +25,7 @@ ND-virtualgeneric-NAME = Virtual Generic
 ND-virtualgeneric-ICON = Switch
 ST-vgeneric-ST-NAME = Status
 ST-vgeneric-OL-NAME = On Level
+ST-vgeneric-GV0-NAME = On Level Type
 CMD-vgeneric-DON-NAME = On
 CMD-vgeneric-DOF-NAME = Off
 CMD-vgeneric-DFON-NAME = Fast On
@@ -33,6 +34,9 @@ CMD-vgeneric-BRT-NAME = Brighten
 CMD-vgeneric-DIM-NAME = Dim
 CMD-vgeneric-SETST-NAME = Set Status
 CMD-vgeneric-SETOL-NAME = Set On Level
+
+ONLEVELTYPE-0 = Static
+ONLEVELTYPE-1 = Dynamic
 
 # virtualtemp
 ND-virtualtemp-NAME = Virtual Temperature

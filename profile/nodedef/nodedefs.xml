@@ -149,6 +149,7 @@
       <sts>
         <st id="ST" editor="value" />
         <st id="OL" editor="value" />
+        <st id="GV0" editor="ONLEVELTYPE" />
       </sts>
       <cmds>
 		<sends>

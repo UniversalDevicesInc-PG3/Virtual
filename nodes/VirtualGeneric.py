@@ -16,6 +16,10 @@ from utils.node_funcs import FieldSpec, load_persistent_data, store_values
 
 # constants
 
+
+# Dimmer, keep onlevel to a minimum level
+DIMLOWERLIMIT = 5
+
 # @dataclass(frozen=True)
 # class FieldSpec:
 #     driver: Optional[str]  # e.g., "GV1" or None if not pushed to a driver
@@ -28,8 +32,9 @@ from utils.node_funcs import FieldSpec, load_persistent_data, store_values
 # Single source of truth for field names, driver codes, and defaults
 FIELDS: dict[str, FieldSpec] = {
     # State variables (pushed to drivers)
-    "status":           FieldSpec(driver="OL", default=100, data_type="state"),
-    "onlevel":    FieldSpec(driver=None, default=100, data_type="state"),
+    "status":           FieldSpec(driver="ST", default=100, data_type="state"),
+    "onlevel":    FieldSpec(driver="OL", default=100, data_type="state"),
+    "onleveltype":    FieldSpec(driver="GV0", default=0, data_type="state"),
 }
 
 
@@ -98,12 +103,10 @@ class VirtualGeneric(Node):
 
     def DON_cmd(self, command=None):
         LOGGER.info(f"{self.name}, {command}")
-        if self.data.get('onlevel', 0) > 0:
-            self.data['status'] = self.data.get('onlevel')
-        else:
-            self.data['status'] = 100
-        self.setDriver('ST', self.data.get('status'))
-        self.setDriver('OL', self.data.get('onlevel'))
+        onlevel = self.data.get('onlevel', 100)
+        self.data['status'] = onlevel if onlevel > 0 else 100
+        self.setDriver('ST', self.data['status'])
+        self.setDriver('OL', self.data['onlevel'])
         self.reportCmd("DON")
         store_values(self)
         LOGGER.debug("Exit")
@@ -112,11 +115,12 @@ class VirtualGeneric(Node):
     def DOF_cmd(self, command=None):
         LOGGER.info(f"{self.name}, {command}")
         status = self.data.get('status', 0)
-        if status not in [0, 100]:
+        # set onlevel if onleveltype = dynamic
+        if status not in [0, 100] and self.data['onleveltype'] == 1:
             self.data['onlevel'] = status
+            self.setDriver('OL', self.data.get('onlevel'))
         self.data['status'] = 0
         self.setDriver('ST', 0)
-        self.setDriver('OL', self.data.get('onlevel'))
         self.reportCmd("DOF")
         store_values(self)
         LOGGER.debug("Exit")
@@ -135,11 +139,12 @@ class VirtualGeneric(Node):
     def DFOF_cmd(self, command=None):
         LOGGER.info(f"{self.name}, {command}")
         status = self.data.get('status', 0)
-        if status not in [None, 0, 100]:
-            self.data['onlevel'] = status 
+        # set onlevel if onleveltype = dynamic
+        if status not in [0, 100] and self.data['onleveltype'] == 1:
+            self.data['onlevel'] = status
+            self.setDriver('OL', self.data.get('onlevel'))
         self.data['status'] = 0
         self.setDriver('ST', 0)
-        self.setDriver('OL', self.data.get('onlevel'))
         self.reportCmd("DFOF")
         store_values(self)
         LOGGER.debug("Exit")
@@ -149,10 +154,11 @@ class VirtualGeneric(Node):
         LOGGER.info(f"{self.name}, {command}")
         status = int(self.data.get('status', 0)) + 2
         if status > 100: status = 100
-        self.data['onlevel'] = status
+        if self.data['onleveltype'] == 1:
+            self.data['onlevel'] = status
+            self.setDriver('OL', self.data.get('onlevel'))
         self.data['status'] = status
         self.setDriver('ST', status)
-        self.setDriver('OL', self.data.get('onlevel'))
         self.reportCmd("BRT")
         store_values(self)
         LOGGER.debug("Exit")
@@ -163,12 +169,14 @@ class VirtualGeneric(Node):
         status = int(self.data.get('status', 100)) - 2
         if status <= 0:
             status = 0
-            self.data['onlevel'] = 10 # keep stored to a minimum level
-        else:
-            self.data['onlevel'] = status
+            if self.data['onleveltype'] == 1:
+                self.data['onlevel'] = DIMLOWERLIMIT
+                self.setDriver('OL', self.data.get('onlevel'))
+            else:
+                self.data['onlevel'] = status
+                self.setDriver('OL', self.data.get('onlevel'))
         self.data['status'] = status
         self.setDriver('ST', status)
-        self.setDriver('OL', self.data.get('onlevel'))
         self.reportCmd("DIM")
         store_values(self)
         LOGGER.debug("Exit")
@@ -180,7 +188,7 @@ class VirtualGeneric(Node):
         if status != 0:
             self.data['status'] = status
         else:
-            self.data['status'] = 10
+            self.data['status'] = DIMLOWERLIMIT
         self.data['status'] = status
         self.setDriver('ST', status)
         self.setDriver('OL', self.data.get('onlevel'))
@@ -226,8 +234,9 @@ class VirtualGeneric(Node):
     UOM 2 is boolean so the ISY will display 'True/False'
     """
     drivers = [
-        {'driver': 'ST', 'value': 0, 'uom': 56, 'name': "Level"},
-        {'driver': 'OL', 'value': 0, 'uom': 56, 'name': "Level"},
+        {'driver': 'ST', 'value': 0, 'uom': 56, 'name': "State"},
+        {'driver': 'OL', 'value': 0, 'uom': 56, 'name': "onLevel"},
+        {'driver': 'GV0', 'value': 0, 'uom': 2, 'name': "onLevelType"},
     ]
 
     """
