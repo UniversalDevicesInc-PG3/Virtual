@@ -13,7 +13,7 @@
     </editor>
 
 	<editor id="ONLEVELTYPE">
-	    <range uom="2" subset="0,1" />
+	    <range uom="2" subset="0,1" nls="ONLEVELTYPE" />
 	</editor>
 
     <editor id="on_off">
