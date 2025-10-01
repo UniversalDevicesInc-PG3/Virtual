@@ -162,6 +162,7 @@
 		  <cmd id="ST" />
 		  <cmd id="SETST" />
 		  <cmd id="SETOL" />
+		  <cmd id="OLTT" />
         </sends>
         <accepts>
           <cmd id="DON" />
@@ -176,6 +177,7 @@
 		  <cmd id="SETOL">
 			<p id="" editor="value" init="OL" />
 		  </cmd>
+		  <cmd id="OLTT" />
         </accepts>
       </cmds>
     </nodeDef>

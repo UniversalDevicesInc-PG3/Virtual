@@ -34,6 +34,7 @@ CMD-vgeneric-BRT-NAME = Brighten
 CMD-vgeneric-DIM-NAME = Dim
 CMD-vgeneric-SETST-NAME = Set Status
 CMD-vgeneric-SETOL-NAME = Set On Level
+CMD-vgeneric-OLTT-NAME = Toggle on Level Type
 
 ONLEVELTYPE-0 = Static
 ONLEVELTYPE-1 = Dynamic

@@ -211,6 +211,18 @@ class VirtualGeneric(Node):
         LOGGER.debug("Exit")
 
 
+    def OL_toggle_type_cmd(self, command=None):
+        """
+        Toggle the onlovel driver, report OLTT command, store values in db for persistence.
+        """
+        LOGGER.info(f"{self.name}, {command}")
+        onleveltype = not self.data['onleveltype']
+        self.setDriver('GV0', onleveltype)
+        self.reportCmd("OLTT", value=onleveltype)
+        store_values(self)        
+        LOGGER.debug("Exit")
+
+
     def query(self, command=None):
         """
         Called by ISY to report all drivers for this node. This is done in
@@ -252,6 +264,7 @@ class VirtualGeneric(Node):
                     'DIM': DIM_cmd,
                     'SETST': set_ST_cmd,
                     'SETOL': set_OL_cmd,
+                    'OLTT': OL_toggle_type_cmd,
                     'QUERY': query,
                 }
 
