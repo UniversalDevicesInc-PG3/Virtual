@@ -23,7 +23,7 @@ LOGGER = udi_interface.LOGGER
 VERSION = '3.1.22'
 """
 3.1.22
-INPROCESS generic/dimmer static/dynamic behaviour
+DONE generic/dimmer static/dynamic behaviour
 
 3.1.21
 DONE generic/dimmer to model dimmer ST & OL
