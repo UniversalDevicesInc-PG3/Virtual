@@ -216,7 +216,9 @@ class VirtualGeneric(Node):
         Toggle the onlovel driver, report OLTT command, store values in db for persistence.
         """
         LOGGER.info(f"{self.name}, {command}")
-        onleveltype = self.data['onleveltype'] ^ 1 # toggle 0/1
+        # Toggle between 0 and 1
+        self.data['onleveltype'] ^= 1
+        onleveltype = self.data['onleveltype']
         self.setDriver('GV0', onleveltype)
         self.reportCmd("OLTT", value=onleveltype)
         store_values(self)        
