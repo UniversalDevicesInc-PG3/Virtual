@@ -116,7 +116,7 @@ class VirtualGeneric(Node):
         LOGGER.info(f"{self.name}, {command}")
         status = self.data.get('status', 0)
         # set onlevel if onleveltype = dynamic
-        if status not in [0, 100] and self.data['onleveltype'] == 1:
+        if status not in (0, 100) and self.data['onleveltype'] == 1:
             self.data['onlevel'] = status
             self.setDriver('OL', self.data.get('onlevel'))
         self.data['status'] = 0
@@ -140,7 +140,7 @@ class VirtualGeneric(Node):
         LOGGER.info(f"{self.name}, {command}")
         status = self.data.get('status', 0)
         # set onlevel if onleveltype = dynamic
-        if status not in [0, 100] and self.data['onleveltype'] == 1:
+        if status not in (0, 100) and self.data['onleveltype'] == 1:
             self.data['onlevel'] = status
             self.setDriver('OL', self.data.get('onlevel'))
         self.data['status'] = 0
@@ -152,8 +152,7 @@ class VirtualGeneric(Node):
 
     def BRT_cmd(self, command=None):
         LOGGER.info(f"{self.name}, {command}")
-        status = int(self.data.get('status', 0)) + 2
-        if status > 100: status = 100
+        status = min(int(self.data.get('status', 0)) + 2, 100)
         if self.data['onleveltype'] == 1:
             self.data['onlevel'] = status
             self.setDriver('OL', self.data.get('onlevel'))
@@ -166,15 +165,14 @@ class VirtualGeneric(Node):
 
     def DIM_cmd(self, command=None):
         LOGGER.info(f"{self.name}, {command}")
-        status = int(self.data.get('status', 100)) - 2
-        if status <= 0:
-            status = 0
-            if self.data['onleveltype'] == 1:
-                self.data['onlevel'] = DIMLOWERLIMIT
-                self.setDriver('OL', self.data.get('onlevel'))
-            else:
-                self.data['onlevel'] = status
-                self.setDriver('OL', self.data.get('onlevel'))
+        status = max(int(self.data.get('status', 100)) - 2, 0)
+        if status == 0:
+            onlevel = DIMLOWERLIMIT if self.data['onleveltype'] == 1 else None
+        else:
+            onlevel = status if self.data['onleveltype'] == 1 else None
+        if onlevel:    
+            self.setDriver('OL', onlevel)
+            self.data['onlevel'] = onlevel
         self.data['status'] = status
         self.setDriver('ST', status)
         self.reportCmd("DIM")
@@ -185,10 +183,8 @@ class VirtualGeneric(Node):
     def set_ST_cmd(self, command):
         LOGGER.info(f"{self.name}, {command}")
         status = int(command.get('value'))
-        if status != 0:
-            self.data['status'] = status
-        else:
-            self.data['status'] = DIMLOWERLIMIT
+        if status == 0:
+            status = DIMLOWERLIMIT
         self.data['status'] = status
         self.setDriver('ST', status)
         self.setDriver('OL', self.data.get('onlevel'))
@@ -200,9 +196,7 @@ class VirtualGeneric(Node):
     def set_OL_cmd(self, command):
         LOGGER.info(f"{self.name}, {command}")
         level = int(command.get('value'))
-        if level != 0:
-            self.data['onlevel'] = level
-        else:
+        if level == 0:
             self.data['onlevel'] = 10
         self.data['onlevel'] = level
         self.setDriver('OL', level)
