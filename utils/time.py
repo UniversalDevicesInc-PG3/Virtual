@@ -1,4 +1,14 @@
-# utils/time.py
+#!/usr/bin/env python3
+"""
+These are helper functions for use in a Plugin/NodeServer
+for Polyglot v3 written in Python3
+
+utils/time.py  for NodeServer/Plugin for EISY/Polisy
+
+(C) 2025 Stephen Jenkins
+
+"""
+
 from datetime import datetime, timezone, timedelta
 
 def get_iso_utc_now():
