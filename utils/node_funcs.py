@@ -1,3 +1,13 @@
+#!/usr/bin/env python3
+"""
+These are helper functions for use in a Plugin/NodeServer
+for Polyglot v3 written in Python3
+
+node_funcs.py for NodeServer/Plugin for EISY/Polisy
+
+(C) 2025 Stephen Jenkins
+
+"""
 
 # standard imports
 import shelve
