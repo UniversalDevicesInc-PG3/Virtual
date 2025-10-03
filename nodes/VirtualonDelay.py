@@ -169,6 +169,16 @@ class VirtualonDelay(Node):
         LOGGER.debug("Exit")
 
         
+    def set_delay_cmd(self, command):
+        LOGGER.info(f"{self.name}, {command}")
+        delay = int(command.get('value'))
+        self.data['delay'] = delay
+        self.setDriver('DUR', delay)
+        self.reportCmd("DUR", value=delay)
+        store_values(self)
+        LOGGER.debug("Exit")
+
+
     def query(self, command=None):
         """
         Called by ISY to report all drivers for this node. This is done in
@@ -203,6 +213,7 @@ class VirtualonDelay(Node):
     commands = {
                     'DON': set_on_cmd,
                     'DOF': set_off_cmd,
+                    'SETDELAY': set_delay_cmd,
                     'QUERY': query,
                 }
-
+    
