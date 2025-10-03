@@ -3,10 +3,10 @@ udi-Virtual-pg3 NodeServer/Plugin for EISY/Polisy
 
 (C) 2024 Stephen Jenkins
 
-VirtualSwitch class
+VirtualonDelay class
 """
 # std libraries
-pass
+from threading import Timer
 
 # external libraries
 from udi_interface import Node, LOGGER
@@ -18,6 +18,7 @@ from utils.node_funcs import FieldSpec, load_persistent_data, store_values
 
 OFF = 0
 ON = 1
+TIMER = 2
 
 # @dataclass(frozen=True)
 # class FieldSpec:
@@ -32,21 +33,29 @@ ON = 1
 FIELDS: dict[str, FieldSpec] = {
 	# State variables (pushed to drivers)
 	"switch":           FieldSpec(driver="ST", default=OFF, data_type="state"),
+	"delay":       FieldSpec(driver="DUR", default=OFF, data_type="state"),
 }
 
 
-class VirtualSwitch(Node):
-    id = 'virtualswitch'
+class VirtualonDelay(Node):
+    id = 'virtualondelay'
 
-    """ This class represents a simple virtual switch / relay / light.
+    """ This class represents an onDelay virtual switch / relay / light.
     This device can be made a controller/responder as part of a scene to
     provide easy indication or control.  It can also be used as control
     or status in a program and manipulated by then or else.
+    It will receive DON, then DUR seconds later send DON.
+    DOF received is immediate DOF send
+    DOF needed to reset ST to zero or OFF
+    If DUR = 0, acts as normal switch.
+    ST will follow input DON/DOF
 
     Drivers & commands:
     ST 0,1: is used to report ON/OFF status in the ISY
-    setOn: Sets the node to ON
-    setOFF: Sets the node to OFF
+    DUR: integer, time delay duration in seconds
+    setOn: Sets the node to ON delayed by onDelay
+    setOFF: Sets the node to OFF, immediate
+    SetOnDelay: set the onDelay
     Query: Is used to report status of the node
 
     Class Methods(generic):
@@ -87,6 +96,9 @@ class VirtualSwitch(Node):
         self.address = address
         self.name = name
 
+        # timer
+        self.timer = Timer(0, self._on_delay)
+
         # default variables and drivers
         self.data = {field: spec.default for field, spec in FIELDS.items()}
 
@@ -104,6 +116,8 @@ class VirtualSwitch(Node):
 
         # get persistent data from polyglot or depreciated: old db file, then delete db file
         load_persistent_data(self, FIELDS)
+        if self.data['switch'] == TIMER:
+            self.data['switch'] = ON
         LOGGER.info(f"data:{self.data}")
         
 
@@ -112,18 +126,42 @@ class VirtualSwitch(Node):
         Turn the driver on, report cmd DON, store values in db for persistence.
         """
         LOGGER.info(f"{self.name}, {command}")
-        self.data['switch'] = ON
-        self.setDriver('ST', ON)
-        self.reportCmd("DON")
+        switch = self.data['switch']
+        delay = self.data['delay']
+        if switch == 1:
+            LOGGER.info('Switch already on, return')
+            return
+        
+        self.data['switch'] = TIMER
+        self.setDriver('ST', TIMER)
         store_values(self)
+        if delay > 0:
+            self.timer = Timer(delay, self._on_delay)
+            self.timer.start()
+        else:
+            self.reportCmd("DON")
         LOGGER.debug("Exit")
 
+        
+    def _on_delay(self):
+        LOGGER.info('enter on delay')
+        self.data['switch'] = ON
+        self.setDriver('ST', ON)
+        store_values(self)
+        self.reportCmd("DON")
+        LOGGER.debug("Exit")
+        
         
     def set_off_cmd(self, command=None):
         """
         Turn the driver off, report cmd DOF, store values in db for persistence.
         """
         LOGGER.info(f"{self.name}, {command}")
+        switch = self.data['switch']
+        if switch == OFF:
+            LOGGER.info('Switch already off, return')
+            return
+        self.timer.cancel()
         self.data['switch'] = OFF
         self.setDriver('ST', OFF)
         self.reportCmd("DOF")
@@ -131,18 +169,6 @@ class VirtualSwitch(Node):
         LOGGER.debug("Exit")
 
         
-    def toggle_cmd(self, command=None):
-        """
-        Toggle the driver, report cmd DON/DOF as appropriate, store values in db for persistence.
-        """
-        LOGGER.info(f"{self.name}, {command}")
-        if self.data.get('switch'):
-            self.set_off_cmd()
-        else:
-            self.set_on_cmd()                
-        LOGGER.debug("Exit")
-
-
     def query(self, command=None):
         """
         Called by ISY to report all drivers for this node. This is done in
@@ -167,6 +193,7 @@ class VirtualSwitch(Node):
     """
     drivers = [
         {'driver': 'ST', 'value': OFF, 'uom': 25, 'name': "Status"},
+        {'driver': 'DUR', 'value': OFF, 'uom': 58, 'name': "Delay"}, # uom 58, duration in seconds
     ]
 
     """
@@ -176,7 +203,6 @@ class VirtualSwitch(Node):
     commands = {
                     'DON': set_on_cmd,
                     'DOF': set_off_cmd,
-                    'TOGGLE': toggle_cmd,
                     'QUERY': query,
                 }
 

@@ -20,6 +20,13 @@ CMD-vswitch-DON-NAME = On
 CMD-vswitch-DOF-NAME = Off
 CMD-vswitch-TOGGLE-NAME = Toggle
 
+# virtualondelay
+ND-virtualondelay-NAME = Virtual onDelay Switch
+ND-virtualondelay-ICON = Switch
+ST-vondelay-ST-NAME = Switch Status
+CMD-vondelay-DON-NAME = On
+CMD-vondelay-DOF-NAME = Off
+
 # virtualgeneric
 ND-virtualgeneric-NAME = Virtual Generic
 ND-virtualgeneric-ICON = Switch
@@ -98,6 +105,7 @@ CMD-vtempc-setFtoC-NAME = Convert F to C
 
 ON_OFF-0 = Off
 ON_OFF-1 = On
+ON_OFF-2 = Timer
  
 ACTION-0 = None
 ACTION-1 = Push to

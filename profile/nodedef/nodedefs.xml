@@ -37,6 +37,24 @@
           </accepts>
         </cmds>
     </nodeDef>
+		<!-- virtualondelayid -->
+	<nodeDef id="virtualondelay" nls="vondelay">
+		<editors />
+		<sts>
+		  <st id="ST" editor="on_off" />
+		  <st id="DUR" />
+		</sts>
+		<cmds>
+		  <sends>
+			<cmd id="DON" />
+			<cmd id="DOF" />
+		  </sends>
+		  <accepts>
+			<cmd id="DON" />
+			<cmd id="DOF" />
+		  </accepts>
+		</cmds>
+	</nodeDef>
         <!-- virtualtempid -->
     <nodeDef id="virtualtemp" nls="vtemp">
         <editors />

@@ -17,7 +17,7 @@
 	</editor>
 
     <editor id="on_off">
-        <range uom="25" subset="0,1" nls="ON_OFF" />
+        <range uom="25" subset="0,1,2" nls="ON_OFF" />
     </editor>
     
     <editor id="action_type">

@@ -20,8 +20,12 @@ import udi_interface
 
 LOGGER = udi_interface.LOGGER
 
-VERSION = '3.1.22'
+VERSION = '3.1.23'
 """
+3.1.23
+DONE ondelay switch
+DONE switch / ondelay / generic magic number removal
+
 3.1.22
 DONE generic/dimmer static/dynamic behaviour
 
@@ -75,7 +79,7 @@ DONE move db files to subfolder
 3.1.9
 DONE Garage device read status directly from Ratgdo through ESPHome RESTapi
 DONE update docs for garage Ratgdo integration
-FIX  switch st uom from 2 True/False to 25 On/Off
+DONE  switch st uom from 2 True/False to 25 On/Off
 
 3.1.8
 DONE Garage device sends commands directly to Ratgdo through ESPHome RESTapi
@@ -86,10 +90,10 @@ DONE Small refactors
 DONE redo environment
 
 3.1.6
-FIX better solution to markdown2 issue
+DONE better solution to markdown2 issue
 
 3.1.5
-FIX repair docs due to markdown2 issue
+DONE repair docs due to markdown2 issue
 
 3.1.4
 DONE docs updated for garage
