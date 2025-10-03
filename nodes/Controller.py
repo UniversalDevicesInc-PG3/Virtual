@@ -31,6 +31,7 @@ DEVICE_TYPE_TO_NODE_CLASS = {
     'generic': VirtualGeneric,
     'dimmer': VirtualGeneric,
     'garage': VirtualGarage,
+    'ondelay': VirtualonDelay,
 }
 
 
