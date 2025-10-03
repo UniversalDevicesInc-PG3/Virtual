@@ -32,7 +32,7 @@ TIMER = 2
 # Single source of truth for field names, driver codes, and defaults
 FIELDS: dict[str, FieldSpec] = {
 	# State variables (pushed to drivers)
-	"switch":           FieldSpec(driver="ST", default=OFF, data_type="state"),
+	"switch":      FieldSpec(driver="ST", default=OFF, data_type="state"),
 	"delay":       FieldSpec(driver="DUR", default=OFF, data_type="state"),
 }
 

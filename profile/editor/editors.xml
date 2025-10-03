@@ -24,6 +24,10 @@
         <range uom="25" subset="0-2" nls="ACTION" />
     </editor>
     
+	<editor id="delay">
+		<range uom="58" min="0" max="99999" prec="0" step="1"/>
+	</editor>
+
     <editor id="variable_type">
         <range uom="25" subset="0-4" nls="TYPE" />
     </editor>    
