@@ -99,14 +99,11 @@ class VirtualDelay(Node):
         self.address = address
         self.name = name
 
-        # timer
-        self.timer = Timer(0, self._on_delay)
-
         # default variables and drivers
         self.data = {field: spec.default for field, spec in FIELDS.items()}
 
         self.poly.subscribe(self.poly.START, self.start, address)
-        self.poly.subscribe(self.poly.STOP, self.start, address)
+        self.poly.subscribe(self.poly.STOP, self.stop, address)
 
 
     def start(self):
@@ -126,53 +123,14 @@ class VirtualDelay(Node):
 
     def stop(self):
         """
-        General purpose: Stop node and clean-up TIMER status
+        Stop node and clean-up TIMER status
         """
-        LOGGER.info(f'stop: delayswitch:{self.name}')
+        LOGGER.info(f'stop: ondelay:{self.name}')
+
         # for onDelay we want to end up on
         if self.data['switch'] == TIMER:
-            self.data['switch'] = ON
+            self.data['switch'] = self.reset
         LOGGER.info(f"stopping:{self.name}")
-
-
-    def set_on_cmd(self, command=None):
-        """
-        General purpose: Turn the driver on, report cmd DON, store values in db for persistence.
-        """
-        LOGGER.info(f"{self.name}, {command}")
-        switch = self.data['switch']
-        delay = self.data['delay']
-        if switch == 1:
-            LOGGER.info('Switch already on, return')
-            return
-
-        self.data['switch'] = TIMER
-        self.setDriver('ST', TIMER)
-        store_values(self)
-        if delay > 0:
-            self.timer = Timer(delay, self._on_delay)
-            self.timer.start()
-        else:
-            self.reportCmd("DON")
-        LOGGER.debug("Exit")
-
-
-    def _on_delay(self):
-        LOGGER.info('enter on delay')
-        self.data['switch'] = ON
-        self.setDriver('ST', ON)
-        store_values(self)
-        self.reportCmd("DON")
-        LOGGER.debug("Exit")
-
-
-    def _off_delay(self):
-        LOGGER.info('enter off delay')
-        self.data['switch'] = OFF
-        self.setDriver('ST', OFF)
-        store_values(self)
-        self.reportCmd("DOF")
-        LOGGER.debug("Exit")
 
 
     def set_off_cmd(self, command=None):
@@ -232,16 +190,6 @@ class VirtualDelay(Node):
         {'driver': 'DUR', 'value': OFF, 'uom': 58, 'name': "Delay"}, # uom 58, duration in seconds
     ]
 
-    """
-    This is a dictionary of commands. If ISY sends a command to the NodeServer,
-    this tells it which method to call. DON calls setOn, etc.
-    """
-    commands = {
-        'DON': set_on_cmd,
-        'DOF': set_off_cmd,
-        'SETDELAY': set_delay_cmd,
-        'QUERY': query,
-    }
     
 ###############
 # Sub-classes #
@@ -253,16 +201,18 @@ class VirtualonDelay(VirtualDelay):
     Sub-class for the VirtualDelay class, handles specific commands for onDelay.    
     """
     
-    def stop(self):
-        """
-        Stop node and clean-up TIMER status
-        """
-        LOGGER.info(f'stop: ondelay:{self.name}')
+    def __init__(self, poly, primary, address, name):
+        super().__init__(poly, primary, address, name)
 
-        # for onDelay we want to end up on
-        if self.data['switch'] == TIMER:
-            self.data['switch'] = ON
-        LOGGER.info(f"stopping:{self.name}")
+        self.poly = poly
+        self.primary = primary
+        self.controller = poly.getNode(self.primary)
+        self.address = address
+        self.name = name
+
+        # timer
+        self.timer = Timer(0, self._on_delay)
+        self.reset = ON
 
 
     def set_on_cmd(self, command=None):
@@ -286,7 +236,27 @@ class VirtualonDelay(VirtualDelay):
             self.reportCmd("DON")
         LOGGER.debug("Exit")
 
+    def _on_delay(self):
+        LOGGER.info('enter on delay')
+        self.data['switch'] = ON
+        self.setDriver('ST', ON)
+        store_values(self)
+        self.reportCmd("DON")
+        LOGGER.debug("Exit")
 
+        
+    """
+    This is a dictionary of commands. If ISY sends a command to the NodeServer,
+    this tells it which method to call. DON calls setOn, etc.
+    """
+    commands = {
+        'DON': set_on_cmd,
+        'DOF': set_off_cmd,
+        'SETDELAY': set_delay_cmd,
+        'QUERY': query,
+    }
+
+        
 class VirtualoffDelay(VirtualDelay):
     id = 'virtualoffdelay'
 
@@ -294,16 +264,18 @@ class VirtualoffDelay(VirtualDelay):
     Sub-class for the VirtualDelay class, handles specific commands for offDelay.    
     """
 
-    def stop(self):
-        """
-        Stop node and clean-up TIMER status
-        """
-        LOGGER.info(f'stop: offdelay:{self.name}')
+    def __init__(self, poly, primary, address, name):
+        super().__init__(poly, primary, address, name)
 
-        # for offDelay we want to end up off
-        if self.data['switch'] == TIMER:
-            self.data['switch'] = OFF
-        LOGGER.info(f"stopping:{self.name}")
+        self.poly = poly
+        self.primary = primary
+        self.controller = poly.getNode(self.primary)
+        self.address = address
+        self.name = name
+
+        # timer
+        self.timer = Timer(0, self._off_delay)
+        self.reset = OFF
 
 
     def set_on_cmd(self, command=None):
@@ -322,6 +294,26 @@ class VirtualoffDelay(VirtualDelay):
         else:
             self.reportCmd("DON")
         LOGGER.debug("Exit")
+
+    def _off_delay(self):
+        LOGGER.info('enter off delay')
+        self.data['switch'] = OFF
+        self.setDriver('ST', OFF)
+        store_values(self)
+        self.reportCmd("DOF")
+        LOGGER.debug("Exit")
+        
+
+    """
+    This is a dictionary of commands. If ISY sends a command to the NodeServer,
+    this tells it which method to call. DON calls setOn, etc.
+    """
+    commands = {
+        'DON': set_on_cmd,
+        'DOF': set_off_cmd,
+        'SETDELAY': set_delay_cmd,
+        'QUERY': query,
+    }
 
 
 
