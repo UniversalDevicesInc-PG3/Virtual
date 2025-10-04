@@ -442,8 +442,16 @@ class Controller(Node):
 
 
     def _cleanup_nodes(self, nodes_new, nodes_old):
-        nodes_db = self.poly.getNodesFromDb()
-        LOGGER.info(f"db nodes = {nodes_db}")
+        # Extract all unique node classes from the mapping
+        valid_node_classes = set(DEVICE_TYPE_TO_NODE_CLASS.values())
+
+        # Filter nodes that contain any of the valid classes
+        nodes_db_sub = [
+            node for node in self.poly.getNodesFromDb()
+            if any(cls in node for cls in valid_node_classes)
+        ]
+
+        LOGGER.info(f"db nodes = {nodes_db_sub}")
 
         nodes_current = self.poly.getNodes()
         nodes_get = {key: nodes_current[key] for key in nodes_current if key != self.id}
