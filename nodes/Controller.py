@@ -479,6 +479,13 @@ class Controller(Node):
                 LOGGER.info(f"need to delete node {node}")
                 self.poly.delNode(node)
 
+        # discovery called from new node server
+        for node in nodes_delete:
+            address = node.get('address')
+            if address not in nodes_new:
+                LOGGER.info(f"need to delete node {node}")
+                self.poly.delNode(address)
+                
 
     def delete(self, command = None):
         """
