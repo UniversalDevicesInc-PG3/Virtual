@@ -28,6 +28,14 @@ CMD-vondelay-DON-NAME = On
 CMD-vondelay-DOF-NAME = Off
 CMD-vondelay-SETDELAY-NAME = Set onDelay
 
+# virtualondelay
+ND-virtualoffdelay-NAME = Virtual offDelay Switch
+ND-virtualoffdelay-ICON = Switch
+ST-vondelay-ST-NAME = Switch Status
+CMD-vondelay-DON-NAME = On
+CMD-vondelay-DOF-NAME = Off
+CMD-vondelay-SETDELAY-NAME = Set offDelay
+
 # virtualgeneric
 ND-virtualgeneric-NAME = Virtual Generic
 ND-virtualgeneric-ICON = Switch

@@ -8,7 +8,7 @@ devices:
   name: "TestTemp"
 - id: 30
   type:  "dimmer"
-  name: "TestDimmer 92"
+  name: "TestDimmer"
 - id: 40
   type:  "garage"
   name:  "Ratgdo"
@@ -29,4 +29,10 @@ devices:
   lockId: 133
   obstructT: 1
   obstructId: 131
+- id: 50
+  type:  "ondelay"
+  name: "Test onDelay"
+- id: 60
+  type:  "offdelay"
+  name: "Test offDelay"
 

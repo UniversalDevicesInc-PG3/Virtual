@@ -23,8 +23,8 @@ LOGGER = udi_interface.LOGGER
 VERSION = '3.1.23'
 """
 3.1.23
-DONE ondelay switch
-DONE switch / ondelay / generic magic number removal
+DONE onDelay, offDelay switch
+DONE magic number scrub
 
 3.1.22
 DONE generic/dimmer static/dynamic behaviour
