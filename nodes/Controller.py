@@ -453,7 +453,7 @@ class Controller(Node):
             if node.get("nodeDefId", "").lower() in valid_class_names
         ]
 
-        LOGGER.info(f"db nodes = {nodes_db_sub}")
+        LOGGER.debug(f"db nodes = {nodes_db_sub}")
 
         nodes_current = self.poly.getNodes()
         nodes_get = {key: nodes_current[key] for key in nodes_current if key != self.id}
@@ -473,13 +473,11 @@ class Controller(Node):
         LOGGER.info(f"pre-delete(get) nodes = {nodes_get}")
         LOGGER.info(f"nodes to delete = {nodes_delete}")
 
+        # discovery called from running node server
         for node in nodes_get:
             if node not in nodes_new:
                 LOGGER.info(f"need to delete node {node}")
                 self.poly.delNode(node)
-
-        if set(nodes_get) == set(nodes_new):
-            LOGGER.info('Discovery NO NEW activity')
 
 
     def delete(self, command = None):
