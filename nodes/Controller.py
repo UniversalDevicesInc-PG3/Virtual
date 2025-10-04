@@ -458,9 +458,20 @@ class Controller(Node):
         nodes_current = self.poly.getNodes()
         nodes_get = {key: nodes_current[key] for key in nodes_current if key != self.id}
 
+        # Get the set of existing addresses from nodes_get
+        existing_addresses = set(nodes_get.keys())
+
+        # Filter nodes_db_sub to only those whose address is NOT in nodes_get
+        nodes_delete = [
+            node for node in nodes_db_sub
+            if node.get("address") not in existing_addresses
+        ]
+
+
         LOGGER.info(f"old nodes = {nodes_old}")
         LOGGER.info(f"new nodes = {nodes_new}")
         LOGGER.info(f"pre-delete(get) nodes = {nodes_get}")
+        LOGGER.info(f"nodes to delete = {nodes_delete}")
 
         for node in nodes_get:
             if node not in nodes_new:
