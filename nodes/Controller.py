@@ -453,7 +453,7 @@ class Controller(Node):
         LOGGER.info(f"pre-delete nodes = {nodes_get}")
 
         for node in nodes_get:
-            if node not in nodes_new:
+            if nodes_new not in node:
                 LOGGER.info(f"need to delete node {node}")
                 self.poly.delNode(node)
 
