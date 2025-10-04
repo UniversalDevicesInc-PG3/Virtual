@@ -448,9 +448,9 @@ class Controller(Node):
         nodes_current = self.poly.getNodes()
         nodes_get = {key: nodes_current[key] for key in nodes_current if key != self.id}
 
-        LOGGER.debug(f"old nodes = {nodes_old}")
-        LOGGER.debug(f"new nodes = {nodes_new}")
-        LOGGER.debug(f"pre-delete nodes = {nodes_get}")
+        LOGGER.info(f"old nodes = {nodes_old}")
+        LOGGER.info(f"new nodes = {nodes_new}")
+        LOGGER.info(f"pre-delete nodes = {nodes_get}")
 
         for node in nodes_get:
             if node not in nodes_new:
