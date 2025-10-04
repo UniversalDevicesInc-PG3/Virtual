@@ -447,7 +447,7 @@ class Controller(Node):
             cls.__name__.lower() for cls in DEVICE_TYPE_TO_NODE_CLASS.values()
         }
 
-        # Filter nodes whose nodeDefId matches any class name
+        # Filter DB nodes whose nodeDefId matches any valid class name
         nodes_db_sub = [
             node for node in self.poly.getNodesFromDb()
             if node.get("nodeDefId", "").lower() in valid_class_names
@@ -455,35 +455,33 @@ class Controller(Node):
 
         LOGGER.debug(f"db nodes = {nodes_db_sub}")
 
+        # Get current nodes excluding self
         nodes_current = self.poly.getNodes()
-        nodes_get = {key: nodes_current[key] for key in nodes_current if key != self.id}
-
-        # Get the set of existing addresses from nodes_get
+        nodes_get = {addr: node for addr, node in nodes_current.items() if addr != self.id}
         existing_addresses = set(nodes_get.keys())
 
-        # Filter nodes_db_sub to only those whose address is NOT in nodes_get
+        # Filter DB nodes whose address is not in current nodes
         nodes_delete = [
             node for node in nodes_db_sub
             if node.get("address") not in existing_addresses
         ]
-
 
         LOGGER.info(f"old nodes = {nodes_old}")
         LOGGER.info(f"new nodes = {nodes_new}")
         LOGGER.info(f"pre-delete(get) nodes = {nodes_get}")
         LOGGER.info(f"nodes to delete = {nodes_delete}")
 
-        # discovery called from running node server
-        for node in nodes_get:
-            if node not in nodes_new:
-                LOGGER.info(f"need to delete node {node}")
-                self.poly.delNode(node)
-
-        # discovery called from new node server
-        for node in nodes_delete:
-            address = node.get('address')
+        # Delete stale nodes from current set
+        for address in nodes_get:
             if address not in nodes_new:
-                LOGGER.info(f"need to delete node {node}")
+                LOGGER.info(f"need to delete node {address}")
+                self.poly.delNode(address)
+
+        # Delete stale nodes from DB
+        for node in nodes_delete:
+            address = node.get("address")
+            if address not in nodes_new:
+                LOGGER.info(f"need to delete node {address}")
                 self.poly.delNode(address)
                 
 
