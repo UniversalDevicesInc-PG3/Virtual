@@ -443,14 +443,14 @@ class Controller(Node):
 
     def _cleanup_nodes(self, nodes_new, nodes_old):
         nodes_db = self.poly.getNodesFromDb()
-        LOGGER.debug(f"db nodes = {nodes_db}")
+        LOGGER.info(f"db nodes = {nodes_db}")
 
         nodes_current = self.poly.getNodes()
         nodes_get = {key: nodes_current[key] for key in nodes_current if key != self.id}
 
         LOGGER.info(f"old nodes = {nodes_old}")
         LOGGER.info(f"new nodes = {nodes_new}")
-        LOGGER.info(f"pre-delete nodes = {nodes_get}")
+        LOGGER.info(f"pre-delete(get) nodes = {nodes_get}")
 
         for node in nodes_get:
             if node not in nodes_new:
