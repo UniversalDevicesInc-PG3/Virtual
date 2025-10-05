@@ -121,7 +121,6 @@ class VirtualoffDelay(Node):
         
         # timer
         self.timer = Timer(0, self._off_delay)
-        self.reset = OFF
 
         LOGGER.info(f"data:{self.data}")
         
@@ -137,8 +136,8 @@ class VirtualoffDelay(Node):
         self.setDriver('ST', TIMER)
         store_values(self)
         if delay > 0:
-            self.timer = Timer(delay, self._off_delay)
             self.timer.cancel()
+            self.timer = Timer(delay, self._off_delay)
             self.timer.start()
         else:
             self.reportCmd("DON")
@@ -159,7 +158,7 @@ class VirtualoffDelay(Node):
         Stop node and clean-up TIMER status
         """
         LOGGER.info(f'stop: ondelay:{self.name}')
-
+        self.timer.cancel()
         # for onDelay we want to end up on
         if self.data['switch'] == TIMER:
             self.data['switch'] = RESET

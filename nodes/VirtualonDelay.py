@@ -121,7 +121,6 @@ class VirtualonDelay(Node):
         
         # timer
         self.timer = Timer(0, self._on_delay)
-        self.reset = ON
         
         LOGGER.info(f"data:{self.data}")
         
@@ -136,13 +135,12 @@ class VirtualonDelay(Node):
         if switch == 1:
             LOGGER.info('Switch already on, return')
             return
-
         self.data['switch'] = TIMER
         self.setDriver('ST', TIMER)
         store_values(self)
         if delay > 0:
-            self.timer = Timer(delay, self._on_delay)
             self.timer.cancel()
+            self.timer = Timer(delay, self._on_delay)
             self.timer.start()
         else:
             self.reportCmd("DON")
@@ -163,7 +161,7 @@ class VirtualonDelay(Node):
         Stop node and clean-up TIMER status
         """
         LOGGER.info(f'stop: ondelay:{self.name}')
-
+        self.timer.cancel()
         # for onDelay we want to end up on
         if self.data['switch'] == TIMER:
             self.data['switch'] = RESET
@@ -179,7 +177,7 @@ class VirtualonDelay(Node):
         if switch == OFF:
             LOGGER.info('Switch already off, return')
             return
-        if self.timer.is_alive():
+        if not self.timer.is_alive():
             self.data['switch'] = OFF
             self.setDriver('ST', OFF)
             self.reportCmd("DOF")
