@@ -162,6 +162,7 @@ class VirtualGarage(Node):
         self.address = address
         self.name = name # node name
         self.hb = 0 # heartbeat
+        self.openTime = datetime.now()
 
         # Bonjour checking vars
         self.bonjourCommand = None
