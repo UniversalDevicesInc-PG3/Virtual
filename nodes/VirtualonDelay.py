@@ -126,7 +126,7 @@ class VirtualonDelay(Node):
         LOGGER.info(f"data:{self.data}")
         
 
-    def set_on_cmd(self, command=None):
+    def don_cmd(self, command=None):
         """
         Turn the driver on, report cmd DON, store values in db for persistence.
         """
@@ -142,6 +142,7 @@ class VirtualonDelay(Node):
         store_values(self)
         if delay > 0:
             self.timer = Timer(delay, self._on_delay)
+            self.timer.cancel()
             self.timer.start()
         else:
             self.reportCmd("DON")
@@ -169,7 +170,24 @@ class VirtualonDelay(Node):
         LOGGER.info(f"stopping:{self.name}")
 
 
-    def set_off_cmd(self, command=None):
+    def dof_cmd(self, command=None):
+        """
+        Turn the driver off, report cmd DOF, store values in db for persistence.
+        """
+        LOGGER.info(f"{self.name}, {command}")
+        switch = self.data['switch']
+        if switch == OFF:
+            LOGGER.info('Switch already off, return')
+            return
+        if self.timer.is_alive():
+            self.data['switch'] = OFF
+            self.setDriver('ST', OFF)
+            self.reportCmd("DOF")
+        store_values(self)
+        LOGGER.debug("Exit")
+
+        
+    def dfof_cmd(self, command=None):
         """
         Turn the driver off, report cmd DOF, store values in db for persistence.
         """
@@ -181,11 +199,11 @@ class VirtualonDelay(Node):
         self.timer.cancel()
         self.data['switch'] = OFF
         self.setDriver('ST', OFF)
-        self.reportCmd("DOF")
+        self.reportCmd("DFOF")
         store_values(self)
         LOGGER.debug("Exit")
 
-        
+
     def set_delay_cmd(self, command):
         """
         Setting of delay duration, 0-99999 sec
@@ -232,8 +250,9 @@ class VirtualonDelay(Node):
     this tells it which method to call. DON calls setOn, etc.
     """
     commands = {
-        'DON': set_on_cmd,
-        'DOF': set_off_cmd,
+        'DON': don_cmd,
+        'DOF': dof_cmd,
+        'DFOF': dfof_cmd,
         'SETDELAY': set_delay_cmd,
         'QUERY': query,
     }

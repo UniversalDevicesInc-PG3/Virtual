@@ -126,7 +126,7 @@ class VirtualoffDelay(Node):
         LOGGER.info(f"data:{self.data}")
         
 
-    def set_on_cmd(self, command=None):
+    def don_cmd(self, command=None):
         """
         Turn the driver on, report cmd DON, store values in db for persistence.
         """
@@ -138,6 +138,7 @@ class VirtualoffDelay(Node):
         store_values(self)
         if delay > 0:
             self.timer = Timer(delay, self._off_delay)
+            self.timer.cancel()
             self.timer.start()
         else:
             self.reportCmd("DON")
@@ -165,7 +166,7 @@ class VirtualoffDelay(Node):
         LOGGER.info(f"stopping:{self.name}")
 
 
-    def set_off_cmd(self, command=None):
+    def dof_cmd(self, command=None):
         """
         Turn the driver off, report cmd DOF, store values in db for persistence.
         """
@@ -228,8 +229,8 @@ class VirtualoffDelay(Node):
     this tells it which method to call. DON calls setOn, etc.
     """
     commands = {
-        'DON': set_on_cmd,
-        'DOF': set_off_cmd,
+        'DON': don_cmd,
+        'DOF': dof_cmd,
         'SETDELAY': set_delay_cmd,
         'QUERY': query,
     }
