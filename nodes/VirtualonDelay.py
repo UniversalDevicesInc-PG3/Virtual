@@ -125,6 +125,18 @@ class VirtualonDelay(Node):
         LOGGER.info(f"data:{self.data}")
         
 
+    def stop(self):
+        """
+        Stop node and clean-up TIMER status
+        """
+        LOGGER.info(f'stop: ondelay:{self.name}')
+        self.timer.cancel()
+        # for onDelay we want to end up on
+        if self.data['switch'] == TIMER:
+            self.data['switch'] = RESET
+        LOGGER.info(f"stopping:{self.name}")
+
+
     def don_cmd(self, command=None):
         """
         Turn the driver on, report cmd DON, store values in db for persistence.
@@ -132,9 +144,8 @@ class VirtualonDelay(Node):
         LOGGER.info(f"{self.name}, {command}")
         switch = self.data['switch']
         delay = self.data['delay']
-        if switch == 1:
-            LOGGER.info('Switch already on, return')
-            return
+        if switch == TIMER:
+            self.timer.cancel()
         self.data['switch'] = TIMER
         self.setDriver('ST', TIMER)
         store_values(self)
@@ -154,18 +165,6 @@ class VirtualonDelay(Node):
         store_values(self)
         self.reportCmd("DON")
         LOGGER.debug("Exit")
-
-
-    def stop(self):
-        """
-        Stop node and clean-up TIMER status
-        """
-        LOGGER.info(f'stop: ondelay:{self.name}')
-        self.timer.cancel()
-        # for onDelay we want to end up on
-        if self.data['switch'] == TIMER:
-            self.data['switch'] = RESET
-        LOGGER.info(f"stopping:{self.name}")
 
 
     def dof_cmd(self, command=None):
