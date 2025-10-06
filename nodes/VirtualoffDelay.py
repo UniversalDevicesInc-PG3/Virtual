@@ -148,7 +148,6 @@ class VirtualoffDelay(Node):
         if self.timer.is_alive():
             self.timer.cancel()
         if delay > 0:
-            self.timer.cancel()
             self.timer = Timer(delay, self._off_delay)
             self.timer.start()
             self.data['switch'] = TIMER
