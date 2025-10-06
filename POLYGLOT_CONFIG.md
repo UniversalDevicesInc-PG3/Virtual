@@ -10,6 +10,8 @@ Required for variable write access
 - switch
 - dimmer
 - generic
+- ondelay
+- offdelay
 - temperature     ... *Farenheit units*
 - temperaturec    ... *Celcius units*
 - temperaturecr   ... *raw no-units DEPRECIATED AS SAME AS CELCIUS*
@@ -29,7 +31,9 @@ Key (var ID)    Value (device type)
   78              switch
   79              dimmer
   80              generic
-  82              temperature
+  81              ondelay
+  82              offdelay
+  84              temperature
   85              temperaturec
   100             temperaturecr
 ````
@@ -43,7 +47,9 @@ Key (var ID)    Value (device type)
   78              {"id": "10", "type": "switch", "name": "switch 10"}
   79              {"type": "dimmer", "name": "main dimmer"}
   80              {"type": "generic", "name": "raw device"}
-  82              {"type": "temperature", "name": "lake temperature"}
+  81              {"type": "ondelay", "name": "living lt onDelay"}
+  82              {"type": "offdelay", "name": "office lt offDelay"}
+  84              {"type": "temperature", "name": "lake temperature"}
   85              {"id": "85", "type": "temperaturec", "name": "garden temp"}
   100             {"type": "temperaturecr", "name": "raw temp"}
   200             {"type": "garage", "name": "garage door", "ratgdo": "True"}
@@ -94,6 +100,12 @@ devices:
   type:  "dimmer"
   name: "TestDimmer 92"
 - id: 40
+  type:  "ondelay"
+  name: "Living lt onDelay"
+- id: 50
+  type:  "offdelay"
+  name: "Office lt offDelay"
+- id: 60
   type:  "garage"
   name:  "Ratgdo"
   ratgdo: True # will find the Ratgdo device (slower startup)

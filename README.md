@@ -31,6 +31,20 @@ determine if the scene is ON or OFF. Programs can read / set as any device.
 
 Percent of ON for a dimmer or generic.
 
+## onDelay switch
+
+When turned on during OFF or ON, it will change ST status to TIMER, it Sends DON after delay seconds.
+if turned on during TIMER, it will reset the TIMER.
+If turned off during TIMER, it will ignore until TIMER done.
+If turned off after TIMER it will change ST status to Off, and send DOF.
+If turned fast off (DFOF) anytime it will change ST status to off, and send DFOF.
+
+## offDelay switch
+
+When turned on during OFF or ON, it will change ST status to TIMER, sends DON, it Sends DOF after delay seconds.
+if turned on during TIMER, it will reset the TIMER.
+If turned off during TIMER it will change ST status to Off, and send DOF immediately.
+
 ## Temperature
 
 The virtual temperature device allows you to extract temperature information
