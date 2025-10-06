@@ -134,49 +134,52 @@ class VirtualonDelay(Node):
         # for onDelay we want to end up on
         if self.data['switch'] == TIMER:
             self.data['switch'] = RESET
+            store_values(self)
         LOGGER.info(f"stopping:{self.name}")
 
 
     def don_cmd(self, command=None):
         """
-        Turn the driver on, report cmd DON, store values in db for persistence.
+        If the delay is > 0, set the driver to TIMER, start the timer, store values in db for persistence.
+        If delay is zero, call the ON function.
         """
         LOGGER.info(f"{self.name}, {command}")
-        switch = self.data['switch']
         delay = self.data['delay']
-        if switch == TIMER:
+        if self.timer.is_alive():
             self.timer.cancel()
-        self.data['switch'] = TIMER
-        self.setDriver('ST', TIMER)
-        store_values(self)
         if delay > 0:
             self.timer.cancel()
             self.timer = Timer(delay, self._on_delay)
             self.timer.start()
+            self.data['switch'] = TIMER
+            self.setDriver('ST', TIMER)
         else:
-            self.reportCmd("DON")
+            self._on_delay()
+        store_values(self)
         LOGGER.debug("Exit")
         
 
     def _on_delay(self):
+        """
+        Helper fucntion which the thread Timer calls to turn on the switch.
+        Send DON command.
+        """
         LOGGER.info('enter on delay')
         self.data['switch'] = ON
         self.setDriver('ST', ON)
-        store_values(self)
         self.reportCmd("DON")
+        store_values(self)
         LOGGER.debug("Exit")
 
 
     def dof_cmd(self, command=None):
         """
-        Turn the driver off, report cmd DOF, store values in db for persistence.
+        If not in TIMER, Turn the driver off, report cmd DOF, store values in db for persistence.
         """
         LOGGER.info(f"{self.name}, {command}")
-        switch = self.data['switch']
-        if switch == OFF:
-            LOGGER.info('Switch already off, return')
-            return
-        if not self.timer.is_alive():
+        if self.timer.is_alive():
+            LOGGER.info("Switch, is mid TIMER, waiting for DON")
+        else:
             self.data['switch'] = OFF
             self.setDriver('ST', OFF)
             self.reportCmd("DOF")
@@ -186,13 +189,9 @@ class VirtualonDelay(Node):
         
     def dfof_cmd(self, command=None):
         """
-        Turn the driver off, report cmd DOF, store values in db for persistence.
+        Force the driver off, report cmd DFOF, store values in db for persistence.
         """
         LOGGER.info(f"{self.name}, {command}")
-        switch = self.data['switch']
-        if switch == OFF:
-            LOGGER.info('Switch already off, return')
-            return
         self.timer.cancel()
         self.data['switch'] = OFF
         self.setDriver('ST', OFF)
