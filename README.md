@@ -38,12 +38,17 @@ if turned on during TIMER, it will reset the TIMER.
 If turned off during TIMER, it will ignore until TIMER done.
 If turned off after TIMER it will change ST status to Off, and send DOF.
 If turned fast off (DFOF) anytime it will change ST status to off, and send DFOF.
+Example usage: replaces timers and scene setting for changing from one scene to another.
+With two scenes, one named High the other Normal, where you want High to be switched on for x seconds,
+then revert to Normal.  onDelay is responder in High and Controller in Normal.
 
 ## offDelay switch
 
 When turned on during OFF or ON, it will change ST status to TIMER, sends DON, it Sends DOF after delay seconds.
 if turned on during TIMER, it will reset the TIMER.
 If turned off during TIMER it will change ST status to Off, and send DOF immediately.
+Example usage: replaces program timers if used as a controller in a scene to turn a light off after x seconds.
+The scene is switched on by a switch or program, which fires offDelay, then after x seconds, scene it turned off.
 
 ## Temperature
 
