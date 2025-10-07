@@ -23,7 +23,7 @@ LOGGER = udi_interface.LOGGER
 VERSION = '3.1.23'
 """
 3.1.23
-DONE onDelay, offDelay switch
+DONE add onDelay, offDelay switch, update documentation
 DONE magic number scrub
 
 3.1.22
