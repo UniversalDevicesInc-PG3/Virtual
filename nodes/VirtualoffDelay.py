@@ -3,7 +3,7 @@ udi-Virtual-pg3 NodeServer/Plugin for EISY/Polisy
 
 (C) 2025 Stephen Jenkins
 
-VirtualonDelay class
+VirtualoffDelay class
 """
 # std libraries
 from threading import Timer
@@ -41,25 +41,24 @@ FIELDS: dict[str, FieldSpec] = {
 class VirtualoffDelay(Node):
     id = 'virtualoffdelay'
 
-    """ This is a general class for both onDelay & offDelay virtual switches.
-    This device can be made a controller/responder as part of a scene to
-    provide easy indication or control.  It can also be used as control
-    or status in a program and manipulated by then or else.
-    It will receive DON, ST will moved to TIMER(2)
-    if onDelay then DUR seconds later send DON.
-    if offDelay, send DON immediately then DUR seconds later send DOF.
-    ST will change to True in onDelay and False in offDelay cases.
-    DOF received is immediate DOF send in both cases.
-    DOF needed to reset ST to zero or OFF
+    """ This class is for offDelay virtual switches, which will turn off a
+    switch after a time duration of x seconds. This device can be made a
+    controller/responder as part of a scene to provide easy indication
+    or control.  It can also be used as control or status in a program
+    and manipulated by then or else.
+    It will receive DON, ST will moved to TIMER(2), DON is sent, DUR
+    seconds later it will send DOF, ST will change to False.
+    DOF received when in TIMER will send DOF, ST will change to False
+    DOF received when True will do the same
     If DUR = 0, acts as normal switch.
-    ST will follow input DON/DOF
 
     Drivers & commands:
-    ST 0,1: is used to report ON/OFF status in the ISY
+    ST 0,1,2: is used to report ON/OFF/TIMER status in the ISY
     DUR: integer, time delay duration in seconds
-    setOn: Sets the node to ON, depending on onDelay / off Delay
-    setOFF: Sets the node to OFF, immediate, cancel delay
-    SetOnDelay: set the onDelay
+    don_cmd: Sets the node to ON, depending on onDelay
+    dof_cmd: Sets the node to OFF, if ST = ON immediate, nothing if ST = TMIER
+    dfof_cmd: Sets the node to OFF, immediate, resets on timer
+    set_delay_cmd: set the onDelay
     Query: Is used to report status of the node
 
     Class Methods(generic):

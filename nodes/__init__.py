@@ -8,4 +8,5 @@ from .VirtualGeneric  import VirtualGeneric
 from .VirtualGarage   import VirtualGarage
 from .VirtualonDelay  import VirtualonDelay
 from .VirtualoffDelay import VirtualoffDelay
+from .VirtualToggle   import VirtualToggle
 from .Controller      import Controller

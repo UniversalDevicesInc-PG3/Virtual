@@ -3,7 +3,7 @@ udi-Virtual-pg3 NodeServer/Plugin for EISY/Polisy
 
 (C) 2025 Stephen Jenkins
 
-VirtualonDelay class
+VirtualToggle class
 """
 # std libraries
 from threading import Timer
@@ -18,8 +18,9 @@ from utils.node_funcs import FieldSpec, load_persistent_data, store_values
 
 OFF = 0
 ON = 1
-TIMER = 2
-RESET = ON
+ONTIMER = 2
+OFFTIMER = 3
+RESET = OFF
 
 # @dataclass(frozen=True)
 # class FieldSpec:
@@ -34,32 +35,35 @@ RESET = ON
 FIELDS: dict[str, FieldSpec] = {
 	# State variables (pushed to drivers)
 	"switch":      FieldSpec(driver="ST", default=OFF, data_type="state"),
-	"delay":       FieldSpec(driver="DUR", default=0, data_type="state"),
+	"ondelay":     FieldSpec(driver="DUR", default=1, data_type="state"),
+	"offdelay":    FieldSpec(driver="GV0", default=1, data_type="state"),
 }
 
 
-class VirtualonDelay(Node):
-    id = 'virtualondelay'
+class VirtualToggle(Node):
+    id = 'virtualtoggle'
 
-    """ This class is for onDelay virtual switches, which will turn on a
-    switch after a time duration of x seconds. This device can be made a
-    controller/responder as part of a scene to provide easy indication
-    or control.  It can also be used as control or status in a program
-    and manipulated by then or else.
-    It will receive DON, ST will moved to TIMER(2), DUR seconds later
-    it will send DON, ST will change to True.
-    DOF received when in TIMER will do nothing.
-    DOF received when True will send DOF and reset ST to zero or OFF
-    DFOF received will reset TIMER and reset ST to zero or OFF
-    If DUR = 0, acts as normal switch.
+    """ This class is for DON/DOF virtual switches, which oscillate according
+    to time duration On and Off. This device can be made a controller/responder
+    as part of a scene to provide easy indication or control.  It can also be
+    used as control or status in a program and manipulated by then or else.
+    It will receive DON, ST will moved to ONTIMER(2) for DUR seconds,
+    sending DON at the beginning, then moved to OFFTIMER(3), for GV0 seconds,
+    immediately sending DOF.
+    It will not accept DUR or GV0 = 0
+    DFON will move ST to On and send DFON, cancelling oscillation.
+    DFOF will move ST to Off and send DFOF, cancelling oscillation.    
 
     Drivers & commands:
-    ST 0,1,2: is used to report ON/OFF/TIMER status in the ISY
-    DUR: integer, time delay duration in seconds
-    don_cmd: Sets the node to ON, depending on onDelay
-    dof_cmd: Sets the node to OFF, if ST = ON immediate, nothing if ST = TMIER
-    dfof_cmd: Sets the node to OFF, immediate, resets on timer
-    set_delay_cmd: set the onDelay
+    ST 0,1,2,3: is used to report ON/OFF/ONTIMER/OFFTIMER status in the ISY
+    DUR: integer, time on delay duration in seconds, > 0
+    GV0: integer, time off delay duration in seconds, > 0
+    don_cmd: Sets the node to ON if ST = ON or OFF, if ON or OFF TIMER nothing
+    dof_cmd: Sets the node to OFF, if ST = ON or OFF, if ON or OFF TIMER nothing
+    dfon_cmd: Sets the node to ON, cancels further oscillations
+    dfof_cmd: Sets the node to OFF, cancels further oscillations
+    set_on_delay_cmd: set the onDelay
+    set_off_delay_cmd: set the offDelay
     Query: Is used to report status of the node
 
     Class Methods(generic):
@@ -186,6 +190,19 @@ class VirtualonDelay(Node):
         LOGGER.debug("Exit")
 
         
+    def dfon_cmd(self, command=None):
+        """
+        Force the driver off, report cmd DFOF, store values in db for persistence.
+        """
+        LOGGER.info(f"{self.name}, {command}")
+        self.timer.cancel()
+        self.data['switch'] = OFF
+        self.setDriver('ST', OFF)
+        self.reportCmd("DFOF")
+        store_values(self)
+        LOGGER.debug("Exit")
+
+
     def dfof_cmd(self, command=None):
         """
         Force the driver off, report cmd DFOF, store values in db for persistence.
@@ -199,7 +216,20 @@ class VirtualonDelay(Node):
         LOGGER.debug("Exit")
 
 
-    def set_delay_cmd(self, command):
+    def set_on_dur_cmd(self, command):
+        """
+        Setting of delay duration, 0-99999 sec
+        """
+        LOGGER.info(f"{self.name}, {command}")
+        delay = int(command.get('value'))
+        self.data['delay'] = delay
+        self.setDriver('DUR', delay)
+        self.reportCmd("DUR", value=delay)
+        store_values(self)
+        LOGGER.debug("Exit")
+
+
+    def set_off_dur_cmd(self, command):
         """
         Setting of delay duration, 0-99999 sec
         """
@@ -236,7 +266,8 @@ class VirtualonDelay(Node):
     """
     drivers = [
         {'driver': 'ST', 'value': OFF, 'uom': 25, 'name': "Status"},
-        {'driver': 'DUR', 'value': OFF, 'uom': 58, 'name': "Delay"}, # uom 58, duration in seconds
+        {'driver': 'DUR', 'value': 1, 'uom': 58, 'name': "onDuration"}, # uom 58, duration in seconds
+        {'driver': 'GV0', 'value': 1, 'uom': 58, 'name': "offDuration"}, # uom 58, duration in seconds
     ]
 
     
@@ -247,8 +278,10 @@ class VirtualonDelay(Node):
     commands = {
         'DON': don_cmd,
         'DOF': dof_cmd,
+        'DFON': dfon_cmd,
         'DFOF': dfof_cmd,
-        'SETDELAY': set_delay_cmd,
+        'SETONDUR': set_on_dur_cmd,
+        'SETOFFDUR': set_off_dur_cmd,
         'QUERY': query,
     }
 

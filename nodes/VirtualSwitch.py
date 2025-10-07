@@ -1,7 +1,7 @@
 """
 udi-Virtual-pg3 NodeServer/Plugin for EISY/Polisy
 
-(C) 2024 Stephen Jenkins
+(C) 2025 Stephen Jenkins
 
 VirtualSwitch class
 """

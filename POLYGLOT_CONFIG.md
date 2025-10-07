@@ -12,6 +12,7 @@ Required for variable write access
 - generic
 - ondelay
 - offdelay
+- toggle
 - temperature     ... *Farenheit units*
 - temperaturec    ... *Celcius units*
 - temperaturecr   ... *raw no-units DEPRECIATED AS SAME AS CELCIUS*
@@ -33,6 +34,7 @@ Key (var ID)    Value (device type)
   80              generic
   81              ondelay
   82              offdelay
+  83              toggle
   84              temperature
   85              temperaturec
   100             temperaturecr
@@ -49,6 +51,7 @@ Key (var ID)    Value (device type)
   80              {"type": "generic", "name": "raw device"}
   81              {"type": "ondelay", "name": "living lt onDelay"}
   82              {"type": "offdelay", "name": "office lt offDelay"}
+  83              {"type": "toggle", "name": "Christmas lights toggle"}
   84              {"type": "temperature", "name": "lake temperature"}
   85              {"id": "85", "type": "temperaturec", "name": "garden temp"}
   100             {"type": "temperaturecr", "name": "raw temp"}
@@ -106,6 +109,9 @@ devices:
   type:  "offdelay"
   name: "Office lt offDelay"
 - id: 60
+  type:  "toggle"
+  name: "Christmas lights toggle"
+- id: 70
   type:  "garage"
   name:  "Ratgdo"
   ratgdo: True # will find the Ratgdo device (slower startup)

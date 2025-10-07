@@ -14,18 +14,19 @@ Devices store their status in a .db for retrieval on a restart.
 
 ## Example Virtual Device Uses
 
-- I use REST to switch a virtual device from an 8266 device
-    - My Awning controller & heartbeat
+- I use REST to switch a virtual device from an ESP8266 device
+- My Awning controller & heartbeat
 - from Alexa I switch a virtual device
-    - The status of my daughter's goodnight routine
+- The status of my daughter's goodnight routine
 - inserted as part of scenes or programs for both status and control
 - provide scene status if you make them part of a scene
 - consolidate data with the temp devices, & I am looking to add a garage device
+- delay devices can be used in place of timers
 
 ## Switches
 
 You can add a virtual switch to a scene and that ON/OFF switch is polled to
-determine if the scene is ON or OFF. Programs can read / set as any device. 
+determine if the scene is ON or OFF. Programs can read / set as any device.
 
 ## Dimmer or Generic
 
@@ -33,22 +34,32 @@ Percent of ON for a dimmer or generic.
 
 ## onDelay switch
 
-When turned on during OFF or ON, it will change ST status to TIMER, it Sends DON after delay seconds.
+If turned on when OFF or ON, ST status changes to TIMER, DON after delay seconds.
 if turned on during TIMER, it will reset the TIMER.
 If turned off during TIMER, it will ignore until TIMER done.
 If turned off after TIMER it will change ST status to Off, and send DOF.
 If turned fast off (DFOF) anytime it will change ST status to off, and send DFOF.
-Example usage: replaces timers and scene setting for changing from one scene to another.
-With two scenes, one named High the other Normal, where you want High to be switched on for x seconds,
+Ex usage: replaces timers and scene setting for changing from one scene to another.
+Use two scenes, High the other Normal, intending High to be switched on for x-seconds,
 then revert to Normal.  onDelay is responder in High and Controller in Normal.
 
 ## offDelay switch
 
-When turned on during OFF or ON, it will change ST status to TIMER, sends DON, it Sends DOF after delay seconds.
+If turned on when OFF or ON, ST to TIMER, then sends DON, then DOF after delay seconds.
 if turned on during TIMER, it will reset the TIMER.
 If turned off during TIMER it will change ST status to Off, and send DOF immediately.
-Example usage: replaces program timers if used as a controller in a scene to turn a light off after x seconds.
-The scene is switched on by a switch or program, which fires offDelay, then after x seconds, scene it turned off.
+Ex: replaces program timers used as a scene controller, for lights off after x seconds.
+The scene is switched on by a switch or program & fires offDelay, after
+x-seconds the scene is turned off.
+
+## toggle
+
+With parameters of timeOn & timeOFF, this device can be used to regularly
+cycle a program or scene.
+Once started it will be stopped with a DFOF as opposed to DOF, this is so as
+to not cancel the device in a scene.
+Ex: Obvious example is Christmas lights; another would be to fire a program at
+regular intervals.
 
 ## Temperature
 
