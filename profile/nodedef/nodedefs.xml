@@ -100,6 +100,7 @@
 			<cmd id="DFOF" />
 			<cmd id="SETONDUR">
 			  <p id="" editor="delay" init="DUR" />
+			</cmd>
 			<cmd id="SETOFFDUR">
 			  <p id="" editor="delay" init="GV0" />
 			</cmd>

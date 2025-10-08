@@ -114,7 +114,7 @@ class VirtualToggle(Node):
         """
         Start node and retrieve persistent data
         """
-        LOGGER.info(f'start: delayswitch:{self.name}')
+        LOGGER.info(f'start: toggle:{self.name}')
 
         # wait for controller start ready
         self.controller.ready_event.wait()
