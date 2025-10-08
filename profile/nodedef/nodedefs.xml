@@ -84,7 +84,7 @@
 	<nodeDef id="virtualtoggle" nls="vtoggle">
 		<editors />
 		<sts>
-		  <st id="ST" editor="on_off" />
+		  <st id="ST" editor="on_off_toggle" />
 		  <st id="DUR" editor="delay" />
 		  <st id="GV0" editor="delay" />
 		</sts>
