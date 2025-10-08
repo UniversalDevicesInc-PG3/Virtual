@@ -33,6 +33,7 @@ DEVICE_TYPE_TO_NODE_CLASS = {
     'garage': VirtualGarage,
     'ondelay': VirtualonDelay,
     'offdelay': VirtualoffDelay,
+    'toggle': VirtualToggle,
 }
 
 
