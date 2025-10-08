@@ -245,7 +245,7 @@ class VirtualToggle(Node):
         Setting of onDelay duration, 0-99999 sec
         """
         LOGGER.info(f"{self.name}, {command}")
-        ondelay = max(int(command.get('ondelay', 1)), 1)
+        ondelay = max(int(command.get('value', 1)), 1)
         self.data['ondelay'] = ondelay
         self.setDriver('DUR', ondelay)
         self.reportCmd("DUR", value=ondelay)
@@ -258,7 +258,7 @@ class VirtualToggle(Node):
         Setting of offDelay duration, 0-99999 sec
         """
         LOGGER.info(f"{self.name}, {command}")
-        offdelay = max(int(command.get('offdelay', 1)), 1)
+        offdelay = max(int(command.get('value', 1)), 1)
         self.data['offdelay'] = offdelay
         self.setDriver('GV0', offdelay)
         self.reportCmd("GV0", value=offdelay)
