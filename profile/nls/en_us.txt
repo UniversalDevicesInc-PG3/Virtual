@@ -137,8 +137,8 @@ ON_OFF_DELAY-2 = Timer
 
 ON_OFF_TOGGLE-0 = Off
 ON_OFF_TOGGLE-1 = On
-ON_OFF_TOGGLE-2 = onDuration
-ON_OFF_TOGGLE-3 = offDuration
+ON_OFF_TOGGLE-2 = onTimer
+ON_OFF_TOGGLE-3 = offTimer
 
 ACTION-0 = None
 ACTION-1 = Push to
