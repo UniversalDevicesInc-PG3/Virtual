@@ -20,7 +20,6 @@ OFF = 0
 ON = 1
 ONTIMER = 2
 OFFTIMER = 3
-RESET = OFF
 
 # @dataclass(frozen=True)
 # class FieldSpec:
@@ -136,42 +135,65 @@ class VirtualToggle(Node):
         LOGGER.info(f'stop: ondelay:{self.name}')
         self.timer.cancel()
         # for onDelay we want to end up on
-        if self.data['switch'] == TIMER:
-            self.data['switch'] = RESET
-            store_values(self)
+        if self.data['switch'] == ONTIMER:
+            self.data['switch'] = ON
+        elif self.data['switch'] == OFFTIMER:
+            self.data['switch'] = OFF
+        store_values(self)
         LOGGER.info(f"stopping:{self.name}")
 
 
     def don_cmd(self, command=None):
         """
-        If the delay is > 0, set the driver to TIMER, start the timer, store values in db for persistence.
-        If delay is zero, call the ON function.
+        Set the driver to ONTIMER, send DON, start the timer, store values in db for persistence.
+        If delay is zero, change to 1.
         """
         LOGGER.info(f"{self.name}, {command}")
-        delay = self.data['delay']
+        ondelay = max(self.data.get('ondelay', 1), 1)
         if self.timer.is_alive():
             self.timer.cancel()
-        if delay > 0:
-            self.timer = Timer(delay, self._on_delay)
-            self.timer.start()
-            self.data['switch'] = TIMER
-            self.setDriver('ST', TIMER)
-        else:
-            self._on_delay()
+        self.timer = Timer(ondelay, self._on_delay)
+        self.timer.start()
+        self.data['switch'] = ONTIMER
+        self.setDriver('ST', ONTIMER)
+        self.reportCmd("DON")
         store_values(self)
         LOGGER.debug("Exit")
         
 
     def _on_delay(self):
         """
+        Helper fucntion which the thread Timer calls to turn off the switch.
+        Send DOF command.
+        """
+        LOGGER.info('enter on delay')
+        self.data['switch'] = OFFTIMER
+        self.setDriver('ST', OFFTIMER)
+        self.reportCmd("DOF")
+        store_values(self)
+        offdelay = max(self.data.get('offdelay', 1), 1)
+        if self.timer.is_alive():
+            self.timer.cancel()
+        self.timer = Timer(offdelay, self._off_delay)
+        self.timer.start()
+        LOGGER.debug("Exit")
+
+
+    def _off_delay(self):
+        """
         Helper fucntion which the thread Timer calls to turn on the switch.
         Send DON command.
         """
-        LOGGER.info('enter on delay')
-        self.data['switch'] = ON
-        self.setDriver('ST', ON)
+        LOGGER.info('enter off delay')
+        self.data['switch'] = ONTIMER
+        self.setDriver('ST', ONTIMER)
         self.reportCmd("DON")
         store_values(self)
+        ondelay = max(self.data.get('ondelay', 1), 1)
+        if self.timer.is_alive():
+            self.timer.cancel()
+        self.timer = Timer(ondelay, self._on_delay)
+        self.timer.start()
         LOGGER.debug("Exit")
 
 
@@ -181,7 +203,7 @@ class VirtualToggle(Node):
         """
         LOGGER.info(f"{self.name}, {command}")
         if self.timer.is_alive():
-            LOGGER.info("Switch, is mid TIMER, waiting for DON")
+            LOGGER.info("Switch, is mid TIMER, waiting for DON/DOF")
         else:
             self.data['switch'] = OFF
             self.setDriver('ST', OFF)
@@ -192,13 +214,14 @@ class VirtualToggle(Node):
         
     def dfon_cmd(self, command=None):
         """
-        Force the driver off, report cmd DFOF, store values in db for persistence.
+        Force the driver on, report cmd DFON, store values in db for persistence.
         """
         LOGGER.info(f"{self.name}, {command}")
-        self.timer.cancel()
-        self.data['switch'] = OFF
-        self.setDriver('ST', OFF)
-        self.reportCmd("DFOF")
+        if self.timer.is_alive():
+            self.timer.cancel()
+        self.data['switch'] = ON
+        self.setDriver('ST', ON)
+        self.reportCmd("DFON")
         store_values(self)
         LOGGER.debug("Exit")
 
@@ -208,7 +231,8 @@ class VirtualToggle(Node):
         Force the driver off, report cmd DFOF, store values in db for persistence.
         """
         LOGGER.info(f"{self.name}, {command}")
-        self.timer.cancel()
+        if self.timer.is_alive():
+            self.timer.cancel()
         self.data['switch'] = OFF
         self.setDriver('ST', OFF)
         self.reportCmd("DFOF")
@@ -218,26 +242,26 @@ class VirtualToggle(Node):
 
     def set_on_dur_cmd(self, command):
         """
-        Setting of delay duration, 0-99999 sec
+        Setting of onDelay duration, 0-99999 sec
         """
         LOGGER.info(f"{self.name}, {command}")
-        delay = int(command.get('value'))
-        self.data['delay'] = delay
-        self.setDriver('DUR', delay)
-        self.reportCmd("DUR", value=delay)
+        ondelay = max(int(command.get('ondelay', 1)), 1)
+        self.data['ondelay'] = ondelay
+        self.setDriver('DUR', ondelay)
+        self.reportCmd("DUR", value=ondelay)
         store_values(self)
         LOGGER.debug("Exit")
 
 
     def set_off_dur_cmd(self, command):
         """
-        Setting of delay duration, 0-99999 sec
+        Setting of offDelay duration, 0-99999 sec
         """
         LOGGER.info(f"{self.name}, {command}")
-        delay = int(command.get('value'))
-        self.data['delay'] = delay
-        self.setDriver('DUR', delay)
-        self.reportCmd("DUR", value=delay)
+        offdelay = max(int(command.get('offdelay', 1)), 1)
+        self.data['offdelay'] = offdelay
+        self.setDriver('GV0', offdelay)
+        self.reportCmd("GV0", value=offdelay)
         store_values(self)
         LOGGER.debug("Exit")
 

@@ -191,7 +191,8 @@ class VirtualonDelay(Node):
         Force the driver off, report cmd DFOF, store values in db for persistence.
         """
         LOGGER.info(f"{self.name}, {command}")
-        self.timer.cancel()
+        if self.timer.is_alive():
+            self.timer.cancel()
         self.data['switch'] = OFF
         self.setDriver('ST', OFF)
         self.reportCmd("DFOF")

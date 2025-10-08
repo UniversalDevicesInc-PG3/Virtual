@@ -17,9 +17,17 @@
 	</editor>
 
     <editor id="on_off">
-        <range uom="25" subset="0,1,2" nls="ON_OFF" />
+        <range uom="25" subset="0,1" nls="ON_OFF" />
     </editor>
     
+	<editor id="on_off_delay">
+		<range uom="25" subset="0,1,2" nls="ON_OFF_DELAY" />
+	</editor>
+
+	<editor id="on_off_toggle">
+		<range uom="25" subset="0,1,2,3" nls="ON_OFF_TOGGLE" />
+	</editor>
+
     <editor id="action_type">
         <range uom="25" subset="0-2" nls="ACTION" />
     </editor>

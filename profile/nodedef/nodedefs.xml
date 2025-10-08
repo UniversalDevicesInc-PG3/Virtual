@@ -41,7 +41,7 @@
 	<nodeDef id="virtualondelay" nls="vondelay">
 		<editors />
 		<sts>
-		  <st id="ST" editor="on_off" />
+		  <st id="ST" editor="on_off_delay" />
 		  <st id="DUR" editor="delay" />
 		</sts>
 		<cmds>
@@ -63,7 +63,7 @@
 	<nodeDef id="virtualoffdelay" nls="voffdelay">
 		<editors />
 		<sts>
-		  <st id="ST" editor="on_off" />
+		  <st id="ST" editor="on_off_delay" />
 		  <st id="DUR" editor="delay" />
 		</sts>
 		<cmds>
@@ -76,6 +76,32 @@
 			<cmd id="DOF" />
 			<cmd id="SETDELAY">
 			  <p id="" editor="delay" init="DUR" />
+			</cmd>
+		  </accepts>
+		</cmds>
+	</nodeDef>
+		<!-- virtualtoggleid -->
+	<nodeDef id="virtualtoggle" nls="vtoggle">
+		<editors />
+		<sts>
+		  <st id="ST" editor="on_off" />
+		  <st id="DUR" editor="delay" />
+		  <st id="GV0" editor="delay" />
+		</sts>
+		<cmds>
+		  <sends>
+			<cmd id="DON" />
+			<cmd id="DOF" />
+		  </sends>
+		  <accepts>
+			<cmd id="DON" />
+			<cmd id="DOF" />
+			<cmd id="DFON" />
+			<cmd id="DFOF" />
+			<cmd id="SETONDUR">
+			  <p id="" editor="delay" init="DUR" />
+			<cmd id="SETOFFDUR">
+			  <p id="" editor="delay" init="GV0" />
 			</cmd>
 		  </accepts>
 		</cmds>
