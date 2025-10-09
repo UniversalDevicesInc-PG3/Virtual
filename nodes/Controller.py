@@ -262,7 +262,8 @@ class Controller(Node):
                     has_error = True
                 continue
             # handle simple single device
-            if val in {'switch', 'temperature', 'temperaturec', 'temperaturecr', 'generic', 'dimmer'}:
+            if val in {'switch', 'temperature', 'temperaturec', 'temperaturecr',
+                       'generic', 'dimmer', 'ondelay', 'offdelay', 'toggle'}:
                 name = self.poly.getValidName(f"{val} {key}")
                 device = {'id': key, 'type': val, 'name': name}
                 self.devlist.append(device)
