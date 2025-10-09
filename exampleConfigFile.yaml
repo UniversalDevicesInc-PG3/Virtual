@@ -32,7 +32,13 @@ devices:
 - id: 50
   type:  "ondelay"
   name: "Test onDelay"
+  delay: 600
 - id: 60
   type:  "offdelay"
   name: "Test offDelay"
+  delay: 60
+- id: 70
+  type: "toggle"
+  ondelay: 600
+  offdelay: 700
 

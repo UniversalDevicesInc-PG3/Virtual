@@ -149,6 +149,31 @@ def _shelve_file_candidates(base: Path) -> Iterable[Path]:
     return sorted(seen)
 
 
+def get_config_data(self, FIELDS):
+        """
+        Retrieves and processes garage configuration data from the controller.
+        Calls helper to process Ratgdo config.
+        """
+        self.dev = next((dev for dev in self.controller.devlist 
+                                         if str(dev.get('type')) == 'garage' and dev.get('name') == self.name), None)
+
+        if not self.dev:
+                LOGGER.error(f'No configuration data found for node {self.name}.')
+                return False
+
+        # Iterate through fields and update from self.dev if key exists
+        try:
+            for field, _ in FIELDS.items():
+                    # Use a safe get to retrieve config data
+                    if field in self.dev:
+                            self.data[field] = self.dev[field]
+            store_values(self)
+            return True
+        except (ValueError, TypeError) as ex:
+            LOGGER.error(f'Configuration data get bad for node {self.name}, ex:{ex}.', exc_info=True)
+            return False            
+
+                        
 def push_to_isy_var(self, var_type: str | int, var_id: int | str, var_value: int | float | str) -> None:
     """
     Push self.tempVal to an ISY variable.

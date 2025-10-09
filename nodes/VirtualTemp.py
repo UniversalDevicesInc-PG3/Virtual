@@ -13,7 +13,9 @@ from typing import Any, Dict, Optional
 from udi_interface import LOGGER, ISY, Node
 
 # local imports
-from utils.node_funcs import FieldSpec, load_persistent_data, store_values, push_to_isy_var, pull_from_isy_var
+from utils.node_funcs import (FieldSpec, load_persistent_data, store_values,
+                              push_to_isy_var, pull_from_isy_var,
+                              get_config_data)
 
 # @dataclass(frozen=True)
 # class FieldSpec:
@@ -117,6 +119,9 @@ class VirtualTemp(Node):
         
         # get persistent data from polyglot or depreciated: old db file, then delete db file
         load_persistent_data(self, FIELDS)
+
+        # retrieve configuration data
+        get_config_data(self, FIELDS)
 
         self.reset_time()
 

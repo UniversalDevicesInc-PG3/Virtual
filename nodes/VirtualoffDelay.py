@@ -12,7 +12,7 @@ from threading import Timer
 from udi_interface import Node, LOGGER
 
 # local imports
-from utils.node_funcs import FieldSpec, load_persistent_data, store_values
+from utils.node_funcs import FieldSpec, load_persistent_data, store_values, get_config_data
 
 # constants
 
@@ -118,6 +118,9 @@ class VirtualoffDelay(Node):
         # get persistent data from polyglot or depreciated: old db file, then delete db file
         load_persistent_data(self, FIELDS)
         
+        # retrieve configuration data
+        get_config_data(self, FIELDS)
+
         # timer
         self.timer = Timer(0, self._off_delay)
 

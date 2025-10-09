@@ -17,7 +17,9 @@ import requests
 import aiohttp
 
 # local imports
-from utils.node_funcs import FieldSpec, load_persistent_data, store_values, push_to_isy_var, pull_from_isy_var
+from utils.node_funcs import (FieldSpec, load_persistent_data, store_values,
+                              push_to_isy_var, pull_from_isy_var,
+                              get_config_data)
 
 # @dataclass(frozen=True)
 # class FieldSpec:
@@ -57,7 +59,7 @@ FIELDS: dict[str, FieldSpec] = {
     "obstructId":      FieldSpec(driver=None, default=0, data_type="config"),
     "motorT":          FieldSpec(driver=None, default=1, data_type="config"),
     "motorId":         FieldSpec(driver=None, default=0, data_type="config"),
-    "positioT":        FieldSpec(driver=None, default=1, data_type="config"),
+    "positionT":       FieldSpec(driver=None, default=1, data_type="config"),
     "positionId":      FieldSpec(driver=None, default=0, data_type="config"),
 }
 
@@ -219,7 +221,10 @@ class VirtualGarage(Node):
         LOGGER.info(f"data:{self.data}")
 
         # retrieve configuration data
-        self.get_config_data()
+        if get_config_data(self, FIELDS):
+            # Process ratgdo from config_data
+            self.process_ratgdo_config()
+
         self.reset_time()
 
         # try bonjour
@@ -275,8 +280,9 @@ class VirtualGarage(Node):
             LOGGER.debug('shortPoll exit')
 
             
-    def get_config_data(self):
+    def get_config_data_old(self):
         """
+        TODO remove *Not currently used, calling central function*
         Retrieves and processes garage configuration data from the controller.
         Calls helper to process Ratgdo config.
         """
@@ -293,7 +299,7 @@ class VirtualGarage(Node):
             if field in self.dev:
                 self.data[field] = self.dev[field]
         
-        # Process ratgdo
+        # Process ratgdo from config_data
         self.process_ratgdo_config()
         
 
