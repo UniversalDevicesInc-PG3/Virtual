@@ -151,8 +151,7 @@ def _shelve_file_candidates(base: Path) -> Iterable[Path]:
 
 def get_config_data(self, FIELDS):
         """
-        Retrieves and processes garage configuration data from the controller.
-        Calls helper to process Ratgdo config.
+        Retrieves and processes configuration data from the controller.
         """
         self.dev = next((dev for dev in self.controller.devlist 
                                          if str(dev.get('type')) == 'garage' and dev.get('name') == self.name), None)
@@ -167,7 +166,9 @@ def get_config_data(self, FIELDS):
                     # Use a safe get to retrieve config data
                     if field in self.dev:
                             self.data[field] = self.dev[field]
+            # Persist and push drivers
             store_values(self)
+            _push_drivers(self, FIELDS)
             return True
         except (ValueError, TypeError) as ex:
             LOGGER.error(f'Configuration data get bad for node {self.name}, ex:{ex}.', exc_info=True)
