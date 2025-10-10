@@ -20,8 +20,11 @@ import udi_interface
 
 LOGGER = udi_interface.LOGGER
 
-VERSION = '3.1.23'
+VERSION = '3.1.24'
 """
+3.1.24
+DONE configuration based optional overide initial default
+
 3.1.23
 DONE add onDelay, offDelay, toggle switch, update documentation
 DONE magic number scrub
