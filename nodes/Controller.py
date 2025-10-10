@@ -22,7 +22,7 @@ pass
 # Nodes
 from nodes import *
 
-# Map device types to their respective node classes
+ # Map device types to their respective node classes
 DEVICE_TYPE_TO_NODE_CLASS = {
     'switch': VirtualSwitch,
     'temperature': VirtualTemp,
@@ -247,7 +247,7 @@ class Controller(Node):
         for key, val in self.Parameters.items():
             if not key.isdigit():
                 # handle config file
-                if key in ["devFile", "devfile"]:
+                if key.lower() == "devfile":
                     if val:
                         devices_from_file = self._handle_file_devices(val)
                         if devices_from_file is not None:
@@ -261,9 +261,9 @@ class Controller(Node):
                     LOGGER.error(f"unknown keyfield: '{key}'")
                     has_error = True
                 continue
-            # handle simple single device
-            if val in {'switch', 'temperature', 'temperaturec', 'temperaturecr',
-                       'generic', 'dimmer', 'ondelay', 'offdelay', 'toggle'}:
+            
+            # handle simple single device using DEVICE_TYPE_TO_NODE_CLASS
+            if val in DEVICE_TYPE_TO_NODE_CLASS:
                 name = self.poly.getValidName(f"{val} {key}")
                 device = {'id': key, 'type': val, 'name': name}
                 self.devlist.append(device)
