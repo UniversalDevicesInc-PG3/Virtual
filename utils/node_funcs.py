@@ -154,7 +154,7 @@ def get_config_data(self, FIELDS):
         Retrieves and processes configuration data from the controller.
         """
         self.dev = next((dev for dev in self.controller.devlist 
-                                         if str(dev.get('type')) == 'garage' and dev.get('name') == self.name), None)
+                                         if str(dev.get('id')) == self.address), None)
 
         if not self.dev:
                 LOGGER.error(f'No configuration data found for node {self.name}.')
