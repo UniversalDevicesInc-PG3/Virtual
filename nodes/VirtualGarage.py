@@ -189,6 +189,7 @@ class VirtualGarage(Node):
                 
         # default variables and drivers
         self.data = {field: spec.default for field, spec in FIELDS.items()}
+        self.dev = None
 
         # subscriptions
         self.poly.subscribe(self.poly.START, self.start, address)
@@ -223,9 +224,9 @@ class VirtualGarage(Node):
         # retrieve configuration data
         if get_config_data(self, FIELDS):
             # Process ratgdo from config_data
-            self.process_ratgdo_config()
+            self._process_ratgdo_config()
 
-        self.reset_time()
+        self._reset_time()
 
         # try bonjour
         self.bonjourOnce = True
@@ -272,38 +273,15 @@ class VirtualGarage(Node):
                         self.ratgdo_poll_lock.release()
             LOGGER.debug('longPoll exit')
         else:
-            self.heartbeat() # send cmd DON/DOF
+            self._heartbeat() # send cmd DON/DOF
             # no Ratgdo, so get/set data from ISY variables
             if not self.ratgdo:
-                self.update_vars() # update variables
-            self.update_isy() # update ISY
+                self._update_vars() # update variables
+            self._update_isy() # update ISY
             LOGGER.debug('shortPoll exit')
 
             
-    def get_config_data_old(self):
-        """
-        TODO remove *Not currently used, calling central function*
-        Retrieves and processes garage configuration data from the controller.
-        Calls helper to process Ratgdo config.
-        """
-        self.dev = next((dev for dev in self.controller.devlist 
-                         if str(dev.get('type')) == 'garage' and dev.get('name') == self.name), None)
-
-        if not self.dev:
-            LOGGER.error('No configuration data found for this garage node.')
-            return
-
-        # Iterate through fields and update from self.dev if key exists
-        for field, _ in FIELDS.items():
-            # Use a safe get to retrieve config data
-            if field in self.dev:
-                self.data[field] = self.dev[field]
-        
-        # Process ratgdo from config_data
-        self.process_ratgdo_config()
-        
-
-    def process_ratgdo_config(self):
+    def _process_ratgdo_config(self):
         """
         This function parses the configuration which is specifically for the
         Ratgdo.  The variable ratgdo can be false (none used), true (use default address),
@@ -536,22 +514,22 @@ class VirtualGarage(Node):
                             if msg:
                                 id = msg.get('id')
                                 if id == 'light-light':
-                                    self.set_ratgdo_light(msg)
+                                    self._set_ratgdo_light(msg)
                                     LOGGER.info(f'event:state - processed id:{id}')
                                 elif id == 'cover-door':
-                                    self.set_ratgdo_door(msg)
+                                    self._set_ratgdo_door(msg)
                                     LOGGER.info(f'event:state - processed id:{id}')
                                 elif id == 'binary_sensor-motor':
-                                    self.set_ratgdo_motor(msg)
+                                    self._set_ratgdo_motor(msg)
                                     LOGGER.info(f'event:state - processed id:{id}')
                                 elif id == 'binary_sensor-motion':
-                                    self.set_ratgdo_motion(msg)
+                                    self._set_ratgdo_motion(msg)
                                     LOGGER.info(f'event:state - processed id:{id}')
                                 elif id == 'lock-lock_remotes':
-                                    self.set_ratgdo_lock(msg)
+                                    self._set_ratgdo_lock(msg)
                                     LOGGER.info(f'event:state - processed id:{id}')
                                 elif id == 'binary_sensor-obstruction': 
-                                    self.set_ratgdo_obstruct(msg)
+                                    self._set_ratgdo_obstruct(msg)
                                     LOGGER.info(f'event:state - processed id:{id}')
                                 else:
                                     LOGGER.info(f'event:state - no action - {id}')                    
@@ -710,7 +688,7 @@ class VirtualGarage(Node):
         post = f"{self.ratgdo}{LIGHT}{TURN_ON}"
         self.ratgdo_post(post)
         store_values(self)
-        self.reset_time()
+        self._reset_time()
 
         
     def lt_off_cmd(self, command = None):
@@ -727,7 +705,7 @@ class VirtualGarage(Node):
         post = f"{self.ratgdo}{LIGHT}{TURN_OFF}"
         self.ratgdo_post(post)
         store_values(self)
-        self.reset_time()
+        self._reset_time()
 
         
     def door_command(self, post):
@@ -740,7 +718,7 @@ class VirtualGarage(Node):
         self.setDriver('GV2', self.data['dcommand'])
         self.ratgdo_post(post)
         store_values(self)
-        self.reset_time()
+        self._reset_time()
 
         
     def dr_open_cmd(self, command = None):
@@ -805,7 +783,7 @@ class VirtualGarage(Node):
         post = f"{self.ratgdo}{LOCK_REMOTES}{LOCK}"
         self.ratgdo_post(post)
         store_values(self)
-        self.reset_time()
+        self._reset_time()
         
         
     def lk_unlock_cmd(self, command = None):
@@ -822,10 +800,10 @@ class VirtualGarage(Node):
         post = f"{self.ratgdo}{LOCK_REMOTES}{UNLOCK}"
         self.ratgdo_post(post)
         store_values(self)
-        self.reset_time()
+        self._reset_time()
 
         
-    def update_vars(self) -> None:
+    def _update_vars(self) -> None:
         """
         Uses FIELDS definitions to pulling data from ISY, then storing values
         """
@@ -872,12 +850,12 @@ class VirtualGarage(Node):
         Light, door, motion, motor, remote lock, and obstruction.
         """
         endpoints = [
-            (LIGHT, self.set_ratgdo_light, "LIGHT"),
-            (DOOR, self.set_ratgdo_door, "DOOR"),
-            (MOTION, self.set_ratgdo_motion, "MOTION"),
-            (MOTOR, self.set_ratgdo_motor, "MOTOR"),
-            (LOCK_REMOTES, self.set_ratgdo_lock, "LOCK_REMOTES"),
-            (OBSTRUCT, self.set_ratgdo_obstruct, "OBSTRUCT"),
+            (LIGHT, self._set_ratgdo_light, "LIGHT"),
+            (DOOR, self._set_ratgdo_door, "DOOR"),
+            (MOTION, self._set_ratgdo_motion, "MOTION"),
+            (MOTOR, self._set_ratgdo_motor, "MOTOR"),
+            (LOCK_REMOTES, self._set_ratgdo_lock, "LOCK_REMOTES"),
+            (OBSTRUCT, self._set_ratgdo_obstruct, "OBSTRUCT"),
         ]
 
         for path, handler, label in endpoints:
@@ -896,7 +874,7 @@ class VirtualGarage(Node):
         return True
     
                                 
-    def set_ratgdo_light(self, _data):
+    def _set_ratgdo_light(self, _data):
         """
         Update persistent data as well as send command.
         Called by either poll or event.
@@ -909,7 +887,7 @@ class VirtualGarage(Node):
             self.data['light'] = 0
             
 
-    def set_ratgdo_door(self, _data):
+    def _set_ratgdo_door(self, _data):
         """
         Update persistent data as well as send command.
         Called by either poll or event.
@@ -947,7 +925,7 @@ class VirtualGarage(Node):
             self.data['position'] = 101
 
             
-    def set_ratgdo_motor(self, _data):
+    def _set_ratgdo_motor(self, _data):
         """
         Update persistent data as well as send command.
         Called by either poll or event.
@@ -962,7 +940,7 @@ class VirtualGarage(Node):
             self.reportCmd('MOTOROFF',2)
 
             
-    def set_ratgdo_motion(self, _data):
+    def _set_ratgdo_motion(self, _data):
         """
         Update persistent data as well as send command.
         Called by either poll or event.
@@ -977,7 +955,7 @@ class VirtualGarage(Node):
             self.reportCmd('NOMOTION',2)
 
             
-    def set_ratgdo_lock(self, _data):
+    def _set_ratgdo_lock(self, _data):
         """
         Update persistent data as well as send command.
         Called by either poll or event.
@@ -990,7 +968,7 @@ class VirtualGarage(Node):
             self.data['lock'] = 0
 
             
-    def set_ratgdo_obstruct(self, _data):
+    def _set_ratgdo_obstruct(self, _data):
         """
         Update persistent data as well as send command.
         Called by either poll or event.
@@ -1005,7 +983,7 @@ class VirtualGarage(Node):
             self.reportCmd('NOOBSTRUCTION',2)
 
             
-    def update_isy(self):
+    def _update_isy(self):
         """
         Update ISY drivers and process both lastUpdateTime & door openTime.
         First pass is signaled by and event, which then pushes all the fields to their drivers.
@@ -1018,7 +996,7 @@ class VirtualGarage(Node):
                 return  # Skip config-only fields
             if self.getDriver(spec.driver) != self.data[field_name]:
                 self.setDriver(spec.driver, self.data[field_name])
-                self.reset_time()
+                self._reset_time()
 
         if self.first_pass_event.is_set():
             for field_name, spec in FIELDS.items():
@@ -1026,7 +1004,7 @@ class VirtualGarage(Node):
                     self.setDriver(spec.driver, self.data[field_name])
             if self.getDriver(FIELDS["door"].driver) != self.data["door"]:
                 self.data["dcommand"] = 0
-            self.reset_time()
+            self._reset_time()
             self.first_pass_event.clear()
         else:
             # Door change logic
@@ -1069,11 +1047,11 @@ class VirtualGarage(Node):
         """
         LOGGER.info(f"{self.name}, {command}")
         self.first_pass_event.set() # reset first pass to push values
-        self.reset_time()
+        self._reset_time()
         store_values(self)
 
 
-    def reset_time(self):
+    def _reset_time(self):
         """
         Reset the last update time to now
         """
@@ -1082,7 +1060,7 @@ class VirtualGarage(Node):
         self.setDriver('GV6', 0.0)
 
         
-    def heartbeat(self):
+    def _heartbeat(self):
         """
         Heartbeat function uses the long poll interval to alternately send a ON and OFF
         command back to the ISY.  Programs on the ISY can then monitor this.

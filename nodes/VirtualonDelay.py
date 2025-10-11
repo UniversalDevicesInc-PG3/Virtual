@@ -103,6 +103,10 @@ class VirtualonDelay(Node):
         # default variables and drivers
         self.data = {field: spec.default for field, spec in FIELDS.items()}
 
+        # timer
+        self.timer = None
+        self._initialize_timer()        
+
         self.poly.subscribe(self.poly.START, self.start, address)
         self.poly.subscribe(self.poly.STOP, self.stop, address)
 
@@ -122,18 +126,25 @@ class VirtualonDelay(Node):
         # retrieve configuration data
         get_config_data(self, FIELDS)
 
-        # timer
-        self.timer = Timer(0, self._on_delay)
-        
         LOGGER.info(f"data:{self.data}")
         
+
+    def _initialize_timer(self) -> None:
+        """Initialize timer with proper error handling."""
+        try:
+            self.timer = Timer(0, self._on_delay)
+        except Exception as ex:
+            LOGGER.error(f"Failed to initialize timer: {ex}")
+            self.timer = None
+            
 
     def stop(self):
         """
         Stop node and clean-up TIMER status
         """
         LOGGER.info(f'stop: ondelay:{self.name}')
-        self.timer.cancel()
+        if self.timer:
+            self.timer.cancel()
         # for onDelay we want to end up on
         if self.data['switch'] == TIMER:
             self.data['switch'] = RESET
@@ -141,22 +152,25 @@ class VirtualonDelay(Node):
         LOGGER.info(f"stopping:{self.name}")
 
 
-    def don_cmd(self, command=None):
+    def DON_cmd(self, command=None):
         """
         If the delay is > 0, set the driver to TIMER, start the timer, store values in db for persistence.
         If delay is zero, call the ON function.
         """
         LOGGER.info(f"{self.name}, {command}")
         delay = self.data['delay']
-        if self.timer.is_alive():
-            self.timer.cancel()
-        if delay > 0:
-            self.timer = Timer(delay, self._on_delay)
-            self.timer.start()
-            self.data['switch'] = TIMER
-            self.setDriver('ST', TIMER)
-        else:
-            self._on_delay()
+        try:
+            if self.timer and self.timer.is_alive():
+                self.timer.cancel()
+            if delay > 0:
+                self.timer = Timer(delay, self._on_delay)
+                self.timer.start()
+                self.data['switch'] = TIMER
+                self.setDriver('ST', TIMER)
+            else:
+                self._on_delay()
+        except Exception as ex:
+            LOGGER.error(f"Error in DON_cmd:{ex}")
         store_values(self)
         LOGGER.debug("Exit")
         
@@ -174,12 +188,12 @@ class VirtualonDelay(Node):
         LOGGER.debug("Exit")
 
 
-    def dof_cmd(self, command=None):
+    def DOF_cmd(self, command=None):
         """
         If not in TIMER, Turn the driver off, report cmd DOF, store values in db for persistence.
         """
         LOGGER.info(f"{self.name}, {command}")
-        if self.timer.is_alive():
+        if self.timer and self.timer.is_alive():
             LOGGER.info("Switch, is mid TIMER, waiting for DON")
         else:
             self.data['switch'] = OFF
@@ -189,12 +203,12 @@ class VirtualonDelay(Node):
         LOGGER.debug("Exit")
 
         
-    def dfof_cmd(self, command=None):
+    def DFOF_cmd(self, command=None):
         """
         Force the driver off, report cmd DFOF, store values in db for persistence.
         """
         LOGGER.info(f"{self.name}, {command}")
-        if self.timer.is_alive():
+        if self.timer and self.timer.is_alive():
             self.timer.cancel()
         self.data['switch'] = OFF
         self.setDriver('ST', OFF)
@@ -249,9 +263,9 @@ class VirtualonDelay(Node):
     this tells it which method to call. DON calls setOn, etc.
     """
     commands = {
-        'DON': don_cmd,
-        'DOF': dof_cmd,
-        'DFOF': dfof_cmd,
+        'DON': DON_cmd,
+        'DOF': DOF_cmd,
+        'DFOF': DFOF_cmd,
         'SETDELAY': set_delay_cmd,
         'QUERY': query,
     }

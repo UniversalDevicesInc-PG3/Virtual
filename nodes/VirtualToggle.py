@@ -106,6 +106,10 @@ class VirtualToggle(Node):
         # default variables and drivers
         self.data = {field: spec.default for field, spec in FIELDS.items()}
 
+        # timer
+        self.timer = None
+        self._initialize_timer()        
+
         self.poly.subscribe(self.poly.START, self.start, address)
         self.poly.subscribe(self.poly.STOP, self.stop, address)
 
@@ -125,18 +129,25 @@ class VirtualToggle(Node):
         # retrieve configuration data
         get_config_data(self, FIELDS)
 
-        # timer
-        self.timer = Timer(0, self._on_delay)
-        
         LOGGER.info(f"data:{self.data}")
         
+
+    def _initialize_timer(self) -> None:
+        """Initialize timer with proper error handling."""
+        try:
+            self.timer = Timer(0, self._on_delay)
+        except Exception as ex:
+            LOGGER.error(f"Failed to initialize timer: {ex}")
+            self.timer = None
+
 
     def stop(self):
         """
         Stop node and clean-up TIMER status
         """
         LOGGER.info(f'stop: ondelay:{self.name}')
-        self.timer.cancel()
+        if self.timer:
+            self.timer.cancel()
         # for onDelay we want to end up on
         if self.data['switch'] == ONTIMER:
             self.data['switch'] = ON
@@ -146,17 +157,21 @@ class VirtualToggle(Node):
         LOGGER.info(f"stopping:{self.name}")
 
 
-    def don_cmd(self, command=None):
+    def DON_cmd(self, command=None):
         """
         Set the driver to ONTIMER, send DON, start the timer, store values in db for persistence.
         If delay is zero, change to 1.
         """
         LOGGER.info(f"{self.name}, {command}")
         ondelay = max(self.data.get('ondelay', 1), 1)
-        if self.timer.is_alive():
-            self.timer.cancel()
-        self.timer = Timer(ondelay, self._on_delay)
-        self.timer.start()
+        try:
+            if self.timer and self.timer.is_alive():
+                self.timer.cancel()
+            self.timer = Timer(ondelay, self._on_delay)
+            self.timer.start()
+        except Exception as ex:
+            LOGGER.error(f"Error in DON_cmd:{ex}")
+            return
         self.data['switch'] = ONTIMER
         self.setDriver('ST', ONTIMER)
         self.reportCmd("DON")
@@ -175,7 +190,7 @@ class VirtualToggle(Node):
         self.reportCmd("DOF")
         store_values(self)
         offdelay = max(self.data.get('offdelay', 1), 1)
-        if self.timer.is_alive():
+        if self.timer and self.timer.is_alive():
             self.timer.cancel()
         self.timer = Timer(offdelay, self._off_delay)
         self.timer.start()
@@ -193,19 +208,19 @@ class VirtualToggle(Node):
         self.reportCmd("DON")
         store_values(self)
         ondelay = max(self.data.get('ondelay', 1), 1)
-        if self.timer.is_alive():
+        if self.timer and self.timer.is_alive():
             self.timer.cancel()
         self.timer = Timer(ondelay, self._on_delay)
         self.timer.start()
         LOGGER.debug("Exit")
 
 
-    def dof_cmd(self, command=None):
+    def DOF_cmd(self, command=None):
         """
         If not in TIMER, Turn the driver off, report cmd DOF, store values in db for persistence.
         """
         LOGGER.info(f"{self.name}, {command}")
-        if self.timer.is_alive():
+        if self.timer and self.timer.is_alive():
             LOGGER.info("Switch, is mid TIMER, waiting for DON/DOF")
         else:
             self.data['switch'] = OFF
@@ -215,12 +230,12 @@ class VirtualToggle(Node):
         LOGGER.debug("Exit")
 
         
-    def dfon_cmd(self, command=None):
+    def DFON_cmd(self, command=None):
         """
         Force the driver on, report cmd DFON, store values in db for persistence.
         """
         LOGGER.info(f"{self.name}, {command}")
-        if self.timer.is_alive():
+        if self.timer and self.timer.is_alive():
             self.timer.cancel()
         self.data['switch'] = ON
         self.setDriver('ST', ON)
@@ -229,12 +244,12 @@ class VirtualToggle(Node):
         LOGGER.debug("Exit")
 
 
-    def dfof_cmd(self, command=None):
+    def DFOF_cmd(self, command=None):
         """
         Force the driver off, report cmd DFOF, store values in db for persistence.
         """
         LOGGER.info(f"{self.name}, {command}")
-        if self.timer.is_alive():
+        if self.timer and self.timer.is_alive():
             self.timer.cancel()
         self.data['switch'] = OFF
         self.setDriver('ST', OFF)
@@ -303,10 +318,10 @@ class VirtualToggle(Node):
     this tells it which method to call. DON calls setOn, etc.
     """
     commands = {
-        'DON': don_cmd,
-        'DOF': dof_cmd,
-        'DFON': dfon_cmd,
-        'DFOF': dfof_cmd,
+        'DON': DON_cmd,
+        'DOF': DOF_cmd,
+        'DFON': DFON_cmd,
+        'DFOF': DFOF_cmd,
         'SETONDUR': set_on_dur_cmd,
         'SETOFFDUR': set_off_dur_cmd,
         'QUERY': query,

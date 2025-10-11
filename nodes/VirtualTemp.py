@@ -123,7 +123,7 @@ class VirtualTemp(Node):
         # retrieve configuration data
         get_config_data(self, FIELDS)
 
-        self.reset_time()
+        self._reset_time()
 
         # start polling & exit
         self.poly.subscribe(self.poly.POLL, self.poll)
@@ -136,10 +136,10 @@ class VirtualTemp(Node):
         """
         if 'shortPoll' in flag and self.controller.ready_event:
             LOGGER.debug(f"shortPoll {self.name}")
-            self.update()
+            self._update()
             
 
-    def update(self):
+    def _update(self):
         """
         Called by shortPoll to update last update and action list.
         """
@@ -285,7 +285,7 @@ class VirtualTemp(Node):
         self.setDriver('GV1', self.data['prevVal'])            
         self.data['tempVal'] = value
         self.setDriver('ST', self.data['tempVal'])
-        self.check_high_low(self.data['tempVal'])
+        self._check_high_low(self.data['tempVal'])
         store_values(self)
 
 
@@ -306,7 +306,7 @@ class VirtualTemp(Node):
         return val
         
 
-    def check_high_low(self, value):
+    def _check_high_low(self, value):
         """
         Move high & low temp based on current temp.
         """
@@ -351,12 +351,12 @@ class VirtualTemp(Node):
         # Reset drivers
         for driver in ['GV1', 'GV3', 'GV4', 'GV5', 'ST']:
             self.setDriver(driver, 0)
-        self.reset_time()
+        self._reset_time()
         store_values(self)
         LOGGER.debug('Exit')
         
 
-    def reset_time(self):
+    def _reset_time(self):
         """
         Reset the last update time to now
         """

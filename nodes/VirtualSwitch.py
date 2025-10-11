@@ -111,7 +111,7 @@ class VirtualSwitch(Node):
         LOGGER.info(f"data:{self.data}")
         
 
-    def set_on_cmd(self, command=None):
+    def DON_cmd(self, command=None):
         """
         Turn the driver on, report cmd DON, store values in db for persistence.
         """
@@ -123,7 +123,7 @@ class VirtualSwitch(Node):
         LOGGER.debug("Exit")
 
         
-    def set_off_cmd(self, command=None):
+    def DOF_cmd(self, command=None):
         """
         Turn the driver off, report cmd DOF, store values in db for persistence.
         """
@@ -141,9 +141,9 @@ class VirtualSwitch(Node):
         """
         LOGGER.info(f"{self.name}, {command}")
         if self.data.get('switch'):
-            self.set_off_cmd()
+            self.DOF_cmd()
         else:
-            self.set_on_cmd()                
+            self.DON_cmd()                
         LOGGER.debug("Exit")
 
 
@@ -178,8 +178,8 @@ class VirtualSwitch(Node):
     this tells it which method to call. DON calls setOn, etc.
     """
     commands = {
-                    'DON': set_on_cmd,
-                    'DOF': set_off_cmd,
+                    'DON': DON_cmd,
+                    'DOF': DOF_cmd,
                     'TOGGLE': toggle_cmd,
                     'QUERY': query,
                 }
