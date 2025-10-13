@@ -48,6 +48,7 @@
 		  <sends>
 			<cmd id="DON" />
 			<cmd id="DOF" />
+			<cmd id="TIMER" />
 		  </sends>
 		  <accepts>
 			<cmd id="DON" />
@@ -70,6 +71,7 @@
 		  <sends>
 			<cmd id="DON" />
 			<cmd id="DOF" />
+			<cmd id="TIMER" />
 		  </sends>
 		  <accepts>
 			<cmd id="DON" />
@@ -92,6 +94,8 @@
 		  <sends>
 			<cmd id="DON" />
 			<cmd id="DOF" />
+			<cmd id="ONTIMER" />
+			<cmd id="OFFTIMER" />
 		  </sends>
 		  <accepts>
 			<cmd id="DON" />
