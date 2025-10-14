@@ -28,15 +28,15 @@ from utils.node_funcs import (FieldSpec, load_persistent_data, store_values,
 
 # Single source of truth for field names, driver codes, and defaults
 FIELDS: dict[str, FieldSpec] = {
-    "tempVal":         FieldSpec(driver="ST",  default=0.0, data_type="state"), # 'ST'  : current temperature        
-    "prevVal":         FieldSpec(driver="GV1", default=0.0, data_type="state"), # 'GV1' : previous temperature
+    "tempVal":         FieldSpec(driver="ST",  default=None, data_type="state"), # 'ST'  : current temperature        
+    "prevVal":         FieldSpec(driver="GV1", default=None, data_type="state"), # 'GV1' : previous temperature
     "lastUpdateTime":  FieldSpec(driver="GV2", default=0.0, data_type="state"), # 'GV2' : time since last update
     "highTemp":        FieldSpec(driver="GV3", default=None, data_type="state"), # 'GV3' : high temperature     
     "lowTemp":         FieldSpec(driver="GV4", default=None, data_type="state"), # 'GV4' : low temperature            
     "previousHigh":    FieldSpec(driver=None,  default=None, data_type="state"), # bucket for previous high
     "previousLow":     FieldSpec(driver=None,  default=None, data_type="state"), # bucket for previous low
-    "prevAvgTemp":     FieldSpec(driver=None,  default=0.0, data_type="state"), # bucket for previous avg
-    "currentAvgTemp":  FieldSpec(driver="GV5", default=0.0, data_type="state"), # 'GV5' : average of  high to low 
+    "prevAvgTemp":     FieldSpec(driver=None,  default=None, data_type="state"), # bucket for previous avg
+    "currentAvgTemp":  FieldSpec(driver="GV5", default=None, data_type="state"), # 'GV5' : average of  high to low 
     "action1":         FieldSpec(driver="GV6", default=0, data_type="state"), # 'GV6' : action1 push to or pull from variable   
     "action1type":     FieldSpec(driver="GV7", default=0, data_type="state"), # 'GV7' : variable type integer or state
     "action1id":       FieldSpec(driver="GV8", default=0, data_type="state"), # 'GV8' : variable id
@@ -344,8 +344,8 @@ class VirtualTemp(Node):
         LOGGER.info(f"{self.name}, {command}")
         self.data['lowTemp'] = None
         self.data['highTemp'] = None
-        self.data['prevAvgTemp'] = 0
-        self.data['currentAvgTemp'] = 0
+        self.data['prevAvgTemp'] = None
+        self.data['currentAvgTemp'] = None
         self.data['prevTemp'] = None
         self.data['tempVal'] = None
         # Reset drivers
