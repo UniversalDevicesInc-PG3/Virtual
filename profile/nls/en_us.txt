@@ -27,6 +27,7 @@ ST-vondelay-ST-NAME = Switch Status
 ST-vondelay-DUR-NAME = onDelay
 CMD-vondelay-DON-NAME = On
 CMD-vondelay-DOF-NAME = Off
+CMD-vondelay-TIMER-NAME = Timer
 CMD-vondelay-DFOF-NAME = FOff(cancel)
 CMD-vondelay-SETDELAY-NAME = Set onDelay
 
@@ -37,6 +38,7 @@ ST-voffdelay-ST-NAME = Switch Status
 ST-voffdelay-DUR-NAME = offDelay
 CMD-voffdelay-DON-NAME = On
 CMD-voffdelay-DOF-NAME = Off
+CMD-voffdelay-TIMER-NAME = Timer
 CMD-voffdelay-SETDELAY-NAME = Set offDelay
 
 # virtualtoggle
