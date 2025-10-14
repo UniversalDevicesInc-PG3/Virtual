@@ -350,7 +350,7 @@ class VirtualTemp(Node):
         self.data['tempVal'] = None
         # Reset drivers
         for driver in ['GV1', 'GV3', 'GV4', 'GV5', 'ST']:
-            self.setDriver(driver, None)
+            self.setDriver(driver, 0)
         self._reset_time()
         store_values(self)
         LOGGER.debug('Exit')
