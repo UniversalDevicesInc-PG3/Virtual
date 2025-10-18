@@ -166,6 +166,7 @@ class VirtualoffDelay(Node):
                 self.timer.start()
                 self.data['switch'] = TIMER
                 self.setDriver('ST', TIMER)
+                self.reportCmd("TIMER")
             else:
                 self.reportCmd("DON")
                 self.setDriver('ST', ON)
