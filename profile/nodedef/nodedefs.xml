@@ -76,6 +76,7 @@
 		  <accepts>
 			<cmd id="DON" />
 			<cmd id="DOF" />
+			<cmd id="TIMER" />
 			<cmd id="SETDELAY">
 			  <p id="" editor="delay" init="DUR" />
 			</cmd>
