@@ -168,7 +168,6 @@ class VirtualoffDelay(Node):
                 self.setDriver('ST', TIMER)
                 self.reportCmd("TIMER")
             else:
-                self.reportCmd("DON")
                 self.setDriver('ST', ON)
                 self.reportCmd("DON")
                 self._off_delay()
