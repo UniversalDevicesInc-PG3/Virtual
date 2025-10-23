@@ -20,8 +20,12 @@ import udi_interface
 
 LOGGER = udi_interface.LOGGER
 
-VERSION = '3.1.24'
+VERSION = '3.1.25'
 """
+3.1.25
+DONE add onOnly device
+DONE update generic project files
+
 3.1.24
 DONE configuration based optional overide initial default
 
