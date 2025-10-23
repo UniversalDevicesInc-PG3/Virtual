@@ -2,6 +2,7 @@
 """ Node classes used by the Python template Node Server. """
 
 from .VirtualSwitch   import VirtualSwitch
+from .VirtualonOnly   import VirtualonOnly
 from .VirtualTemp     import VirtualTemp
 from .VirtualTemp     import VirtualTempC
 from .VirtualGeneric  import VirtualGeneric

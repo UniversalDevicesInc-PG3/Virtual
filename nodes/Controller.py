@@ -25,6 +25,7 @@ from nodes import *
  # Map device types to their respective node classes
 DEVICE_TYPE_TO_NODE_CLASS = {
     'switch': VirtualSwitch,
+    'ononly': VirtualonOnly,
     'temperature': VirtualTemp,
     'temperaturec': VirtualTempC,
     'temperaturecr': VirtualTempC,
