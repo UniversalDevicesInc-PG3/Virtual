@@ -10,7 +10,9 @@ Required for variable write access
 ## Device Types & OPTIONAL config parameters with {range limits}
 
 - switch
-    - switch      {0=Off, 1=On
+    - switch      {0=Off, 1=On}
+- ononly
+	- switch      {0=Off, 1=On}
 - dimmer, generic
     - status      {0 - 100}
     - onlevel     {10 - 100}
@@ -70,13 +72,14 @@ duplicate Keys will create ghost nodes
 ````md
 Key (var ID)    Value (device type)
   78          switch
-  79          dimmer
-  80          generic
-  81          ondelay
-  82          offdelay
-  83          toggle
-  84          temperature
-  85          temperaturec
+  79          ononly
+  80          dimmer
+  81          generic
+  82          ondelay
+  83          offdelay
+  84          toggle
+  85          temperature
+  86          temperaturec
   100         temperaturecr
 ````
 
@@ -87,13 +90,14 @@ id is optional in the JSON string as well as the OPTIONAL configs like â€œdelayâ
 ```md
 Key (var ID)    Value (device type)
   78          {"id": "10", "type": "switch", "name": "switch 10"}
-  79          {"type": "dimmer", "name": "main dimmer"}
-  80          {"type": "generic", "name": "raw device"}
-  81          {"type": "ondelay", "name": "living lt onDelay", "delay": 600}
-  82          {"type": "offdelay", "name": "office lt offDelay", "delay": 60}
-  83          {"type": "toggle", "name": "LTtoggle", "ondelay": 60, "offdelay": 5}
-  84          {"type": "temperature", "name": "lake temperature"}
-  85          {"id": "85", "type": "temperaturec", "name": "garden temp"}
+  79          {"id": "12", "type": "ononly", "name": "switch 12"}
+  80          {"type": "dimmer", "name": "main dimmer"}
+  81          {"type": "generic", "name": "raw device"}
+  82          {"type": "ondelay", "name": "living lt onDelay", "delay": 600}
+  83          {"type": "offdelay", "name": "office lt offDelay", "delay": 60}
+  84          {"type": "toggle", "name": "LTtoggle", "ondelay": 60, "offdelay": 5}
+  85          {"type": "temperature", "name": "lake temperature"}
+  86          {"id": "85", "type": "temperaturec", "name": "garden temp"}
   100         {"type": "temperaturecr", "name": "raw temp"}
   200         {"type": "garage", "name": "garage door", "ratgdo": "True"}
 ```
@@ -135,6 +139,9 @@ devices:
 - id: 10
   type:  "switch"
   name: "TestSwitch"
+- id: 15
+  type:  "ononly"
+  name: "TestonOnly"
 - id: 20
   type:  "temperature"
   name: "TestTemp"

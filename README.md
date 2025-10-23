@@ -23,10 +23,15 @@ Devices store their status in a .db for retrieval on a restart.
 - consolidate data with the temp devices, & I am looking to add a garage device
 - delay devices can be used in place of timers
 
-## Switches
+## Switch
 
 You can add a virtual switch to a scene and that ON/OFF switch is polled to
 determine if the scene is ON or OFF. Programs can read / set as any device.
+
+## onOnly Switch
+
+Same as Switch but will only send DON command.  Useful in a scene to make DON/DOF
+device DON only.  Will recive and status both ON and OFF.
 
 ## Dimmer or Generic
 

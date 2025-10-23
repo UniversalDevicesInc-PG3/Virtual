@@ -2,6 +2,45 @@
 
 #### see udi-Virtual-pg3.py for current work
 
+3.1.25 \
+DONE add onOnly device \
+DONE update generic project files 
+ 
+3.1.24 \
+DONE configuration based optional overide initial default 
+ 
+3.1.23 \
+DONE add onDelay, offDelay, toggle switch, update documentation \
+DONE magic number scrub 
+ 
+3.1.22 \
+DONE generic/dimmer static/dynamic behaviour 
+ 
+3.1.21 \
+DONE generic/dimmer to model dimmer ST & OL \
+DONE name & address check using poly interface \
+DONE consistent use of poly versus polyglot \
+DONE fix nagging error check in main() \
+DONE controller discover refactor \
+DONE add notice for ISY authorized error (was only in logs) 
+ 
+3.1.20 \
+DONE fix controller ST "status" on at start, off at stop / delete, "control" still heartbeat \
+DONE garage send CMDs, motor, motion, obstruction ; get naming consistent \
+DONE standardize startup sequence \
+DONE rewrite checkParams, Discovery \
+DONE add NumberOfNodes \
+DONE switch/generic/dimmer/temp(R/C): nodes use polyglot persistence, delete old db files \
+DONE swtich cmd TOGGLE add \
+DONE consolidate temp, tempC, tempRC into one module \
+DONE temp variable writing now with shortPoll (only upon change, considers precision) \
+DONE refactor function naming \
+DONE refactor garage, fix persistence, sse client \
+DONE backfeed garage improvements to switch(done), generic(done), temperature() 
+
+3.1.15 \
+DONE generic, dimmer, change ST to OL, memory of level for DON, DFON/DFOF, command
+
 3.1.14 \
 DONE commands for switches, generic, dimmer, garage
 
