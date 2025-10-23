@@ -2,10 +2,10 @@
 # controller
 ND-controller-NAME = Virtual Device Controller
 ND-controller-ICON = Switch
-ST-GV0-NAME = NumberOfNodes
 CMD-ctl-QUERY"-NAME = Query
 CMD-ctl-DISCOVER-NAME = Discover
 ST-ctl-ST-NAME = NodeServer Online
+ST-ctl-GV0-NAME = NumberOfNodes
 
 # ctd
 CTD-0 = Disconnected
@@ -19,6 +19,13 @@ ST-vswitch-ST-NAME = Switch Status
 CMD-vswitch-DON-NAME = On
 CMD-vswitch-DOF-NAME = Off
 CMD-vswitch-TOGGLE-NAME = Toggle
+
+# virtualononly
+ND-virtualononly-NAME = Virtual OnOnly
+ND-virtualononly-ICON = Switch
+ST-vononly-ST-NAME = Switch Status
+CMD-vononly-DON-NAME = On
+CMD-vononly-DOF-NAME = Off
 
 # virtualondelay
 ND-virtualondelay-NAME = Virtual onDelay Switch

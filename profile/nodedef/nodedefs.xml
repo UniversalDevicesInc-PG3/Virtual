@@ -37,6 +37,22 @@
           </accepts>
         </cmds>
     </nodeDef>
+		<!-- virtualononlyid -->
+	<nodeDef id="virtualononly" nls="vononly">
+		<editors />
+		<sts>
+		  <st id="ST" editor="on_off" />
+		</sts>
+		<cmds>
+		  <sends>
+			<cmd id="DON" />
+		  </sends>
+		  <accepts>
+			<cmd id="DON" />
+			<cmd id="DOF" />
+		  </accepts>
+		</cmds>
+	</nodeDef>
 		<!-- virtualondelayid -->
 	<nodeDef id="virtualondelay" nls="vondelay">
 		<editors />

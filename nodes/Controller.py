@@ -57,7 +57,6 @@ class Controller(Node):
         # storage arrays & conditions
         self.n_queue = []
         self.queue_condition = Condition()
-        self.last = 0.0
 
         # Events & in
         self.ready_event = Event()
@@ -109,7 +108,6 @@ class Controller(Node):
         self.Notices.clear()
         self.Notices['hello'] = 'Start-up'
         self.setDriver('ST', 1, report = True, force = True)
-        self.last = 0.0
 
         # Send the profile files to the ISY if neccessary or version changed.
         self.poly.updateProfile()
@@ -444,7 +442,9 @@ class Controller(Node):
 
 
     def _cleanup_nodes(self, nodes_new, nodes_old):
-        # Get all class names from the mapping
+        """
+        Delete all nodes which are not in the new configuration.
+        """
         valid_class_names = {
             cls.__name__.lower() for cls in DEVICE_TYPE_TO_NODE_CLASS.values()
         }
