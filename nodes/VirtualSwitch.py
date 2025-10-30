@@ -11,11 +11,10 @@ pass
 # external libraries
 from udi_interface import Node, LOGGER
 
-# local imports
+# personal libraries
 from utils.node_funcs import FieldSpec, load_persistent_data, store_values, get_config_data
 
 # constants
-
 OFF = 0
 ON = 1
 
@@ -86,6 +85,7 @@ class VirtualSwitch(Node):
         self.controller = poly.getNode(self.primary)
         self.address = address
         self.name = name
+        self.lpfx = f'{address}:{name}'
 
         # default variables and drivers
         self.data = {field: spec.default for field, spec in FIELDS.items()}
@@ -97,7 +97,7 @@ class VirtualSwitch(Node):
         """
         Start node and retrieve persistent data
         """
-        LOGGER.info(f'start: switch:{self.name}')
+        LOGGER.info(f'start: switch:{self.lpfx}')
 
         # wait for controller start ready
         self.controller.ready_event.wait()
@@ -115,7 +115,7 @@ class VirtualSwitch(Node):
         """
         Turn the driver on, report cmd DON, store values in db for persistence.
         """
-        LOGGER.info(f"{self.name}, {command}")
+        LOGGER.info(f"{self.lpfx}, {command}")
         self.data['switch'] = ON
         self.setDriver('ST', ON)
         self.reportCmd("DON")
@@ -127,7 +127,7 @@ class VirtualSwitch(Node):
         """
         Turn the driver off, report cmd DOF, store values in db for persistence.
         """
-        LOGGER.info(f"{self.name}, {command}")
+        LOGGER.info(f"{self.lpfx}, {command}")
         self.data['switch'] = OFF
         self.setDriver('ST', OFF)
         self.reportCmd("DOF")
@@ -139,7 +139,7 @@ class VirtualSwitch(Node):
         """
         Toggle the driver, report cmd DON/DOF as appropriate, store values in db for persistence.
         """
-        LOGGER.info(f"{self.name}, {command}")
+        LOGGER.info(f"{self.lpfx}, {command}")
         if self.data.get('switch'):
             self.DOF_cmd()
         else:
@@ -173,6 +173,7 @@ class VirtualSwitch(Node):
         {'driver': 'ST', 'value': OFF, 'uom': 25, 'name': "Status"},
     ]
 
+    
     """
     This is a dictionary of commands. If ISY sends a command to the NodeServer,
     this tells it which method to call. DON calls setOn, etc.

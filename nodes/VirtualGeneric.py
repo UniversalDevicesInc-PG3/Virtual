@@ -11,21 +11,18 @@ pass
 #external libraries
 from udi_interface import Node, LOGGER
 
-# local imports
+# personal libraries
 from utils.node_funcs import FieldSpec, load_persistent_data, store_values, get_config_data
 
 # constants
-
 OFF = 0
-ON = 1
 FULL = 100
 INC = 2
+DIMLOWERLIMIT = 5 # Dimmer, keep onlevel to a minimum level
 
 STATIC = 0
 DYNAMIC = 1
 
-# Dimmer, keep onlevel to a minimum level
-DIMLOWERLIMIT = 5
 
 # @dataclass(frozen=True)
 # class FieldSpec:
@@ -73,9 +70,6 @@ class VirtualGeneric(Node):
         :param address: This nodes address
         :param name: This nodes name
         
-        class variables:
-        self.switchStatus internal storage of 0,1 ON/OFF
-
         subscribes:
         START: used to create/check/load DB file
         NOTE: POLL: not needed as no timed updates for this node
@@ -87,6 +81,7 @@ class VirtualGeneric(Node):
         self.controller = poly.getNode(self.primary)
         self.address = address
         self.name = name
+        self.lpfx = f'{address}:{name}'
         
         # default variables and drivers
         self.data = {field: spec.default for field, spec in FIELDS.items()}
@@ -111,9 +106,10 @@ class VirtualGeneric(Node):
 
         self.query()
         LOGGER.info(f"data:{self.data}")
+        
 
     def DON_cmd(self, command=None):
-        LOGGER.info(f"{self.name}, {command}")
+        LOGGER.info(f"{self.lpfx}, {command}")
         onlevel = self.data.get('onlevel', FULL)
         self.data['status'] = onlevel if onlevel > OFF else FULL
         self.setDriver('ST', self.data['status'])
@@ -124,7 +120,7 @@ class VirtualGeneric(Node):
 
 
     def DOF_cmd(self, command=None):
-        LOGGER.info(f"{self.name}, {command}")
+        LOGGER.info(f"{self.lpfx}, {command}")
         status = self.data.get('status', OFF)
         # set onlevel if onleveltype = dynamic
         if status not in (OFF, FULL) and self.data['onleveltype'] == DYNAMIC:
@@ -138,7 +134,7 @@ class VirtualGeneric(Node):
 
 
     def DFON_cmd(self, command=None):
-        LOGGER.info(f"{self.name}, {command}")
+        LOGGER.info(f"{self.lpfx}, {command}")
         self.data['status'] = FULL
         self.setDriver('ST', FULL)
         self.setDriver('OL', self.data.get('onlevel'))
@@ -148,7 +144,7 @@ class VirtualGeneric(Node):
 
 
     def DFOF_cmd(self, command=None):
-        LOGGER.info(f"{self.name}, {command}")
+        LOGGER.info(f"{self.lpfx}, {command}")
         status = self.data.get('status', OFF)
         # set onlevel if onleveltype = dynamic
         if status not in (OFF, FULL) and self.data['onleveltype'] == DYNAMIC:
@@ -162,7 +158,7 @@ class VirtualGeneric(Node):
 
 
     def BRT_cmd(self, command=None):
-        LOGGER.info(f"{self.name}, {command}")
+        LOGGER.info(f"{self.lpfx}, {command}")
         status = min(int(self.data.get('status', OFF)) + INC, FULL)
         if self.data['onleveltype'] == DYNAMIC:
             self.data['onlevel'] = status
@@ -175,7 +171,7 @@ class VirtualGeneric(Node):
 
 
     def DIM_cmd(self, command=None):
-        LOGGER.info(f"{self.name}, {command}")
+        LOGGER.info(f"{self.lpfx}, {command}")
         status = max(int(self.data.get('status', FULL)) - INC, OFF)
         if status == OFF:
             onlevel = DIMLOWERLIMIT if self.data['onleveltype'] == DYNAMIC else None
@@ -192,7 +188,7 @@ class VirtualGeneric(Node):
 
 
     def set_ST_cmd(self, command):
-        LOGGER.info(f"{self.name}, {command}")
+        LOGGER.info(f"{self.lpfx}, {command}")
         status = int(command.get('value'))
         if status == OFF:
             status = DIMLOWERLIMIT
@@ -205,7 +201,7 @@ class VirtualGeneric(Node):
 
 
     def set_OL_cmd(self, command):
-        LOGGER.info(f"{self.name}, {command}")
+        LOGGER.info(f"{self.lpfx}, {command}")
         level = int(command.get('value'))
         if level == OFF:
             self.data['onlevel'] = DIMLOWERLIMIT
@@ -220,7 +216,7 @@ class VirtualGeneric(Node):
         """
         Toggle the onlovel driver, report OLTT command, store values in db for persistence.
         """
-        LOGGER.info(f"{self.name}, {command}")
+        LOGGER.info(f"{self.lpfx}, {command}")
         # Toggle between 0[STATIC] and 1[DYNAMIC]
         self.data['onleveltype'] ^= 1
         onleveltype = self.data['onleveltype']
@@ -236,7 +232,7 @@ class VirtualGeneric(Node):
         the parent class, so you don't need to override this method unless
         there is a need.
         """
-        LOGGER.info(f"{self.name}, {command}")
+        LOGGER.info(f"{self.lpfx}, {command}")
         self.reportDrivers()
         LOGGER.debug("Exit")
         
