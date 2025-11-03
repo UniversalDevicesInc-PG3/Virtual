@@ -11,7 +11,7 @@ NodeServer lifecycle.
 # std libraries
 import json, logging
 from threading import Event, Condition
-from typing import Dict, Any, List
+from typing import Dict, Any, List, Tuple
 
 # external libraries
 from udi_interface import Node, LOGGER, Custom, LOG_HANDLER
@@ -285,35 +285,11 @@ class Controller(Node):
         has_error = False
 
         for key, val in self.Parameters.items():
-            if not key.isdigit():
-                # handle config file
-                if key.lower() == "devfile":
-                    if val:
-                        devices_from_file = self._handle_file_devices(val)
-                        if devices_from_file is not None:
-                            self.devlist.extend(devices_from_file)
-                        else:
-                            has_error = True
-                    else:
-                        LOGGER.error('checkParams: devFile missing filename')
-                        has_error = True
-                else:
-                    LOGGER.error(f"unknown keyfield: '{key}'")
-                    has_error = True
-                continue
-            
-            # handle simple single device using DEVICE_TYPE_TO_NODE_CLASS
-            if val in DEVICE_TYPE_TO_NODE_CLASS:
-                name = self.poly.getValidName(f"{val} {key}")
-                device = {'id': key, 'type': val, 'name': name}
-                self.devlist.append(device)
-            # handle json single device
-            elif val:
-                json_device = self._handle_json_device(key, val)
-                if json_device:
-                    self.devlist.append(json_device)
-                else:
-                    has_error = True
+            new_devices, error = self._process_param(key, val)
+            if new_devices:
+                self.devlist.extend(new_devices)
+            if error:
+                has_error = True
 
         if has_error:
             self.Notices['config'] = 'Bad configuration, please re-check.'
@@ -323,6 +299,54 @@ class Controller(Node):
         LOGGER.info('checkParams is complete')
         LOGGER.info(f'checkParams: self.devlist: {self.devlist}')
         return True
+
+
+    def _process_param(self, key: str, val: Any) -> Tuple[List[Dict[str, Any]], bool]:
+        """
+        Processes a single parameter from the custom parameters.
+
+        Args:
+            key (str): The parameter key.
+            val (Any): The parameter value.
+
+        Returns:
+            (List[Dict[str, Any]], bool): A tuple containing a list of processed devices and an error flag.
+        """
+        devices = []
+        has_error = False
+
+        # Handle special non-digit keys, like 'devfile' for external configuration.
+        if not key.isdigit():
+            if key.lower() == "devfile":
+                if val:
+                    devices_from_file = self._handle_file_devices(val)
+                    if devices_from_file is not None:
+                        devices.extend(devices_from_file)
+                    else:
+                        has_error = True
+                else:
+                    LOGGER.error('checkParams: devFile parameter is missing a filename.')
+                    has_error = True
+            else:
+                LOGGER.error(f"Unknown configuration key: '{key}'. Non-digit keys are reserved.")
+                has_error = True
+            return devices, has_error
+
+        # Handle simple device definitions (e.g., "1": "switch").
+        if val in DEVICE_TYPE_TO_NODE_CLASS:
+            name = self.poly.getValidName(f"{val} {key}")
+            device = {'id': key, 'type': val, 'name': name}
+            devices.append(device)
+        # Handle complex device definitions in JSON format.
+        elif val:
+            json_device = self._handle_json_device(key, val)
+            if json_device:
+                devices.append(json_device)
+            else:
+                has_error = True
+        
+        return devices, has_error
+
     
         
     def _handle_file_devices(self, filename: str) -> List[Dict[str, Any]] | None:
