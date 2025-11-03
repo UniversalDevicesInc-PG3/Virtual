@@ -25,6 +25,7 @@ VERSION = '3.1.25'
 3.1.25
 DONE add onOnly device
 DONE update generic project files
+DONE Controller comments, refactor checkParams
 
 3.1.24
 DONE configuration based optional overide initial default
