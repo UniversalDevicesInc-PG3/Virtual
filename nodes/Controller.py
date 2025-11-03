@@ -1,9 +1,11 @@
 """
-udi-Virtual-pg3 NodeServer/Plugin for EISY/Polisy
+This module defines the Controller class for the udi-Virtual-pg3 NodeServer/Plugin.
+
+The Controller is the primary interface between the Polyglot platform and the
+virtual devices. It manages device discovery, configuration, and overall
+NodeServer lifecycle.
 
 (C) 2025 Stephen Jenkins
-
-Controller class
 """
 
 # std libraries
@@ -22,7 +24,8 @@ pass
 # Nodes
 from nodes import *
 
- # Map device types to their respective node classes
+# Mapping of device types to their respective node classes.
+# This dictionary is used during discovery to instantiate the correct node type.
 DEVICE_TYPE_TO_NODE_CLASS = {
     'switch': VirtualSwitch,
     'ononly': VirtualonOnly,
@@ -39,16 +42,25 @@ DEVICE_TYPE_TO_NODE_CLASS = {
 
 
 class Controller(Node):
-    id = 'controller'
+    """
+    The Controller class represents the main control node for the virtual devices.
+    It handles the overall lifecycle of the NodeServer, including:
+    - Initializing the Polyglot interface.
+    - Managing custom parameters and data.
+    - Discovering and cleaning up virtual device nodes.
+    - Handling system-wide events like log level changes and heartbeats.
+    """
+    id = 'controller' # Unique identifier for the controller node.
 
     def __init__(self, poly, primary, address, name):
         """
-        super
-        self definitions
-        data storage classes
-        subscribes
-        ready
-        we exist!
+        Initializes the Controller node.
+
+        Args:
+            poly (udi_interface.Polyglot): The Polyglot interface object.
+            primary (str): The address of the primary node (this controller).
+            address (str): The address of this controller node.
+            name (str): The name of this controller node.
         """
         super().__init__(poly, primary, address, name)
         # importand flags, timers, vars
@@ -103,7 +115,9 @@ class Controller(Node):
 
     def start(self):
         """
-        Called by handler during startup.
+        Called by the Polyglot handler during NodeServer startup.
+        This method performs initial setup, updates the profile, sets custom parameter documentation,
+        starts the heartbeat, waits for all configuration handlers to complete, and initiates device discovery.
         """
         LOGGER.info(f"Virtual Devices PG3 NodeServer {self.poly.serverdata['version']}")
         self.Notices.clear()
@@ -156,12 +170,14 @@ class Controller(Node):
 
 
     def node_queue(self, data):
-        '''
-        node_queue() and wait_for_node_event() create a simple way to wait
-        for a node to be created.  The nodeAdd() API call is asynchronous and
-        will return before the node is fully created. Using this, we can wait
-        until it is fully created before we try to use it.
-        '''
+        """
+        Queues a newly added node's address to signal its creation.
+        This method is part of a mechanism to asynchronously wait for a node to be fully created
+        after an `addNode()` API call, which returns before the node is ready.
+
+        Args:
+            data (dict): A dictionary containing node data, expected to have an 'address' key.
+        """
         address = data.get('address')
         if address:
             with self.queue_condition:
@@ -170,13 +186,24 @@ class Controller(Node):
                 
 
     def wait_for_node_done(self):
+        """
+        Waits for a node to be added to the queue, indicating it has been created.
+        This method works in conjunction with `node_queue` to ensure that operations
+        on a node do not proceed until the node is fully initialized.
+        """
         with self.queue_condition:
             while not self.n_queue:
                 self.queue_condition.wait(timeout = 0.2)
             self.n_queue.pop()
-            
 
-    def dataHandler(self,data):
+
+    def dataHandler(self, data):
+        """
+        Handles the CUSTOMDATA event, loading custom data into the controller.
+
+        Args:
+            data (dict): The custom data received from Polyglot.
+        """
         LOGGER.debug(f'enter: Loading data {data}')
         if data is None:
             LOGGER.warning("No custom data")
@@ -188,8 +215,11 @@ class Controller(Node):
 
     def parameterHandler(self, params):
         """
-        Called via the CUSTOMPARAMS event. When the user enters or
-        updates Custom Parameters via the dashboard.
+        Handles the CUSTOMPARAMS event, loading custom parameters into the controller.
+        This is triggered when a user enters or updates custom parameters via the dashboard.
+
+        Args:
+            params (dict): The custom parameters received from Polyglot.
         """
         LOGGER.info('parmHandler: Loading parameters now')
         self.Parameters.load(params)
@@ -200,8 +230,11 @@ class Controller(Node):
 
     def typedParameterHandler(self, params):
         """
-        Called via the CUSTOMTYPEDPARAMS event. This event is sent When
-        the Custom Typed Parameters are created.
+        Handles the CUSTOMTYPEDPARAMS event, loading custom typed parameters into the controller.
+        This event is sent when custom typed parameters are created or updated.
+
+        Args:
+            params (dict): The custom typed parameters received from Polyglot.
         """
         LOGGER.debug('Loading typed parameters now')
         self.TypedParameters.load(params)
@@ -212,9 +245,11 @@ class Controller(Node):
 
     def typedDataHandler(self, data):
         """
-        Called via the CUSTOMTYPEDDATA event. This event is sent when
-        the user enters or updates Custom Typed Parameters via the dashboard.
-        'params' will be the full list of parameters entered by the user.
+        Handles the CUSTOMTYPEDDATA event, loading custom typed data into the controller.
+        This event is sent when a user enters or updates custom typed data via the dashboard.
+
+        Args:
+            data (dict): The custom typed data received from Polyglot.
         """
         LOGGER.debug('Loading typed data now')
         if data is None:
@@ -228,7 +263,8 @@ class Controller(Node):
 
     def check_handlers(self):
         """
-        Once all start-up parameters are done then set event.
+        Checks if all startup handlers (parameters and data) have completed their processing.
+        If all handlers are done, it sets the `all_handlers_st_event` to signal completion.
         """
         if (self.handler_params_st and self.handler_data_st and
             self.handler_typedparams_st and self.handler_typeddata_st):
@@ -237,7 +273,12 @@ class Controller(Node):
 
     def checkParams(self) -> bool:
         """
-        Checks and processes device parameters from `self.Parameters`.
+        Validates and processes device configurations from `self.Parameters`.
+        It handles both direct device definitions and references to external configuration files (YAML).
+        Populates `self.devlist` with parsed device information.
+
+        Returns:
+            bool: True if all parameters are processed without critical errors, False otherwise.
         """
         self.Notices.delete('config')
         self.devlist = []
@@ -285,7 +326,15 @@ class Controller(Node):
     
         
     def _handle_file_devices(self, filename: str) -> List[Dict[str, Any]] | None:
-        """Loads and returns devices from a YAML file."""
+        """
+        Loads device configurations from a specified YAML file.
+
+        Args:
+            filename (str): The path to the YAML file containing device definitions.
+
+        Returns:
+            List[Dict[str, Any]] | None: A list of device dictionaries if successful, None otherwise.
+        """
         try:
             with open(filename, 'r') as f:
                 dev_yaml = yaml.safe_load(f)
@@ -305,7 +354,17 @@ class Controller(Node):
 
 
     def _handle_json_device(self, key: str, val: str) -> Dict[str, Any] | None:
-        """Parses a JSON device configuration, handling ID logic."""
+        """
+        Parses a JSON string representing a single device configuration.
+        It ensures the device has an 'id' and handles potential mismatches.
+
+        Args:
+            key (str): The key associated with the JSON string, used as a fallback for 'id'.
+            val (str): The JSON string containing the device configuration.
+
+        Returns:
+            Dict[str, Any] | None: A dictionary representing the device if successful, None otherwise.
+        """
         try:
             device = json.loads(val)
             if not isinstance(device, dict):
@@ -326,7 +385,10 @@ class Controller(Node):
 
     def handleLevelChange(self, level):
         """
-        Called via the LOGLEVEL event, to handle log level change.
+        Handles the LOGLEVEL event, adjusting the NodeServer's logging level.
+
+        Args:
+            level (dict): A dictionary containing the new log level.
         """
         LOGGER.info(f'enter: level={level}')
         if level['level'] < 10:
@@ -340,7 +402,11 @@ class Controller(Node):
         
     def poll(self, flag):
         """
-        Short & Long polling, only heartbeat in Controller
+        Handles short and long poll events from Polyglot.
+        Currently, it primarily triggers the heartbeat on long poll events.
+
+        Args:
+            flag (str): Indicates the type of poll event (e.g., 'longPoll').
         """
         # no updates until node is through start-up
         if not self.ready_event:
@@ -354,7 +420,10 @@ class Controller(Node):
             
     def query(self, command = None):
         """
-        Query all nodes from the gateway.
+        Queries all nodes managed by this controller and reports their current driver states.
+
+        Args:
+            command (str, optional): The command that triggered the query. Defaults to None.
         """
         LOGGER.info(f"Enter {command}")
         nodes = self.poly.getNodes()
@@ -365,9 +434,15 @@ class Controller(Node):
 
     def discover_cmd(self, command = None):
         """
-        Call node discovery here. Called from controller start method
-        and from DISCOVER command received from ISY.
-        Calls checkParams, so can be used after update of devFile or config
+        Initiates the device discovery process.
+        This method is called during controller startup and can also be triggered by a DISCOVER command from ISY.
+        It re-evaluates parameters and performs the actual node discovery and cleanup.
+
+        Args:
+            command (str, optional): The command that triggered discovery. Defaults to None.
+
+        Returns:
+            bool: True if discovery was successful, False otherwise.
         """
         LOGGER.info(command)
         success = False
@@ -387,9 +462,12 @@ class Controller(Node):
         return success
 
     
-    def _discover(self):
+    def _discover(self) -> bool:
         """
-        Discover all nodes from the gateway.
+        Performs the core discovery logic, adding new nodes and cleaning up old ones.
+
+        Returns:
+            bool: True if the discovery process completes without exceptions, False otherwise.
         """
         success = False
         nodes_existing = self.poly.getNodes()
@@ -409,9 +487,13 @@ class Controller(Node):
         return success
 
 
-    def _discover_nodes(self, nodes_existing, nodes_new):
+    def _discover_nodes(self, nodes_existing: Dict[str, Any], nodes_new: List[str]):
         """
-        Adds and updates nodes based on the device list.
+        Iterates through the `devlist` and adds new nodes or ensures existing nodes are present.
+
+        Args:
+            nodes_existing (Dict[str, Any]): A dictionary of currently existing nodes.
+            nodes_new (List[str]): A list to populate with the IDs of newly discovered or existing nodes.
         """
         for dev in self.devlist:
             if "id" not in dev or "type" not in dev:
@@ -435,16 +517,28 @@ class Controller(Node):
 
     def _get_node_name(self, dev: Dict[str, Any]) -> str:
         """
-        Helper to get the node name from a device definition.
+        Retrieves a valid node name from a device definition, prioritizing a 'name' field
+        or constructing one from 'type' and 'id'.
+
+        Args:
+            dev (Dict[str, Any]): The device dictionary.
+
+        Returns:
+            str: A valid name for the node.
         """
         if 'name' in dev:
             return self.poly.getValidName(dev.get('name'))
         return self.poly.getValidVame(f"{dev.get('type')} {dev.get('id')}")
 
 
-    def _cleanup_nodes(self, nodes_new, nodes_old):
+    def _cleanup_nodes(self, nodes_new: List[str], nodes_old: List[str]):
         """
-        Delete all nodes which are not in the new configuration.
+        Deletes nodes that are no longer present in the new configuration.
+        It compares the newly discovered nodes with previously existing nodes and removes stale ones.
+
+        Args:
+            nodes_new (List[str]): A list of addresses for currently active nodes.
+            nodes_old (List[str]): A list of addresses for previously active nodes.
         """
         valid_class_names = {
             cls.__name__.lower() for cls in DEVICE_TYPE_TO_NODE_CLASS.values()
@@ -490,9 +584,11 @@ class Controller(Node):
 
     def delete(self, command = None):
         """
-        This is called by Polyglot upon deletion of the NodeServer. If the
-        process is co-resident and controlled by Polyglot, it will be
-        terminiated within 5 seconds of receiving this message.
+        Called by Polyglot when the NodeServer is deleted.
+        This method performs cleanup tasks before the NodeServer process is terminated.
+
+        Args:
+            command (str, optional): The command that triggered the deletion. Defaults to None.
         """
         LOGGER.info(command)
         self.setDriver('ST', 0, report = True, force = True)
@@ -501,9 +597,11 @@ class Controller(Node):
         
     def stop(self, command = None):
         """
-        This is called by Polyglot when the node server is stopped.  You have
-        the opportunity here to cleanly disconnect from your device or do
-        other shutdown type tasks.
+        Called by Polyglot when the NodeServer is stopped.
+        This method allows for clean disconnection from devices and other shutdown tasks.
+
+        Args:
+            command (str, optional): The command that triggered the stop. Defaults to None.
         """
         LOGGER.info(command)
         self.setDriver('ST', 0, report = True, force = True)
@@ -513,8 +611,8 @@ class Controller(Node):
 
     def heartbeat(self):
         """
-        Heartbeat function uses the long poll interval to alternately send a ON and OFF
-        command back to the ISY.  Programs on the ISY can then monitor this.
+        Sends alternating ON/OFF commands to the ISY to indicate the NodeServer is active.
+        This function is typically called during long poll intervals.
         """
         LOGGER.debug(f'heartbeat: hb={self.hb}')
         command = "DOF" if self.hb else "DON"
@@ -523,15 +621,15 @@ class Controller(Node):
         LOGGER.debug("Exit")
         
 
-    # Status that this node has. Should match the 'sts' section
-    # of the nodedef file.
+    # Node status drivers. These define the state variables reported by the controller.
+    # They should match the 'sts' section of the nodedef file.
     drivers = [
         {'driver': 'ST', 'value': 1, 'uom': 25, 'name': "Controller Status"},
         {'driver': 'GV0', 'value': 0, 'uom': 107, 'name': "NumberOfNodes"},
     ]
     
-    # Commands that this node can handle.  Should match the
-    # 'accepts' section of the nodedef file.
+    # Node commands. These define the actions that can be performed on the controller.
+    # They should match the 'accepts' section of the nodedef file.
     commands = {
         'QUERY': query,
         'DISCOVER': discover_cmd,
