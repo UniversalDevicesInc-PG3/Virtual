@@ -375,10 +375,11 @@ class VirtualTemp(Node):
         LOGGER.debug('Exit')
 
 
+    hint = '0x010b0100'
+    # home, controller, scene controller
     # Hints See: https://github.com/UniversalDevicesInc/hints
-    #hint = [1,2,3,4]
-    
-    
+
+
     """
     This is an array of dictionary items containing the variable names(drivers)
     values and uoms(units of measure) from ISY. This is how ISY knows what kind
