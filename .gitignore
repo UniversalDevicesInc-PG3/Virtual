@@ -11,3 +11,4 @@ __pycache__/
 *.~4~
 /._POLYGLOT_CONFIG.html
 *.~5~
+/.coverage
