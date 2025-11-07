@@ -18,15 +18,19 @@ import sys
 # external libraries
 import udi_interface
 
+# nodes
+from nodes import Controller
+
 LOGGER = udi_interface.LOGGER
 
-VERSION = '3.1.25'
+VERSION = "3.1.25"
 """
 3.1.25
 DONE add onOnly device
 DONE update generic project files
 DONE Controller comments, refactor checkParams
 DONE change hints for temperature devices
+DONE testing added
 
 3.1.24
 DONE configuration based optional overide initial default
@@ -66,8 +70,6 @@ see versionHistory.md
 
 """
 
-from nodes import Controller
-
 if __name__ == "__main__":
     polyglot = None
     try:
@@ -93,7 +95,9 @@ if __name__ == "__main__":
         * use 'controller' for both parent and address and PG3 will be able
           to automatically update node server status
         """
-        control = Controller(polyglot, 'controller', 'controller', 'Virtual Device Controller')
+        control = Controller(
+            polyglot, "controller", "controller", "Virtual Device Controller"
+        )
 
         """
         Sits around and does nothing forever, keeping your program running.
@@ -110,5 +114,5 @@ if __name__ == "__main__":
         if polyglot is not None:
             polyglot.stop()
     except Exception as err:
-        LOGGER.error(f'Excption: {err}', exc_info=True)
+        LOGGER.error(f"Excption: {err}", exc_info=True)
     sys.exit(0)
