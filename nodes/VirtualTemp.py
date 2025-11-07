@@ -1,9 +1,10 @@
 """
-udi-Virtual-pg3 NodeServer/Plugin for EISY/Polisy
+This module defines the VirtualTemp and VirtualTempC classes for the udi-Virtual-pg3 NodeServer.
+
+These nodes represent virtual temperature sensors, supporting direct value setting,
+variable integration, and temperature unit conversions.
 
 (C) 2025 Stephen Jenkins
-
-VirtualTemp class
 """
 
 # std libraries
@@ -94,20 +95,12 @@ FIELDS: dict[str, FieldSpec] = {
 class VirtualTemp(Node):
     id = "virtualtemp"
 
-    """ This class represents a simple virtual temperature sensor.
-    This device can be populated directly or from variables.
-    Conversion to/from raw or F/C is supported.  Finally, the data can
-    be sent to a variable or used directly.  Programs can use the data
-    as well.
+    """Represents a virtual temperature sensor with advanced features.
 
-    'setTemp'           : set temperature to specific number
-    'setAction[1,2]'    : set Action 1,2 None, push, pull
-    'setAction[1,2]id'  : set Action 1,2 id
-    'setAction[1,2]type': set Action 1,2 type
-    'setCtoF'           : set Celsius to Fahrenheit
-    'setFtoC'           : set Fahrenheit to Celsius
-    'setRawToPrec'      : set Raw To Precision
-    'resetStats'        : reset Statistics
+    This node can be populated directly or from ISY variables. It supports
+    conversion between raw values and precision, and Fahrenheit/Celsius.
+    It also tracks high, low, and average temperatures, and allows for
+    actions (push/pull) based on temperature changes.
     """
 
     def __init__(
@@ -119,27 +112,14 @@ class VirtualTemp(Node):
         *,
         default_ovr: Optional[Dict[str, Any]] = None,
     ):
-        """Sent by the Controller class node.
-        :param polyglot: Reference to the Interface class
-        :param primary: Parent address
-        :param address: This nodes address
-        :param name: This nodes name
+        """Initializes the VirtualTemp node.
 
-        data[''] class variables:
-        prevVal, tempVal storage of last, current temperature value
-        lastUpdateTime timestamp
-        highTemp, lowTemp range of high temp, set to None on init
-        previousHigh, previousLow storage of previous range
-        prevAvgTemp, currentAvgTemp storage of averages
-        action1, action2 none, push, pull
-        action1id, action1id id of variable,  0=None, 1 - 400
-        action1type, action2type  State var or init, Int var or init, 1 - 4
-        RtoPrec Raw to precision conversion
-        CtoF Celsius to Fahrenheit conversion
-
-        subscribes:
-        START: used to create/check/load DB file
-        POLL: shortPoll for updates
+        Args:
+            poly (udi_interface.Polyglot): The Polyglot interface object.
+            primary (str): The address of the primary node (the Controller).
+            address (str): The address of this node.
+            name (str): The name of this node.
+            default_ovr (Optional[Dict[str, Any]]): Optional override for default values.
         """
         super().__init__(poly, primary, address, name)
 
@@ -155,9 +135,7 @@ class VirtualTemp(Node):
         self.poly.subscribe(self.poly.START, self.start, address)
 
     def start(self):
-        """
-        Start node and retrieve persistent data
-        """
+        """Performs startup tasks, loads persistent data, and retrieves configuration."""
         LOGGER.info(f"start: switch:{self.name}")
 
         # wait for controller start ready
@@ -178,18 +156,14 @@ class VirtualTemp(Node):
         self.poly.subscribe(self.poly.POLL, self.poll)
         LOGGER.info(f"{self.name} exit start")
 
-    def poll(self, flag):
-        """
-        POLL event subscription above
-        """
+    def poll(self, flag: str):
+        """Handles incoming short poll events from the Polyglot interface."""
         if "shortPoll" in flag and self.controller.ready_event:
             LOGGER.debug(f"shortPoll {self.name}")
             self._update()
 
     def _update(self):
-        """
-        Called by shortPoll to update last update and action list.
-        """
+        """Updates the time-since-last-update driver and processes actions."""
         _sinceLastUpdate = round(((time.time() - self.data["lastUpdateTime"]) / 60), 1)
         if _sinceLastUpdate < 1440:
             self.setDriver("GV2", _sinceLastUpdate)
@@ -222,92 +196,74 @@ class VirtualTemp(Node):
             if var:
                 self.set_temp_cmd({"cmd": "data", "value": var})
 
-    def set_action1_cmd(self, command):
-        """
-        Based on program or admin console set action1
-        """
+    def set_action1_cmd(self, command: Dict[str, Any]):
+        """Sets the behavior for action 1 (None, Push, or Pull)."""
         LOGGER.info(f"{self.name}, {command}")
-        self.data["action1"] = int(command.get("value"), 0)
+        self.data["action1"] = int(command.get("value", 0))
         self.setDriver("GV6", self.data["action1"])
         store_values(self)
         LOGGER.debug("Exit")
 
-    def set_action1_id_cmd(self, command):
-        """
-        Based on program or admin console set action1 id
-        """
+    def set_action1_id_cmd(self, command: Dict[str, Any]):
+        """Sets the ISY variable ID for action 1."""
         LOGGER.info(f"{self.name}, {command}")
-        self.data["action1id"] = int(command.get("value"), 0)
+        self.data["action1id"] = int(command.get("value", 0))
         self.setDriver("GV8", self.data["action1id"])
         store_values(self)
         LOGGER.debug("Exit")
 
-    def set_action1_type_cmd(self, command):
-        """
-        Based on program or admin console set action1 type
-        """
+    def set_action1_type_cmd(self, command: Dict[str, Any]):
+        """Sets the ISY variable type (Integer or State) for action 1."""
         LOGGER.info(f"{self.name}, {command}")
-        self.data["action1type"] = int(command.get("value"), 0)
+        self.data["action1type"] = int(command.get("value", 0))
         self.setDriver("GV7", self.data["action1type"])
         store_values(self)
         LOGGER.debug("Exit")
 
-    def set_action2_cmd(self, command):
-        """
-        Based on program or admin console set action2
-        """
+    def set_action2_cmd(self, command: Dict[str, Any]):
+        """Sets the behavior for action 2 (None, Push, or Pull)."""
         LOGGER.info(f"{self.name}, {command}")
         self.data["action2"] = int(command.get("value", 0))
         self.setDriver("GV9", self.data["action2"])
         store_values(self)
         LOGGER.debug("Exit")
 
-    def set_action2_id_cmd(self, command):
-        """
-        Based on program or admin console set action2 id
-        """
+    def set_action2_id_cmd(self, command: Dict[str, Any]):
+        """Sets the ISY variable ID for action 2."""
         LOGGER.info(f"{self.name}, {command}")
         self.data["action2id"] = int(command.get("value", 0))
         self.setDriver("GV11", self.data["action2id"])
         store_values(self)
         LOGGER.debug("Exit")
 
-    def set_action2_type_cmd(self, command):
-        """
-        Based on program or admin console set action2 type
-        """
+    def set_action2_type_cmd(self, command: Dict[str, Any]):
+        """Sets the ISY variable type (Integer or State) for action 2."""
         LOGGER.info(f"{self.name}, {command}")
-        self.data["action2type"] = int(command.get("value"), 0)
+        self.data["action2type"] = int(command.get("value", 0))
         self.setDriver("GV10", self.data["action2type"])
         store_values(self)
         LOGGER.debug("Exit")
 
-    def set_c_to_f_cmd(self, command):
-        """
-        Based on program or admin console set c_to_f flag
-        """
+    def set_c_to_f_cmd(self, command: Dict[str, Any]):
+        """Enables or disables Celsius to Fahrenheit conversion."""
         LOGGER.info(f"{self.name}, {command}")
-        self.data["CtoF"] = int(command.get("value"), 0)
+        self.data["CtoF"] = int(command.get("value", 0))
         self.setDriver("GV13", self.data["CtoF"])
         self.reset_stats_cmd()
         store_values(self)
         LOGGER.debug("Exit")
 
-    def set_f_to_c_cmd(self, command):
-        """
-        Based on program or admin console set f_to_c flag
-        """
+    def set_f_to_c_cmd(self, command: Dict[str, Any]):
+        """Enables or disables Fahrenheit to Celsius conversion."""
         LOGGER.info(f"{self.name}, {command}")
-        self.data["FtoC"] = int(command.get("value"), 0)
+        self.data["FtoC"] = int(command.get("value", 0))
         self.setDriver("GV13", self.data["FtoC"])
         self.reset_stats_cmd()
         store_values(self)
         LOGGER.debug("Exit")
 
-    def set_raw_to_prec_cmd(self, command):
-        """
-        Based on program or admin console set raw_to_prec flac
-        """
+    def set_raw_to_prec_cmd(self, command: Dict[str, Any]):
+        """Enables or disables raw to precision (divide by 10) conversion."""
         LOGGER.info(f"{self.name}, {command}")
         self.data["RtoPrec"] = int(command.get("value", 0))
         self.setDriver("GV12", self.data["RtoPrec"])
@@ -315,12 +271,10 @@ class VirtualTemp(Node):
         store_values(self)
         LOGGER.debug("Exit")
 
-    def set_temp_cmd(self, command):
-        """
-        Set temperature based on actions set-up.
-        """
+    def set_temp_cmd(self, command: Dict[str, Any]):
+        """Sets the temperature, applying any configured transformations."""
         LOGGER.debug(f"{self.name}, {command}")
-        value = float(command.get("value"))
+        value = float(command.get("value", 0.0))
 
         if command.get("cmd") == "data":
             newValue = self._transform_value(
@@ -350,11 +304,7 @@ class VirtualTemp(Node):
         c_to_f: int | bool,
         f_to_c: int | bool,
     ) -> float | int:
-        """
-        Transform raw value according to flags.
-        r_to_prec: if truthy, treat raw as tenths (divide by 10).
-        c_to_f: if truthy, convert Celsius to Fahrenheit and round to 1 decimal.
-        """
+        """Transforms a raw value based on the node's conversion settings."""
         val: float | int = raw
         if r_to_prec:
             val = raw / 10  # becomes float
@@ -364,10 +314,8 @@ class VirtualTemp(Node):
             val = round((val - 32) / 1.8, 1)  # keep one decimal when converting to C
         return val
 
-    def _check_high_low(self, value):
-        """
-        Move high & low temp based on current temp.
-        """
+    def _check_high_low(self, value: float):
+        """Updates the high, low, and average temperature drivers."""
         LOGGER.info(
             f"{value}, low:{self.data['lowTemp']}, high:{self.data['highTemp']}"
         )
@@ -398,10 +346,8 @@ class VirtualTemp(Node):
             self.setDriver("GV5", self.data["currentAvgTemp"])
         LOGGER.debug("Exit")
 
-    def reset_stats_cmd(self, command=None):
-        """
-        Command to reset stats for the device.
-        """
+    def reset_stats_cmd(self, command: Optional[Dict[str, Any]] = None):
+        """Resets the high, low, and average temperature statistics."""
         LOGGER.info(f"{self.name}, {command}")
         self.data["lowTemp"] = None
         self.data["highTemp"] = None
@@ -417,18 +363,12 @@ class VirtualTemp(Node):
         LOGGER.debug("Exit")
 
     def _reset_time(self):
-        """
-        Reset the last update time to now
-        """
+        """Resets the last update time to the current time."""
         self.data["lastUpdateTime"] = time.time()
         self.setDriver("GV2", 0.0)
 
-    def query(self, command=None):
-        """
-        Called by ISY to report all drivers for this node. This is done in
-        the parent class, so you don't need to override this method unless
-        there is a need.
-        """
+    def query(self, command: Optional[Dict[str, Any]] = None):
+        """Reports the current state of all drivers to the ISY."""
         LOGGER.info(f"{self.name}, {command}")
         self.reportDrivers()
         LOGGER.debug("Exit")
@@ -503,10 +443,27 @@ class VirtualTempC(VirtualTemp):
     id = "virtualtempc"
 
     """
-    This is an array of dictionary items containing the variable names(drivers)
-    values and uoms(units of measure) from ISY. This is how ISY knows what kind
-    of variable to display. Check the UOM's in the WSDK for a complete list.
-    UOM 2 is boolean so the ISY will display 'True/False'
+    UOMs:
+    4: celsius (C)
+    25: index
+    45: duration in minutes
+    56: The raw value as reported by the device
+
+    Driver controls:
+    ST: Status (current)
+    GV1: Custom Control 1 (previous)
+    GV2: Custom Control 2 (update time)
+    GV3: Custom Control 3 (high)
+    GV4: Custom Control 4 (low)
+    GV5: Custom Control 5 (avg high - low)
+    GV6: Custom Control 6 (action1 type)
+    GV7: Custom Control 7 (variable type)
+    GV8: Custom Control 8 (variable id)
+    GV9: Custom Control 9 (action 2)
+    GV10: Custom Control 10 (variable type)
+    GV11: Custom Control 11 (variable id)
+    GV12: Custom Control 12 (r to p)
+    GV13: Custom Control 13 (f to c)
     """
     drivers = [
         {"driver": "ST", "value": 0, "uom": 4},  # current

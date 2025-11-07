@@ -1,9 +1,9 @@
 """
-udi-Virtual-pg3 NodeServer/Plugin for EISY/Polisy
+This module defines the VirtualSwitch class for the udi-Virtual-pg3 NodeServer.
+
+This node represents a simple virtual on/off switch, relay, or light.
 
 (C) 2025 Stephen Jenkins
-
-VirtualSwitch class
 """
 
 # std libraries
@@ -43,46 +43,20 @@ FIELDS: dict[str, FieldSpec] = {
 class VirtualSwitch(Node):
     id = "virtualswitch"
 
-    """ This class represents a simple virtual switch / relay / light.
-    This device can be made a controller/responder as part of a scene to
-    provide easy indication or control.  It can also be used as control
-    or status in a program and manipulated by then or else.
+    """Represents a simple virtual on/off switch, relay, or light.
 
-    Drivers & commands:
-    ST 0,1: is used to report ON/OFF status in the ISY
-    setOn: Sets the node to ON
-    setOFF: Sets the node to OFF
-    Query: Is used to report status of the node
-
-    Class Methods(generic):
-    setDriver('ST', 1, report = True, force = False):
-        This sets the driver 'ST' to 1. If report is False we do not report
-        it to Polyglot/ISY. If force is True, we send a report even if the
-        value hasn't changed.
-    reportDriver(driver, force): report the driver value to Polyglot/ISY if
-        it has changed.  if force is true, send regardless.
-    reportDrivers(): Forces a full update of all drivers to Polyglot/ISY.
-    query(): Called when ISY sends a query request to Polyglot for this
-        specific node.
+    This device can be used as a controller/responder in scenes, or for status
+    and control within ISY programs.
     """
 
     def __init__(self, poly, primary, address, name):
-        """Sent by the Controller class node.
-        :param polyglot: Reference to the Interface class
-        :param primary: Parent address
-        :param address: This nodes address
-        :param name: This nodes name
+        """Initializes the VirtualSwitch node.
 
-        class variables:
-        self.data['switch'] internal storage of 0,1 ON/OFF
-
-        subscribes:
-        START: used to create/check/load DB file
-
-        NOTE: POLL: not needed as no timed updates for this node
-
-        Controller node calls:
-          self.deleteDB() when ISY deletes the node or discovers it gone
+        Args:
+            poly (udi_interface.Polyglot): The Polyglot interface object.
+            primary (str): The address of the primary node (the Controller).
+            address (str): The address of this node.
+            name (str): The name of this node.
         """
         super().__init__(poly, primary, address, name)
 
@@ -99,9 +73,7 @@ class VirtualSwitch(Node):
         self.poly.subscribe(self.poly.START, self.start, address)
 
     def start(self):
-        """
-        Start node and retrieve persistent data
-        """
+        """Performs startup tasks, loads persistent data, and retrieves configuration."""
         LOGGER.info(f"start: switch:{self.lpfx}")
 
         # wait for controller start ready
@@ -116,9 +88,7 @@ class VirtualSwitch(Node):
         LOGGER.info(f"data:{self.data}")
 
     def DON_cmd(self, command=None):
-        """
-        Turn the driver on, report cmd DON, store values in db for persistence.
-        """
+        """Sets the switch to the ON state."""
         LOGGER.info(f"{self.lpfx}, {command}")
         self.data["switch"] = ON
         self.setDriver("ST", ON)
@@ -127,9 +97,7 @@ class VirtualSwitch(Node):
         LOGGER.debug("Exit")
 
     def DOF_cmd(self, command=None):
-        """
-        Turn the driver off, report cmd DOF, store values in db for persistence.
-        """
+        """Sets the switch to the OFF state."""
         LOGGER.info(f"{self.lpfx}, {command}")
         self.data["switch"] = OFF
         self.setDriver("ST", OFF)
@@ -138,9 +106,7 @@ class VirtualSwitch(Node):
         LOGGER.debug("Exit")
 
     def toggle_cmd(self, command=None):
-        """
-        Toggle the driver, report cmd DON/DOF as appropriate, store values in db for persistence.
-        """
+        """Toggles the switch state between ON and OFF."""
         LOGGER.info(f"{self.lpfx}, {command}")
         if self.data.get("switch"):
             self.DOF_cmd()
@@ -149,11 +115,7 @@ class VirtualSwitch(Node):
         LOGGER.debug("Exit")
 
     def query(self, command=None):
-        """
-        Called by ISY to report all drivers for this node. This is done in
-        the parent class, so you don't need to override this method unless
-        there is a need.
-        """
+        """Reports the current state of all drivers to the ISY."""
         LOGGER.info(f"{self.name}, {command}")
         self.reportDrivers()
         LOGGER.debug("Exit")

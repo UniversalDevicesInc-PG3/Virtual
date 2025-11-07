@@ -1,9 +1,10 @@
 """
-udi-Virtual-pg3 NodeServer/Plugin for EISY/Polisy
+This module defines the VirtualoffDelay class for the udi-Virtual-pg3 NodeServer.
+
+This node represents a virtual switch that automatically turns off after a
+configurable delay.
 
 (C) 2025 Stephen Jenkins
-
-VirtualoffDelay class
 """
 
 # std libraries
@@ -47,55 +48,20 @@ FIELDS: dict[str, FieldSpec] = {
 class VirtualoffDelay(Node):
     id = "virtualoffdelay"
 
-    """ This class is for offDelay virtual switches, which will turn off a
-    switch after a time duration of x seconds. This device can be made a
-    controller/responder as part of a scene to provide easy indication
-    or control.  It can also be used as control or status in a program
-    and manipulated by then or else.
-    It will receive DON, ST will moved to TIMER(2), DON is sent, DUR
-    seconds later it will send DOF, ST will change to False.
-    DOF received when in TIMER will send DOF, ST will change to False
-    DOF received when True will do the same
-    If DUR = 0, acts as normal switch.
+    """Represents a virtual switch that automatically turns off after a delay.
 
-    Drivers & commands:
-    ST 0,1,2: is used to report ON/OFF/TIMER status in the ISY
-    DUR: integer, time delay duration in seconds
-    don_cmd: Sets the node to ON, depending on onDelay
-    dof_cmd: Sets the node to OFF, if ST = ON immediate, nothing if ST = TMIER
-    dfof_cmd: Sets the node to OFF, immediate, resets on timer
-    set_delay_cmd: set the onDelay
-    Query: Is used to report status of the node
-
-    Class Methods(generic):
-    setDriver('ST', 1, report = True, force = False):
-        This sets the driver 'ST' to 1. If report is False we do not report
-        it to Polyglot/ISY. If force is True, we send a report even if the
-        value hasn't changed.
-    reportDriver(driver, force): report the driver value to Polyglot/ISY if
-        it has changed.  if force is true, send regardless.
-    reportDrivers(): Forces a full update of all drivers to Polyglot/ISY.
-    query(): Called when ISY sends a query request to Polyglot for this
-        specific node.
+    When turned on, this node starts a timer for a configurable duration.
+    Once the timer expires, the node automatically turns itself off.
     """
 
     def __init__(self, poly, primary, address, name):
-        """Sent by the Controller class node.
-        :param polyglot: Reference to the Interface class
-        :param primary: Parent address
-        :param address: This nodes address
-        :param name: This nodes name
+        """Initializes the VirtualoffDelay node.
 
-        class variables:
-        self.data['switch'] internal storage of 0,1 ON/OFF
-
-        subscribes:
-        START: used to create/check/load DB file
-
-        NOTE: POLL: not needed as no timed updates for this node
-
-        Controller node calls:
-          self.deleteDB() when ISY deletes the node or discovers it gone
+        Args:
+            poly (udi_interface.Polyglot): The Polyglot interface object.
+            primary (str): The address of the primary node (the Controller).
+            address (str): The address of this node.
+            name (str): The name of this node.
         """
         super().__init__(poly, primary, address, name)
 
@@ -116,9 +82,7 @@ class VirtualoffDelay(Node):
         self.poly.subscribe(self.poly.STOP, self.stop, address)
 
     def start(self):
-        """
-        Start node and retrieve persistent data
-        """
+        """Performs startup tasks, loads persistent data, and retrieves configuration."""
         LOGGER.info(f"start: delayswitch:{self.name}")
 
         # wait for controller start ready
@@ -133,7 +97,7 @@ class VirtualoffDelay(Node):
         LOGGER.info(f"data:{self.data}")
 
     def _initialize_timer(self) -> None:
-        """Initialize timer with proper error handling."""
+        """Initializes the internal timer object with error handling."""
         try:
             self.timer = Timer(0, self._off_delay)
         except Exception as ex:
@@ -141,9 +105,7 @@ class VirtualoffDelay(Node):
             self.timer = None
 
     def stop(self):
-        """
-        Stop node and clean-up TIMER status
-        """
+        """Cleans up the timer and sets the final state upon node stop."""
         LOGGER.info(f"stop: ondelay:{self.name}")
         if self.timer and self.timer.is_alive():
             self.timer.cancel()
@@ -154,10 +116,7 @@ class VirtualoffDelay(Node):
         LOGGER.info(f"stopping:{self.name}")
 
     def DON_cmd(self, command=None):
-        """
-        If the delay is > 0, set the driver to TIMER, start the timer, store values in db for persistence.
-        If delay is zero, turn ON, then immediately call the OFF function.
-        """
+        """Starts the off-delay timer; turns off immediately if delay is zero."""
         LOGGER.info(f"{self.name}, {command}")
         delay = self.data["delay"]
         if self.timer and self.timer.is_alive():
@@ -180,10 +139,7 @@ class VirtualoffDelay(Node):
         LOGGER.debug("Exit")
 
     def _off_delay(self):
-        """
-        Helper function which the thread Timer calls to turn off the switch.
-        Send DOF command.
-        """
+        """Callback function executed by the timer to turn the switch off."""
         LOGGER.info("enter off delay")
         self.data["switch"] = OFF
         self.setDriver("ST", OFF)
@@ -192,9 +148,7 @@ class VirtualoffDelay(Node):
         LOGGER.debug("Exit")
 
     def DOF_cmd(self, command=None):
-        """
-        Turn the driver off, report cmd DOF, store values in db for persistence.
-        """
+        """Forcibly sets the switch to OFF and cancels any active timer."""
         LOGGER.info(f"{self.name}, {command}")
         if self.timer and self.timer.is_alive():
             self.timer.cancel()
@@ -205,9 +159,7 @@ class VirtualoffDelay(Node):
         LOGGER.debug("Exit")
 
     def set_delay_cmd(self, command):
-        """
-        Setting of delay duration, 0-99999 sec
-        """
+        """Sets the off-delay duration in seconds."""
         LOGGER.info(f"{self.name}, {command}")
         delay = int(command.get("value"))
         self.data["delay"] = delay
@@ -217,11 +169,7 @@ class VirtualoffDelay(Node):
         LOGGER.debug("Exit")
 
     def query(self, command=None):
-        """
-        Called by ISY to report all drivers for this node. This is done in
-        the parent class, so you don't need to override this method unless
-        there is a need.
-        """
+        """Reports the current state of all drivers to the ISY."""
         LOGGER.info(f"{self.name}, {command}")
         self.reportDrivers()
         LOGGER.debug("Exit")

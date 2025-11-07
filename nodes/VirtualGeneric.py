@@ -1,9 +1,10 @@
 """
-udi-Virtual-pg3 NodeServer/Plugin for EISY/Polisy
+This module defines the VirtualGeneric class for the udi-Virtual-pg3 NodeServer.
+
+This node represents a virtual generic switch or dimmer, providing a flexible
+device for scenes, programs, and status indication.
 
 (C) 2025 Stephen Jenkins
-
-VirtualGeneric class
 """
 
 # std libraries
@@ -51,35 +52,21 @@ FIELDS: dict[str, FieldSpec] = {
 class VirtualGeneric(Node):
     id = "virtualgeneric"
 
-    """ This class represents a simple virtual generic or dimmer switch / relay.
-    This device can be made a controller/responder as part of a scene to
-    provide easy indication or control. It can also be used as control
-    or status in a program and manipulated by then or else.
+    """Represents a virtual generic/dimmer switch with configurable on-level behavior.
 
-    Drivers & commands:
-    ST,OL 0,1: is used to report ON/OFF status in the ISY
-    cmd_DON: Sets the node to ON, last level, with ramp
-    cmd_DOF: Sets the node to OFF, 0, with ramp
-    cmd_DFON: Sets the node to 100, fast
-    cmd_DFOF: Sets the node to 0, fast
-    cmd_BRT: Increase the level +3
-    cmd_DIM: Decrease the level -3
-    cmd_set_OL: Set the level to a percentage or value 0-100
-
-    Query: Is used to report status of the node
-
+    This node simulates a standard dimmable light, supporting on, off, fast on/off,
+    and dim/brighten commands. It features a configurable 'on level' which can
+    either be static or dynamically update to the last set brightness level.
     """
 
     def __init__(self, poly, primary, address, name):
-        """Sent by the Controller class node.
-        :param polyglot: Reference to the Interface class
-        :param primary: Parent address
-        :param address: This nodes address
-        :param name: This nodes name
+        """Initializes the VirtualGeneric node.
 
-        subscribes:
-        START: used to create/check/load DB file
-        NOTE: POLL: not needed as no timed updates for this node
+        Args:
+            poly (udi_interface.Polyglot): The Polyglot interface object.
+            primary (str): The address of the primary node (the Controller).
+            address (str): The address of this node.
+            name (str): The name of this node.
         """
         super().__init__(poly, primary, address, name)
 
@@ -96,9 +83,7 @@ class VirtualGeneric(Node):
         self.poly.subscribe(self.poly.START, self.start, address)
 
     def start(self):
-        """
-        Start node and retrieve persistent data
-        """
+        """Performs startup tasks, loads persistent data, and reports initial state."""
         LOGGER.info(f"start: generic/dimmer:{self.name}")
 
         # wait for controller start ready
@@ -114,6 +99,7 @@ class VirtualGeneric(Node):
         LOGGER.info(f"data:{self.data}")
 
     def DON_cmd(self, command=None):
+        """Sets the device to its last known 'on level'."""
         LOGGER.info(f"{self.lpfx}, {command}")
         onlevel = self.data.get("onlevel", FULL)
         self.data["status"] = onlevel if onlevel > OFF else FULL
@@ -124,6 +110,7 @@ class VirtualGeneric(Node):
         LOGGER.debug("Exit")
 
     def DOF_cmd(self, command=None):
+        """Sets the device to off and optionally updates the 'on level'."""
         LOGGER.info(f"{self.lpfx}, {command}")
         status = self.data.get("status", OFF)
         # set onlevel if onleveltype = dynamic
@@ -137,6 +124,7 @@ class VirtualGeneric(Node):
         LOGGER.debug("Exit")
 
     def DFON_cmd(self, command=None):
+        """Sets the device to 100% brightness immediately."""
         LOGGER.info(f"{self.lpfx}, {command}")
         self.data["status"] = FULL
         self.setDriver("ST", FULL)
@@ -146,6 +134,7 @@ class VirtualGeneric(Node):
         LOGGER.debug("Exit")
 
     def DFOF_cmd(self, command=None):
+        """Sets the device to off immediately."""
         LOGGER.info(f"{self.lpfx}, {command}")
         status = self.data.get("status", OFF)
         # set onlevel if onleveltype = dynamic
@@ -159,6 +148,7 @@ class VirtualGeneric(Node):
         LOGGER.debug("Exit")
 
     def BRT_cmd(self, command=None):
+        """Increases the brightness level by a small increment."""
         LOGGER.info(f"{self.lpfx}, {command}")
         status = min(int(self.data.get("status", OFF)) + INC, FULL)
         if self.data["onleveltype"] == DYNAMIC:
@@ -171,6 +161,7 @@ class VirtualGeneric(Node):
         LOGGER.debug("Exit")
 
     def DIM_cmd(self, command=None):
+        """Decreases the brightness level by a small increment."""
         LOGGER.info(f"{self.lpfx}, {command}")
         status = max(int(self.data.get("status", FULL)) - INC, OFF)
         if status == OFF:
@@ -187,6 +178,7 @@ class VirtualGeneric(Node):
         LOGGER.debug("Exit")
 
     def set_ST_cmd(self, command):
+        """Sets the brightness level to a specific value."""
         LOGGER.info(f"{self.lpfx}, {command}")
         status = int(command.get("value"))
         if status == OFF:
@@ -199,6 +191,7 @@ class VirtualGeneric(Node):
         LOGGER.debug("Exit")
 
     def set_OL_cmd(self, command):
+        """Sets the 'on level' to a specific value."""
         LOGGER.info(f"{self.lpfx}, {command}")
         level = int(command.get("value"))
         if level == OFF:
@@ -210,9 +203,7 @@ class VirtualGeneric(Node):
         LOGGER.debug("Exit")
 
     def OL_toggle_type_cmd(self, command=None):
-        """
-        Toggle the onlovel driver, report OLTT command, store values in db for persistence.
-        """
+        """Toggles the 'on level' behavior between static and dynamic."""
         LOGGER.info(f"{self.lpfx}, {command}")
         # Toggle between 0[STATIC] and 1[DYNAMIC]
         self.data["onleveltype"] ^= 1

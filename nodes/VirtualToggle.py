@@ -1,9 +1,10 @@
 """
-udi-Virtual-pg3 NodeServer/Plugin for EISY/Polisy
+This module defines the VirtualToggle class for the udi-Virtual-pg3 NodeServer.
+
+This node represents a virtual toggling switch that cycles on and off
+at configurable intervals.
 
 (C) 2025 Stephen Jenkins
-
-VirtualToggle class
 """
 
 # std libraries
@@ -48,58 +49,20 @@ FIELDS: dict[str, FieldSpec] = {
 class VirtualToggle(Node):
     id = "virtualtoggle"
 
-    """ This class is for DON/DOF virtual switches, which oscillate according
-    to time duration On and Off. This device can be made a controller/responder
-    as part of a scene to provide easy indication or control.  It can also be
-    used as control or status in a program and manipulated by then or else.
-    It will receive DON, ST will moved to ONTIMER(2) for DUR seconds,
-    sending DON at the beginning, then moved to OFFTIMER(3), for GV0 seconds,
-    immediately sending DOF.
-    It will not accept DUR or GV0 = 0
-    DFON will move ST to On and send DFON, cancelling oscillation.
-    DFOF will move ST to Off and send DFOF, cancelling oscillation.
+    """Represents a virtual toggling switch that cycles on and off.
 
-    Drivers & commands:
-    ST 0,1,2,3: is used to report ON/OFF/ONTIMER/OFFTIMER status in the ISY
-    DUR: integer, time on delay duration in seconds, > 0
-    GV0: integer, time off delay duration in seconds, > 0
-    don_cmd: Sets the node to ON if ST = ON or OFF, if ON or OFF TIMER nothing
-    dof_cmd: Sets the node to OFF, if ST = ON or OFF, if ON or OFF TIMER nothing
-    dfon_cmd: Sets the node to ON, cancels further oscillations
-    dfof_cmd: Sets the node to OFF, cancels further oscillations
-    set_on_delay_cmd: set the onDelay
-    set_off_delay_cmd: set the offDelay
-    Query: Is used to report status of the node
-
-    Class Methods(generic):
-    setDriver('ST', 1, report = True, force = False):
-        This sets the driver 'ST' to 1. If report is False we do not report
-        it to Polyglot/ISY. If force is True, we send a report even if the
-        value hasn't changed.
-    reportDriver(driver, force): report the driver value to Polyglot/ISY if
-        it has changed.  if force is true, send regardless.
-    reportDrivers(): Forces a full update of all drivers to Polyglot/ISY.
-    query(): Called when ISY sends a query request to Polyglot for this
-        specific node.
+    This node uses two configurable delays for 'on' and 'off' durations,
+    creating a continuous toggling effect until a 'DOF' command is received.
     """
 
     def __init__(self, poly, primary, address, name):
-        """Sent by the Controller class node.
-        :param polyglot: Reference to the Interface class
-        :param primary: Parent address
-        :param address: This nodes address
-        :param name: This nodes name
+        """Initializes the VirtualToggle node.
 
-        class variables:
-        self.data['switch'] internal storage of 0,1 ON/OFF
-
-        subscribes:
-        START: used to create/check/load DB file
-
-        NOTE: POLL: not needed as no timed updates for this node
-
-        Controller node calls:
-          self.deleteDB() when ISY deletes the node or discovers it gone
+        Args:
+            poly (udi_interface.Polyglot): The Polyglot interface object.
+            primary (str): The address of the primary node (the Controller).
+            address (str): The address of this node.
+            name (str): The name of this node.
         """
         super().__init__(poly, primary, address, name)
 
@@ -120,9 +83,7 @@ class VirtualToggle(Node):
         self.poly.subscribe(self.poly.STOP, self.stop, address)
 
     def start(self):
-        """
-        Start node and retrieve persistent data
-        """
+        """Performs startup tasks, loads persistent data, and retrieves configuration."""
         LOGGER.info(f"start: toggle:{self.name}")
 
         # wait for controller start ready
@@ -137,7 +98,7 @@ class VirtualToggle(Node):
         LOGGER.info(f"data:{self.data}")
 
     def _initialize_timer(self) -> None:
-        """Initialize timer with proper error handling."""
+        """Initializes the internal timer object with error handling."""
         try:
             self.timer = Timer(0, self._on_delay)
         except Exception as ex:
@@ -145,9 +106,7 @@ class VirtualToggle(Node):
             self.timer = None
 
     def stop(self):
-        """
-        Stop node and clean-up TIMER status
-        """
+        """Cleans up the timer and sets the final state upon node stop."""
         LOGGER.info(f"stop: ondelay:{self.name}")
         if self.timer:
             self.timer.cancel()
@@ -160,10 +119,7 @@ class VirtualToggle(Node):
         LOGGER.info(f"stopping:{self.name}")
 
     def DON_cmd(self, command=None):
-        """
-        Set the driver to ONTIMER, send DON, start the timer, store values in db for persistence.
-        If delay is zero, change to 1.
-        """
+        """Starts the toggling sequence, beginning with the ON state."""
         LOGGER.info(f"{self.name}, {command}")
         ondelay = max(self.data.get("ondelay", 1), 1)
         try:
@@ -181,10 +137,7 @@ class VirtualToggle(Node):
         LOGGER.debug("Exit")
 
     def _on_delay(self):
-        """
-        Helper fucntion which the thread Timer calls to turn off the switch.
-        Send DOF command.
-        """
+        """Callback function to transition from ON to the OFF timer state."""
         LOGGER.info("enter on delay")
         self.data["switch"] = OFFTIMER
         self.setDriver("ST", OFFTIMER)
@@ -198,10 +151,7 @@ class VirtualToggle(Node):
         LOGGER.debug("Exit")
 
     def _off_delay(self):
-        """
-        Helper fucntion which the thread Timer calls to turn on the switch.
-        Send DON command.
-        """
+        """Callback function to transition from OFF to the ON timer state."""
         LOGGER.info("enter off delay")
         self.data["switch"] = ONTIMER
         self.setDriver("ST", ONTIMER)
@@ -215,9 +165,7 @@ class VirtualToggle(Node):
         LOGGER.debug("Exit")
 
     def DOF_cmd(self, command=None):
-        """
-        If not in TIMER, Turn the driver off, report cmd DOF, store values in db for persistence.
-        """
+        """Sets the switch to OFF, but only if it is not currently in a timer state."""
         LOGGER.info(f"{self.name}, {command}")
         if self.timer and self.timer.is_alive():
             LOGGER.info("Switch, is mid TIMER, waiting for DON/DOF")
@@ -229,9 +177,7 @@ class VirtualToggle(Node):
         LOGGER.debug("Exit")
 
     def DFON_cmd(self, command=None):
-        """
-        Force the driver on, report cmd DFON, store values in db for persistence.
-        """
+        """Forcibly sets the switch to ON and stops the toggling sequence."""
         LOGGER.info(f"{self.name}, {command}")
         if self.timer and self.timer.is_alive():
             self.timer.cancel()
@@ -242,9 +188,7 @@ class VirtualToggle(Node):
         LOGGER.debug("Exit")
 
     def DFOF_cmd(self, command=None):
-        """
-        Force the driver off, report cmd DFOF, store values in db for persistence.
-        """
+        """Forcibly sets the switch to OFF and stops the toggling sequence."""
         LOGGER.info(f"{self.name}, {command}")
         if self.timer and self.timer.is_alive():
             self.timer.cancel()
@@ -255,9 +199,7 @@ class VirtualToggle(Node):
         LOGGER.debug("Exit")
 
     def set_on_dur_cmd(self, command):
-        """
-        Setting of onDelay duration, 0-99999 sec
-        """
+        """Sets the ON duration for the toggle sequence."""
         LOGGER.info(f"{self.name}, {command}")
         ondelay = max(int(command.get("value", 1)), 1)
         self.data["ondelay"] = ondelay
@@ -267,9 +209,7 @@ class VirtualToggle(Node):
         LOGGER.debug("Exit")
 
     def set_off_dur_cmd(self, command):
-        """
-        Setting of offDelay duration, 0-99999 sec
-        """
+        """Sets the OFF duration for the toggle sequence."""
         LOGGER.info(f"{self.name}, {command}")
         offdelay = max(int(command.get("value", 1)), 1)
         self.data["offdelay"] = offdelay
@@ -279,11 +219,7 @@ class VirtualToggle(Node):
         LOGGER.debug("Exit")
 
     def query(self, command=None):
-        """
-        Called by ISY to report all drivers for this node. This is done in
-        the parent class, so you don't need to override this method unless
-        there is a need.
-        """
+        """Reports the current state of all drivers to the ISY."""
         LOGGER.info(f"{self.name}, {command}")
         self.reportDrivers()
         LOGGER.debug("Exit")
