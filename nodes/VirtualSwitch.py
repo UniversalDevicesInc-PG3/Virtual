@@ -5,14 +5,20 @@ udi-Virtual-pg3 NodeServer/Plugin for EISY/Polisy
 
 VirtualSwitch class
 """
+
 # std libraries
-pass
+# none
 
 # external libraries
 from udi_interface import Node, LOGGER
 
 # personal libraries
-from utils.node_funcs import FieldSpec, load_persistent_data, store_values, get_config_data
+from utils.node_funcs import (
+    FieldSpec,
+    load_persistent_data,
+    store_values,
+    get_config_data,
+)
 
 # constants
 OFF = 0
@@ -29,13 +35,13 @@ ON = 1
 
 # Single source of truth for field names, driver codes, and defaults
 FIELDS: dict[str, FieldSpec] = {
-	# State variables (pushed to drivers)
-	"switch":           FieldSpec(driver="ST", default=OFF, data_type="state"),
+    # State variables (pushed to drivers)
+    "switch": FieldSpec(driver="ST", default=OFF, data_type="state"),
 }
 
 
 class VirtualSwitch(Node):
-    id = 'virtualswitch'
+    id = "virtualswitch"
 
     """ This class represents a simple virtual switch / relay / light.
     This device can be made a controller/responder as part of a scene to
@@ -59,22 +65,22 @@ class VirtualSwitch(Node):
     query(): Called when ISY sends a query request to Polyglot for this
         specific node.
     """
-    
+
     def __init__(self, poly, primary, address, name):
-        """ Sent by the Controller class node.
+        """Sent by the Controller class node.
         :param polyglot: Reference to the Interface class
         :param primary: Parent address
         :param address: This nodes address
         :param name: This nodes name
-        
+
         class variables:
         self.data['switch'] internal storage of 0,1 ON/OFF
 
         subscribes:
         START: used to create/check/load DB file
-        
+
         NOTE: POLL: not needed as no timed updates for this node
-        
+
         Controller node calls:
           self.deleteDB() when ISY deletes the node or discovers it gone
         """
@@ -85,19 +91,18 @@ class VirtualSwitch(Node):
         self.controller = poly.getNode(self.primary)
         self.address = address
         self.name = name
-        self.lpfx = f'{address}:{name}'
+        self.lpfx = f"{address}:{name}"
 
         # default variables and drivers
         self.data = {field: spec.default for field, spec in FIELDS.items()}
 
         self.poly.subscribe(self.poly.START, self.start, address)
 
-
     def start(self):
         """
         Start node and retrieve persistent data
         """
-        LOGGER.info(f'start: switch:{self.lpfx}')
+        LOGGER.info(f"start: switch:{self.lpfx}")
 
         # wait for controller start ready
         self.controller.ready_event.wait()
@@ -109,43 +114,39 @@ class VirtualSwitch(Node):
         get_config_data(self, FIELDS)
 
         LOGGER.info(f"data:{self.data}")
-        
 
     def DON_cmd(self, command=None):
         """
         Turn the driver on, report cmd DON, store values in db for persistence.
         """
         LOGGER.info(f"{self.lpfx}, {command}")
-        self.data['switch'] = ON
-        self.setDriver('ST', ON)
+        self.data["switch"] = ON
+        self.setDriver("ST", ON)
         self.reportCmd("DON")
         store_values(self)
         LOGGER.debug("Exit")
 
-        
     def DOF_cmd(self, command=None):
         """
         Turn the driver off, report cmd DOF, store values in db for persistence.
         """
         LOGGER.info(f"{self.lpfx}, {command}")
-        self.data['switch'] = OFF
-        self.setDriver('ST', OFF)
+        self.data["switch"] = OFF
+        self.setDriver("ST", OFF)
         self.reportCmd("DOF")
         store_values(self)
         LOGGER.debug("Exit")
 
-        
     def toggle_cmd(self, command=None):
         """
         Toggle the driver, report cmd DON/DOF as appropriate, store values in db for persistence.
         """
         LOGGER.info(f"{self.lpfx}, {command}")
-        if self.data.get('switch'):
+        if self.data.get("switch"):
             self.DOF_cmd()
         else:
-            self.DON_cmd()                
+            self.DON_cmd()
         LOGGER.debug("Exit")
-
 
     def query(self, command=None):
         """
@@ -156,32 +157,29 @@ class VirtualSwitch(Node):
         LOGGER.info(f"{self.name}, {command}")
         self.reportDrivers()
         LOGGER.debug("Exit")
-        
 
-    hint = '0x01020700'
+    hint = "0x01020700"
     # home, controller, scene controller
     # Hints See: https://github.com/UniversalDevicesInc/hints
-    
-    
+
     """
-    This is an array of dictionary items containing the variable names(drivers)
-    values and uoms(units of measure) from ISY. This is how ISY knows what kind
-    of variable to display. Check the UOM's in the WSDK for a complete list.
-    UOM 2 is boolean so the ISY will display 'True/False'
+    UOMs:
+    25: index
+
+    Driver controls:
+    ST: Status (Status)
     """
     drivers = [
-        {'driver': 'ST', 'value': OFF, 'uom': 25, 'name': "Status"},
+        {"driver": "ST", "value": OFF, "uom": 25, "name": "Status"},
     ]
 
-    
     """
-    This is a dictionary of commands. If ISY sends a command to the NodeServer,
-    this tells it which method to call. DON calls setOn, etc.
+    Commands that this node can handle.
+    Should match the 'accepts' section of the nodedef file.
     """
     commands = {
-                    'DON': DON_cmd,
-                    'DOF': DOF_cmd,
-                    'TOGGLE': toggle_cmd,
-                    'QUERY': query,
-                }
-
+        "DON": DON_cmd,
+        "DOF": DOF_cmd,
+        "TOGGLE": toggle_cmd,
+        "QUERY": query,
+    }

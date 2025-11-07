@@ -9,7 +9,8 @@ NodeServer lifecycle.
 """
 
 # std libraries
-import json, logging
+import json
+import logging
 from threading import Event, Condition
 from typing import Dict, Any, List, Tuple
 
@@ -18,26 +19,32 @@ from udi_interface import Node, LOGGER, Custom, LOG_HANDLER
 import yaml
 
 # personal libraries
-pass
-
+# none
 
 # Nodes
-from nodes import *
+from nodes.VirtualGeneric import VirtualGeneric
+from nodes.VirtualGarage import VirtualGarage
+from nodes.VirtualTemp import VirtualTemp, VirtualTempC
+from nodes.VirtualSwitch import VirtualSwitch
+from nodes.VirtualonOnly import VirtualonOnly
+from nodes.VirtualonDelay import VirtualonDelay
+from nodes.VirtualoffDelay import VirtualoffDelay
+from nodes.VirtualToggle import VirtualToggle
 
 # Mapping of device types to their respective node classes.
 # This dictionary is used during discovery to instantiate the correct node type.
 DEVICE_TYPE_TO_NODE_CLASS = {
-    'switch': VirtualSwitch,
-    'ononly': VirtualonOnly,
-    'temperature': VirtualTemp,
-    'temperaturec': VirtualTempC,
-    'temperaturecr': VirtualTempC,
-    'generic': VirtualGeneric,
-    'dimmer': VirtualGeneric,
-    'garage': VirtualGarage,
-    'ondelay': VirtualonDelay,
-    'offdelay': VirtualoffDelay,
-    'toggle': VirtualToggle,
+    "switch": VirtualSwitch,
+    "ononly": VirtualonOnly,
+    "temperature": VirtualTemp,
+    "temperaturec": VirtualTempC,
+    "temperaturecr": VirtualTempC,
+    "generic": VirtualGeneric,
+    "dimmer": VirtualGeneric,
+    "garage": VirtualGarage,
+    "ondelay": VirtualonDelay,
+    "offdelay": VirtualoffDelay,
+    "toggle": VirtualToggle,
 }
 
 
@@ -50,7 +57,8 @@ class Controller(Node):
     - Discovering and cleaning up virtual device nodes.
     - Handling system-wide events like log level changes and heartbeats.
     """
-    id = 'controller' # Unique identifier for the controller node.
+
+    id = "controller"  # Unique identifier for the controller node.
 
     def __init__(self, poly, primary, address, name):
         """
@@ -64,7 +72,7 @@ class Controller(Node):
         """
         super().__init__(poly, primary, address, name)
         # importand flags, timers, vars
-        self.hb = 0 # heartbeat
+        self.hb = 0  # heartbeat
         self.numNodes = 0
 
         # storage arrays & conditions
@@ -76,7 +84,7 @@ class Controller(Node):
         self.all_handlers_st_event = Event()
         self.stop_sse_client_event = Event()
         self.discovery_in = False
-        
+
         # startup completion flags
         self.handler_params_st = None
         self.handler_data_st = None
@@ -84,34 +92,33 @@ class Controller(Node):
         self.handler_typeddata_st = None
 
         # Create data storage classes
-        self.Notices         = Custom(poly, 'notices')
-        self.Parameters      = Custom(poly, 'customparams')
-        self.Data            = Custom(poly, 'customdata')
-        self.TypedParameters = Custom(poly, 'customtypedparams')
-        self.TypedData       = Custom(poly, 'customtypeddata')
+        self.Notices = Custom(poly, "notices")
+        self.Parameters = Custom(poly, "customparams")
+        self.Data = Custom(poly, "customdata")
+        self.TypedParameters = Custom(poly, "customtypedparams")
+        self.TypedData = Custom(poly, "customtypeddata")
 
         # Subscribe to various events from the Interface class.
-        # The START event is unique in that you can subscribe to 
+        # The START event is unique in that you can subscribe to
         # the start event for each node you define.
 
-        self.poly.subscribe(self.poly.START,             self.start, address)
-        self.poly.subscribe(self.poly.POLL,              self.poll)
-        self.poly.subscribe(self.poly.LOGLEVEL,          self.handleLevelChange)
-        self.poly.subscribe(self.poly.CUSTOMPARAMS,      self.parameterHandler)
-        self.poly.subscribe(self.poly.CUSTOMDATA,        self.dataHandler)
-        self.poly.subscribe(self.poly.STOP,              self.stop)
-        self.poly.subscribe(self.poly.DISCOVER,          self.discover_cmd)
-        self.poly.subscribe(self.poly.CUSTOMTYPEDDATA,   self.typedDataHandler)
+        self.poly.subscribe(self.poly.START, self.start, address)
+        self.poly.subscribe(self.poly.POLL, self.poll)
+        self.poly.subscribe(self.poly.LOGLEVEL, self.handleLevelChange)
+        self.poly.subscribe(self.poly.CUSTOMPARAMS, self.parameterHandler)
+        self.poly.subscribe(self.poly.CUSTOMDATA, self.dataHandler)
+        self.poly.subscribe(self.poly.STOP, self.stop)
+        self.poly.subscribe(self.poly.DISCOVER, self.discover_cmd)
+        self.poly.subscribe(self.poly.CUSTOMTYPEDDATA, self.typedDataHandler)
         self.poly.subscribe(self.poly.CUSTOMTYPEDPARAMS, self.typedParameterHandler)
-        self.poly.subscribe(self.poly.ADDNODEDONE,       self.node_queue)
+        self.poly.subscribe(self.poly.ADDNODEDONE, self.node_queue)
 
         # Tell the interface we have subscribed to all the events we need.
         # Once we call ready(), the interface will start publishing data.
         self.poly.ready()
 
-        # Tell the interface we exist.  
-        self.poly.addNode(self, conn_status='ST')
-
+        # Tell the interface we exist.
+        self.poly.addNode(self, conn_status="ST")
 
     def start(self):
         """
@@ -121,8 +128,8 @@ class Controller(Node):
         """
         LOGGER.info(f"Virtual Devices PG3 NodeServer {self.poly.serverdata['version']}")
         self.Notices.clear()
-        self.Notices['hello'] = 'Start-up'
-        self.setDriver('ST', 1, report = True, force = True)
+        self.Notices["hello"] = "Start-up"
+        self.setDriver("ST", 1, report=True, force=True)
 
         # Send the profile files to the ISY if neccessary or version changed.
         self.poly.updateProfile()
@@ -134,15 +141,15 @@ class Controller(Node):
         self.heartbeat()
 
         # Wait for all handlers to finish
-        LOGGER.warning(f'Waiting for all handlers to complete...')
-        self.Notices['waiting'] = 'Waiting on valid configuration'
+        LOGGER.warning("Waiting for all handlers to complete...")
+        self.Notices["waiting"] = "Waiting on valid configuration"
         self.all_handlers_st_event.wait(timeout=60)
         if not self.all_handlers_st_event.is_set():
             # start-up failed
             LOGGER.error("Timed out waiting for handlers to startup")
-            self.setDriver('ST', 2) # start-up failed
-            self.Notices['error'] = 'Error start-up timeout.  Check config & restart'
-            return        
+            self.setDriver("ST", 2)  # start-up failed
+            self.Notices["error"] = "Error start-up timeout.  Check config & restart"
+            return
 
         # Discover and wait for discovery to complete
         discoverSuccess = self.discover_cmd()
@@ -150,24 +157,23 @@ class Controller(Node):
         # first update from Gateway
         if not discoverSuccess:
             # start-up failed
-            LOGGER.error(f'First discovery failed!!! exit {self.name}')
-            self.Notices['error'] = 'Error first discovery.  Check config & restart'
-            self.setDriver('ST', 2)
+            LOGGER.error(f"First discovery failed!!! exit {self.name}")
+            self.Notices["error"] = "Error first discovery.  Check config & restart"
+            self.setDriver("ST", 2)
             return
 
-        self.Notices.delete('waiting')        
-        LOGGER.info('Started Virtual Device NodeServer v%s', self.poly.serverdata)
-        self.query(command = f"{self.name}: STARTUP")
+        self.Notices.delete("waiting")
+        LOGGER.info("Started Virtual Device NodeServer v%s", self.poly.serverdata)
+        self.query(command=f"{self.name}: STARTUP")
 
         # signal to the nodes, its ok to start
         self.ready_event.set()
 
         # clear inital start-up message
-        if self.Notices.get('hello'):
-            self.Notices.delete('hello')
-        
-        LOGGER.info(f'exit {self.name}')
+        if self.Notices.get("hello"):
+            self.Notices.delete("hello")
 
+        LOGGER.info(f"exit {self.name}")
 
     def node_queue(self, data):
         """
@@ -178,12 +184,11 @@ class Controller(Node):
         Args:
             data (dict): A dictionary containing node data, expected to have an 'address' key.
         """
-        address = data.get('address')
+        address = data.get("address")
         if address:
             with self.queue_condition:
                 self.n_queue.append(address)
                 self.queue_condition.notify()
-                
 
     def wait_for_node_done(self):
         """
@@ -193,9 +198,8 @@ class Controller(Node):
         """
         with self.queue_condition:
             while not self.n_queue:
-                self.queue_condition.wait(timeout = 0.2)
+                self.queue_condition.wait(timeout=0.2)
             self.n_queue.pop()
-
 
     def dataHandler(self, data):
         """
@@ -204,14 +208,13 @@ class Controller(Node):
         Args:
             data (dict): The custom data received from Polyglot.
         """
-        LOGGER.debug(f'enter: Loading data {data}')
+        LOGGER.debug(f"enter: Loading data {data}")
         if data is None:
             LOGGER.warning("No custom data")
         else:
             self.Data.load(data)
         self.handler_data_st = True
         self.check_handlers()
-
 
     def parameterHandler(self, params):
         """
@@ -221,12 +224,11 @@ class Controller(Node):
         Args:
             params (dict): The custom parameters received from Polyglot.
         """
-        LOGGER.info('parmHandler: Loading parameters now')
+        LOGGER.info("parmHandler: Loading parameters now")
         self.Parameters.load(params)
         self.handler_params_st = True
-        LOGGER.info('parmHandler Done...')
+        LOGGER.info("parmHandler Done...")
         self.check_handlers()
-        
 
     def typedParameterHandler(self, params):
         """
@@ -236,12 +238,11 @@ class Controller(Node):
         Args:
             params (dict): The custom typed parameters received from Polyglot.
         """
-        LOGGER.debug('Loading typed parameters now')
+        LOGGER.debug("Loading typed parameters now")
         self.TypedParameters.load(params)
         LOGGER.debug(params)
         self.handler_typedparams_st = True
         self.check_handlers()
-
 
     def typedDataHandler(self, data):
         """
@@ -251,25 +252,27 @@ class Controller(Node):
         Args:
             data (dict): The custom typed data received from Polyglot.
         """
-        LOGGER.debug('Loading typed data now')
+        LOGGER.debug("Loading typed data now")
         if data is None:
             LOGGER.warning("No custom data")
         else:
             self.TypedData.load(data)
-        LOGGER.debug(f'Loaded typed data {data}')
+        LOGGER.debug(f"Loaded typed data {data}")
         self.handler_typeddata_st = True
         self.check_handlers()
-        
 
     def check_handlers(self):
         """
         Checks if all startup handlers (parameters and data) have completed their processing.
         If all handlers are done, it sets the `all_handlers_st_event` to signal completion.
         """
-        if (self.handler_params_st and self.handler_data_st and
-            self.handler_typedparams_st and self.handler_typeddata_st):
+        if (
+            self.handler_params_st
+            and self.handler_data_st
+            and self.handler_typedparams_st
+            and self.handler_typeddata_st
+        ):
             self.all_handlers_st_event.set()
-
 
     def checkParams(self) -> bool:
         """
@@ -280,7 +283,7 @@ class Controller(Node):
         Returns:
             bool: True if all parameters are processed without critical errors, False otherwise.
         """
-        self.Notices.delete('config')
+        self.Notices.delete("config")
         self.devlist = []
         has_error = False
 
@@ -292,14 +295,13 @@ class Controller(Node):
                 has_error = True
 
         if has_error:
-            self.Notices['config'] = 'Bad configuration, please re-check.'
-            LOGGER.info('checkParams finished with errors.')
+            self.Notices["config"] = "Bad configuration, please re-check."
+            LOGGER.info("checkParams finished with errors.")
             return False
 
-        LOGGER.info('checkParams is complete')
-        LOGGER.info(f'checkParams: self.devlist: {self.devlist}')
+        LOGGER.info("checkParams is complete")
+        LOGGER.info(f"checkParams: self.devlist: {self.devlist}")
         return True
-
 
     def _process_param(self, key: str, val: Any) -> Tuple[List[Dict[str, Any]], bool]:
         """
@@ -325,17 +327,21 @@ class Controller(Node):
                     else:
                         has_error = True
                 else:
-                    LOGGER.error('checkParams: devFile parameter is missing a filename.')
+                    LOGGER.error(
+                        "checkParams: devFile parameter is missing a filename."
+                    )
                     has_error = True
             else:
-                LOGGER.error(f"Unknown configuration key: '{key}'. Non-digit keys are reserved.")
+                LOGGER.error(
+                    f"Unknown configuration key: '{key}'. Non-digit keys are reserved."
+                )
                 has_error = True
             return devices, has_error
 
         # Handle simple device definitions (e.g., "1": "switch").
         if val in DEVICE_TYPE_TO_NODE_CLASS:
             name = self.poly.getValidName(f"{val} {key}")
-            device = {'id': key, 'type': val, 'name': name}
+            device = {"id": key, "type": val, "name": name}
             devices.append(device)
         # Handle complex device definitions in JSON format.
         elif val:
@@ -344,11 +350,9 @@ class Controller(Node):
                 devices.append(json_device)
             else:
                 has_error = True
-        
+
         return devices, has_error
 
-    
-        
     def _handle_file_devices(self, filename: str) -> List[Dict[str, Any]] | None:
         """
         Loads device configurations from a specified YAML file.
@@ -360,11 +364,13 @@ class Controller(Node):
             List[Dict[str, Any]] | None: A list of device dictionaries if successful, None otherwise.
         """
         try:
-            with open(filename, 'r') as f:
+            with open(filename, "r") as f:
                 dev_yaml = yaml.safe_load(f)
 
             if "devices" not in dev_yaml:
-                LOGGER.error(f"Manual discovery file '{filename}' is missing 'devices' section.")
+                LOGGER.error(
+                    f"Manual discovery file '{filename}' is missing 'devices' section."
+                )
                 return None
 
             LOGGER.info(f"File '{filename}' loaded successfully.")
@@ -373,9 +379,10 @@ class Controller(Node):
             LOGGER.error(f"checkParams: Failed to open {filename}: {ex}")
             return None
         except yaml.YAMLError as ex:
-            LOGGER.error(f"checkParams: Failed to parse YAML content in {filename}: {ex}")
+            LOGGER.error(
+                f"checkParams: Failed to parse YAML content in {filename}: {ex}"
+            )
             return None
-
 
     def _handle_json_device(self, key: str, val: str) -> Dict[str, Any] | None:
         """
@@ -399,13 +406,14 @@ class Controller(Node):
                 LOGGER.debug(f"no id: inserting id: {key} into device: {device}")
             elif device["id"] != key:
                 device["id"] = key
-                LOGGER.error(f"error id: {key} != deviceID: {device['id']}; fixed device: {device}")
+                LOGGER.error(
+                    f"error id: {key} != deviceID: {device['id']}; fixed device: {device}"
+                )
 
             return device
         except (json.JSONDecodeError, TypeError) as ex:
             LOGGER.error(f"JSON parse error for key '{key}' with value '{val}': {ex}")
             return None
-
 
     def handleLevelChange(self, level):
         """
@@ -414,16 +422,15 @@ class Controller(Node):
         Args:
             level (dict): A dictionary containing the new log level.
         """
-        LOGGER.info(f'enter: level={level}')
-        if level['level'] < 10:
+        LOGGER.info(f"enter: level={level}")
+        if level["level"] < 10:
             LOGGER.info("Setting basic config to DEBUG...")
-            LOG_HANDLER.set_basic_config(True,logging.DEBUG)
+            LOG_HANDLER.set_basic_config(True, logging.DEBUG)
         else:
             LOGGER.info("Setting basic config to WARNING...")
-            LOG_HANDLER.set_basic_config(True,logging.WARNING)
-        LOGGER.info(f'exit: level={level}')
+            LOG_HANDLER.set_basic_config(True, logging.WARNING)
+        LOGGER.info(f"exit: level={level}")
 
-        
     def poll(self, flag):
         """
         Handles short and long poll events from Polyglot.
@@ -434,15 +441,14 @@ class Controller(Node):
         """
         # no updates until node is through start-up
         if not self.ready_event:
-            LOGGER.error(f"Node not ready yet, exiting")
+            LOGGER.error("Node not ready yet, exiting")
             return
 
-        if 'longPoll' in flag:
-            LOGGER.debug('longPoll (controller)')
+        if "longPoll" in flag:
+            LOGGER.debug("longPoll (controller)")
             self.heartbeat()
 
-            
-    def query(self, command = None):
+    def query(self, command=None):
         """
         Queries all nodes managed by this controller and reports their current driver states.
 
@@ -453,10 +459,9 @@ class Controller(Node):
         nodes = self.poly.getNodes()
         for node in nodes:
             nodes[node].reportDrivers()
-        LOGGER.debug(f"Exit")
+        LOGGER.debug("Exit")
 
-
-    def discover_cmd(self, command = None):
+    def discover_cmd(self, command=None):
         """
         Initiates the device discovery process.
         This method is called during controller startup and can also be triggered by a DISCOVER command from ISY.
@@ -471,7 +476,7 @@ class Controller(Node):
         LOGGER.info(command)
         success = False
         if self.discovery_in:
-            LOGGER.info('Discover already running.')
+            LOGGER.info("Discover already running.")
             return success
 
         self.discovery_in = True
@@ -482,10 +487,9 @@ class Controller(Node):
             LOGGER.info("Discovery Success")
         else:
             LOGGER.error("Discovery Failure")
-        self.discovery_in = False            
+        self.discovery_in = False
         return success
 
-    
     def _discover(self) -> bool:
         """
         Performs the core discovery logic, adding new nodes and cleaning up old ones.
@@ -503,13 +507,12 @@ class Controller(Node):
             self._discover_nodes(nodes_existing, nodes_new)
             self._cleanup_nodes(nodes_new, nodes_old)
             self.numNodes = len(nodes_new)
-            self.setDriver('GV0', self.numNodes)
+            self.setDriver("GV0", self.numNodes)
             success = True
             LOGGER.info(f"Discovery complete. success = {success}")
         except Exception as ex:
-            LOGGER.error(f'Discovery Failure: {ex}', exc_info=True)            
+            LOGGER.error(f"Discovery Failure: {ex}", exc_info=True)
         return success
-
 
     def _discover_nodes(self, nodes_existing: Dict[str, Any], nodes_new: List[str]):
         """
@@ -523,7 +526,7 @@ class Controller(Node):
             if "id" not in dev or "type" not in dev:
                 LOGGER.error(f"Invalid device definition: {dev}")
                 continue
-            
+
             dev_id = str(dev.get("id"))
             dev_type = str(dev.get("type"))
             node_name = self._get_node_name(dev)
@@ -538,7 +541,6 @@ class Controller(Node):
                 self.poly.addNode(node)
                 self.wait_for_node_done()
 
-
     def _get_node_name(self, dev: Dict[str, Any]) -> str:
         """
         Retrieves a valid node name from a device definition, prioritizing a 'name' field
@@ -550,10 +552,9 @@ class Controller(Node):
         Returns:
             str: A valid name for the node.
         """
-        if 'name' in dev:
-            return self.poly.getValidName(dev.get('name'))
+        if "name" in dev:
+            return self.poly.getValidName(dev.get("name"))
         return self.poly.getValidVame(f"{dev.get('type')} {dev.get('id')}")
-
 
     def _cleanup_nodes(self, nodes_new: List[str], nodes_old: List[str]):
         """
@@ -570,7 +571,8 @@ class Controller(Node):
 
         # Filter DB nodes whose nodeDefId matches any valid class name
         nodes_db_sub = [
-            node for node in self.poly.getNodesFromDb()
+            node
+            for node in self.poly.getNodesFromDb()
             if node.get("nodeDefId", "").lower() in valid_class_names
         ]
 
@@ -578,12 +580,15 @@ class Controller(Node):
 
         # Get current nodes excluding self
         nodes_current = self.poly.getNodes()
-        nodes_get = {addr: node for addr, node in nodes_current.items() if addr != self.id}
+        nodes_get = {
+            addr: node for addr, node in nodes_current.items() if addr != self.id
+        }
         existing_addresses = set(nodes_get.keys())
 
         # Filter DB nodes whose address is not in current nodes
         nodes_delete = [
-            node for node in nodes_db_sub
+            node
+            for node in nodes_db_sub
             if node.get("address") not in existing_addresses
         ]
 
@@ -604,9 +609,8 @@ class Controller(Node):
             if address not in nodes_new:
                 LOGGER.info(f"need to delete node {address}")
                 self.poly.delNode(address)
-                
 
-    def delete(self, command = None):
+    def delete(self, command=None):
         """
         Called by Polyglot when the NodeServer is deleted.
         This method performs cleanup tasks before the NodeServer process is terminated.
@@ -615,11 +619,10 @@ class Controller(Node):
             command (str, optional): The command that triggered the deletion. Defaults to None.
         """
         LOGGER.info(command)
-        self.setDriver('ST', 0, report = True, force = True)
-        LOGGER.info('bye bye ... deleted.')
+        self.setDriver("ST", 0, report=True, force=True)
+        LOGGER.info("bye bye ... deleted.")
 
-        
-    def stop(self, command = None):
+    def stop(self, command=None):
         """
         Called by Polyglot when the NodeServer is stopped.
         This method allows for clean disconnection from devices and other shutdown tasks.
@@ -628,41 +631,40 @@ class Controller(Node):
             command (str, optional): The command that triggered the stop. Defaults to None.
         """
         LOGGER.info(command)
-        self.setDriver('ST', 0, report = True, force = True)
+        self.setDriver("ST", 0, report=True, force=True)
         self.Notices.clear()
-        LOGGER.info('NodeServer stopped.')
-        
+        LOGGER.info("NodeServer stopped.")
 
     def heartbeat(self):
         """
         Sends alternating ON/OFF commands to the ISY to indicate the NodeServer is active.
         This function is typically called during long poll intervals.
         """
-        LOGGER.debug(f'heartbeat: hb={self.hb}')
+        LOGGER.debug(f"heartbeat: hb={self.hb}")
         command = "DOF" if self.hb else "DON"
         self.reportCmd(command, 2)
         self.hb = not self.hb
         LOGGER.debug("Exit")
-        
+
     """
     UOMs:
     25: index
     107: Raw 1-byte unsigned value
 
     Driver controls:
-    ST: Status
-    GV0: Custom Control 0
+    ST: Status (Controller Status)
+    GV0: Custom Control 0 (NumberOfNodes)
     """
     drivers = [
-        {'driver': 'ST', 'value': 1, 'uom': 25, 'name': "Controller Status"},
-        {'driver': 'GV0', 'value': 0, 'uom': 107, 'name': "NumberOfNodes"},
+        {"driver": "ST", "value": 1, "uom": 25, "name": "Controller Status"},
+        {"driver": "GV0", "value": 0, "uom": 107, "name": "NumberOfNodes"},
     ]
-    
+
     """
     Commands that this node can handle.
     Should match the 'accepts' section of the nodedef file.
     """
     commands = {
-        'QUERY': query,
-        'DISCOVER': discover_cmd,
+        "QUERY": query,
+        "DISCOVER": discover_cmd,
     }

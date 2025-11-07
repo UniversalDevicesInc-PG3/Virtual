@@ -5,6 +5,7 @@ udi-Virtual-pg3 NodeServer/Plugin for EISY/Polisy
 
 VirtualoffDelay class
 """
+
 # std libraries
 from threading import Timer
 
@@ -12,7 +13,12 @@ from threading import Timer
 from udi_interface import Node, LOGGER
 
 # local imports
-from utils.node_funcs import FieldSpec, load_persistent_data, store_values, get_config_data
+from utils.node_funcs import (
+    FieldSpec,
+    load_persistent_data,
+    store_values,
+    get_config_data,
+)
 
 # constants
 
@@ -32,14 +38,14 @@ RESET = OFF
 
 # Single source of truth for field names, driver codes, and defaults
 FIELDS: dict[str, FieldSpec] = {
-	# State variables (pushed to drivers)
-	"switch":      FieldSpec(driver="ST", default=OFF, data_type="state"),
-	"delay":       FieldSpec(driver="DUR", default=0, data_type="state"),
+    # State variables (pushed to drivers)
+    "switch": FieldSpec(driver="ST", default=OFF, data_type="state"),
+    "delay": FieldSpec(driver="DUR", default=0, data_type="state"),
 }
 
 
 class VirtualoffDelay(Node):
-    id = 'virtualoffdelay'
+    id = "virtualoffdelay"
 
     """ This class is for offDelay virtual switches, which will turn off a
     switch after a time duration of x seconds. This device can be made a
@@ -72,22 +78,22 @@ class VirtualoffDelay(Node):
     query(): Called when ISY sends a query request to Polyglot for this
         specific node.
     """
-    
+
     def __init__(self, poly, primary, address, name):
-        """ Sent by the Controller class node.
+        """Sent by the Controller class node.
         :param polyglot: Reference to the Interface class
         :param primary: Parent address
         :param address: This nodes address
         :param name: This nodes name
-        
+
         class variables:
         self.data['switch'] internal storage of 0,1 ON/OFF
 
         subscribes:
         START: used to create/check/load DB file
-        
+
         NOTE: POLL: not needed as no timed updates for this node
-        
+
         Controller node calls:
           self.deleteDB() when ISY deletes the node or discovers it gone
         """
@@ -109,25 +115,23 @@ class VirtualoffDelay(Node):
         self.poly.subscribe(self.poly.START, self.start, address)
         self.poly.subscribe(self.poly.STOP, self.stop, address)
 
-
     def start(self):
         """
         Start node and retrieve persistent data
         """
-        LOGGER.info(f'start: delayswitch:{self.name}')
+        LOGGER.info(f"start: delayswitch:{self.name}")
 
         # wait for controller start ready
         self.controller.ready_event.wait()
 
         # get persistent data from polyglot or depreciated: old db file, then delete db file
         load_persistent_data(self, FIELDS)
-        
+
         # retrieve configuration data
         get_config_data(self, FIELDS)
 
         LOGGER.info(f"data:{self.data}")
-        
-        
+
     def _initialize_timer(self) -> None:
         """Initialize timer with proper error handling."""
         try:
@@ -136,20 +140,18 @@ class VirtualoffDelay(Node):
             LOGGER.error(f"Failed to initialize timer: {ex}")
             self.timer = None
 
-            
     def stop(self):
         """
         Stop node and clean-up TIMER status
         """
-        LOGGER.info(f'stop: ondelay:{self.name}')
+        LOGGER.info(f"stop: ondelay:{self.name}")
         if self.timer and self.timer.is_alive():
             self.timer.cancel()
         # for onDelay we want to end up on
-        if self.data['switch'] == TIMER:
-            self.data['switch'] = RESET
+        if self.data["switch"] == TIMER:
+            self.data["switch"] = RESET
             store_values(self)
         LOGGER.info(f"stopping:{self.name}")
-
 
     def DON_cmd(self, command=None):
         """
@@ -157,18 +159,18 @@ class VirtualoffDelay(Node):
         If delay is zero, turn ON, then immediately call the OFF function.
         """
         LOGGER.info(f"{self.name}, {command}")
-        delay = self.data['delay']
+        delay = self.data["delay"]
         if self.timer and self.timer.is_alive():
             self.timer.cancel()
         try:
             if delay > 0:
                 self.timer = Timer(delay, self._off_delay)
                 self.timer.start()
-                self.data['switch'] = TIMER
-                self.setDriver('ST', TIMER)
+                self.data["switch"] = TIMER
+                self.setDriver("ST", TIMER)
                 self.reportCmd("TIMER")
             else:
-                self.setDriver('ST', ON)
+                self.setDriver("ST", ON)
                 self.reportCmd("DON")
                 self._off_delay()
         except Exception as ex:
@@ -176,20 +178,18 @@ class VirtualoffDelay(Node):
             return
         store_values(self)
         LOGGER.debug("Exit")
-        
 
     def _off_delay(self):
         """
         Helper function which the thread Timer calls to turn off the switch.
         Send DOF command.
         """
-        LOGGER.info('enter off delay')
-        self.data['switch'] = OFF
-        self.setDriver('ST', OFF)
+        LOGGER.info("enter off delay")
+        self.data["switch"] = OFF
+        self.setDriver("ST", OFF)
         self.reportCmd("DOF")
         store_values(self)
         LOGGER.debug("Exit")
-
 
     def DOF_cmd(self, command=None):
         """
@@ -198,25 +198,23 @@ class VirtualoffDelay(Node):
         LOGGER.info(f"{self.name}, {command}")
         if self.timer and self.timer.is_alive():
             self.timer.cancel()
-        self.data['switch'] = OFF
-        self.setDriver('ST', OFF)
+        self.data["switch"] = OFF
+        self.setDriver("ST", OFF)
         self.reportCmd("DOF")
         store_values(self)
         LOGGER.debug("Exit")
 
-        
     def set_delay_cmd(self, command):
         """
         Setting of delay duration, 0-99999 sec
         """
         LOGGER.info(f"{self.name}, {command}")
-        delay = int(command.get('value'))
-        self.data['delay'] = delay
-        self.setDriver('DUR', delay)
+        delay = int(command.get("value"))
+        self.data["delay"] = delay
+        self.setDriver("DUR", delay)
         self.reportCmd("DUR", value=delay)
         store_values(self)
         LOGGER.debug("Exit")
-
 
     def query(self, command=None):
         """
@@ -227,35 +225,37 @@ class VirtualoffDelay(Node):
         LOGGER.info(f"{self.name}, {command}")
         self.reportDrivers()
         LOGGER.debug("Exit")
-        
 
-    hint = '0x01020700'
+    hint = "0x01020700"
     # home, controller, scene controller
     # Hints See: https://github.com/UniversalDevicesInc/hints
-    
-    
+
     """
-    This is an array of dictionary items containing the variable names(drivers)
-    values and uoms(units of measure) from ISY. This is how ISY knows what kind
-    of variable to display. Check the UOM's in the WSDK for a complete list.
-    UOM 2 is boolean so the ISY will display 'True/False'
+    UOMs:
+    25: index
+    58: Duration in seconds
+
+    Driver controls:
+    ST: Status (Status)
+    DUR: Duration (Delay)
     """
     drivers = [
-        {'driver': 'ST', 'value': OFF, 'uom': 25, 'name': "Status"},
-        {'driver': 'DUR', 'value': OFF, 'uom': 58, 'name': "Delay"}, # uom 58, duration in seconds
+        {"driver": "ST", "value": OFF, "uom": 25, "name": "Status"},
+        {
+            "driver": "DUR",
+            "value": OFF,
+            "uom": 58,
+            "name": "Delay",
+        },  # uom 58, duration in seconds
     ]
 
-    
     """
-    This is a dictionary of commands. If ISY sends a command to the NodeServer,
-    this tells it which method to call. DON calls setOn, etc.
+    Commands that this node can handle.
+    Should match the 'accepts' section of the nodedef file.
     """
     commands = {
-        'DON': DON_cmd,
-        'DOF': DOF_cmd,
-        'SETDELAY': set_delay_cmd,
-        'QUERY': query,
+        "DON": DON_cmd,
+        "DOF": DOF_cmd,
+        "SETDELAY": set_delay_cmd,
+        "QUERY": query,
     }
-
-
-

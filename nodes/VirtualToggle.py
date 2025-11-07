@@ -5,6 +5,7 @@ udi-Virtual-pg3 NodeServer/Plugin for EISY/Polisy
 
 VirtualToggle class
 """
+
 # std libraries
 from threading import Timer
 
@@ -12,7 +13,12 @@ from threading import Timer
 from udi_interface import Node, LOGGER
 
 # local imports
-from utils.node_funcs import FieldSpec, load_persistent_data, store_values, get_config_data
+from utils.node_funcs import (
+    FieldSpec,
+    load_persistent_data,
+    store_values,
+    get_config_data,
+)
 
 # constants
 
@@ -32,15 +38,15 @@ OFFTIMER = 3
 
 # Single source of truth for field names, driver codes, and defaults
 FIELDS: dict[str, FieldSpec] = {
-	# State variables (pushed to drivers)
-	"switch":      FieldSpec(driver="ST", default=OFF, data_type="state"),
-	"ondelay":     FieldSpec(driver="DUR", default=1, data_type="state"),
-	"offdelay":    FieldSpec(driver="GV0", default=1, data_type="state"),
+    # State variables (pushed to drivers)
+    "switch": FieldSpec(driver="ST", default=OFF, data_type="state"),
+    "ondelay": FieldSpec(driver="DUR", default=1, data_type="state"),
+    "offdelay": FieldSpec(driver="GV0", default=1, data_type="state"),
 }
 
 
 class VirtualToggle(Node):
-    id = 'virtualtoggle'
+    id = "virtualtoggle"
 
     """ This class is for DON/DOF virtual switches, which oscillate according
     to time duration On and Off. This device can be made a controller/responder
@@ -51,7 +57,7 @@ class VirtualToggle(Node):
     immediately sending DOF.
     It will not accept DUR or GV0 = 0
     DFON will move ST to On and send DFON, cancelling oscillation.
-    DFOF will move ST to Off and send DFOF, cancelling oscillation.    
+    DFOF will move ST to Off and send DFOF, cancelling oscillation.
 
     Drivers & commands:
     ST 0,1,2,3: is used to report ON/OFF/ONTIMER/OFFTIMER status in the ISY
@@ -76,22 +82,22 @@ class VirtualToggle(Node):
     query(): Called when ISY sends a query request to Polyglot for this
         specific node.
     """
-    
+
     def __init__(self, poly, primary, address, name):
-        """ Sent by the Controller class node.
+        """Sent by the Controller class node.
         :param polyglot: Reference to the Interface class
         :param primary: Parent address
         :param address: This nodes address
         :param name: This nodes name
-        
+
         class variables:
         self.data['switch'] internal storage of 0,1 ON/OFF
 
         subscribes:
         START: used to create/check/load DB file
-        
+
         NOTE: POLL: not needed as no timed updates for this node
-        
+
         Controller node calls:
           self.deleteDB() when ISY deletes the node or discovers it gone
         """
@@ -108,29 +114,27 @@ class VirtualToggle(Node):
 
         # timer
         self.timer = None
-        self._initialize_timer()        
+        self._initialize_timer()
 
         self.poly.subscribe(self.poly.START, self.start, address)
         self.poly.subscribe(self.poly.STOP, self.stop, address)
-
 
     def start(self):
         """
         Start node and retrieve persistent data
         """
-        LOGGER.info(f'start: toggle:{self.name}')
+        LOGGER.info(f"start: toggle:{self.name}")
 
         # wait for controller start ready
         self.controller.ready_event.wait()
 
         # get persistent data from polyglot or depreciated: old db file, then delete db file
         load_persistent_data(self, FIELDS)
-        
+
         # retrieve configuration data
         get_config_data(self, FIELDS)
 
         LOGGER.info(f"data:{self.data}")
-        
 
     def _initialize_timer(self) -> None:
         """Initialize timer with proper error handling."""
@@ -140,22 +144,20 @@ class VirtualToggle(Node):
             LOGGER.error(f"Failed to initialize timer: {ex}")
             self.timer = None
 
-
     def stop(self):
         """
         Stop node and clean-up TIMER status
         """
-        LOGGER.info(f'stop: ondelay:{self.name}')
+        LOGGER.info(f"stop: ondelay:{self.name}")
         if self.timer:
             self.timer.cancel()
         # for onDelay we want to end up on
-        if self.data['switch'] == ONTIMER:
-            self.data['switch'] = ON
-        elif self.data['switch'] == OFFTIMER:
-            self.data['switch'] = OFF
+        if self.data["switch"] == ONTIMER:
+            self.data["switch"] = ON
+        elif self.data["switch"] == OFFTIMER:
+            self.data["switch"] = OFF
         store_values(self)
         LOGGER.info(f"stopping:{self.name}")
-
 
     def DON_cmd(self, command=None):
         """
@@ -163,7 +165,7 @@ class VirtualToggle(Node):
         If delay is zero, change to 1.
         """
         LOGGER.info(f"{self.name}, {command}")
-        ondelay = max(self.data.get('ondelay', 1), 1)
+        ondelay = max(self.data.get("ondelay", 1), 1)
         try:
             if self.timer and self.timer.is_alive():
                 self.timer.cancel()
@@ -172,48 +174,45 @@ class VirtualToggle(Node):
         except Exception as ex:
             LOGGER.error(f"Error in DON_cmd:{ex}")
             return
-        self.data['switch'] = ONTIMER
-        self.setDriver('ST', ONTIMER)
+        self.data["switch"] = ONTIMER
+        self.setDriver("ST", ONTIMER)
         self.reportCmd("DON")
         store_values(self)
         LOGGER.debug("Exit")
-        
 
     def _on_delay(self):
         """
         Helper fucntion which the thread Timer calls to turn off the switch.
         Send DOF command.
         """
-        LOGGER.info('enter on delay')
-        self.data['switch'] = OFFTIMER
-        self.setDriver('ST', OFFTIMER)
+        LOGGER.info("enter on delay")
+        self.data["switch"] = OFFTIMER
+        self.setDriver("ST", OFFTIMER)
         self.reportCmd("DOF")
         store_values(self)
-        offdelay = max(self.data.get('offdelay', 1), 1)
+        offdelay = max(self.data.get("offdelay", 1), 1)
         if self.timer and self.timer.is_alive():
             self.timer.cancel()
         self.timer = Timer(offdelay, self._off_delay)
         self.timer.start()
         LOGGER.debug("Exit")
 
-
     def _off_delay(self):
         """
         Helper fucntion which the thread Timer calls to turn on the switch.
         Send DON command.
         """
-        LOGGER.info('enter off delay')
-        self.data['switch'] = ONTIMER
-        self.setDriver('ST', ONTIMER)
+        LOGGER.info("enter off delay")
+        self.data["switch"] = ONTIMER
+        self.setDriver("ST", ONTIMER)
         self.reportCmd("DON")
         store_values(self)
-        ondelay = max(self.data.get('ondelay', 1), 1)
+        ondelay = max(self.data.get("ondelay", 1), 1)
         if self.timer and self.timer.is_alive():
             self.timer.cancel()
         self.timer = Timer(ondelay, self._on_delay)
         self.timer.start()
         LOGGER.debug("Exit")
-
 
     def DOF_cmd(self, command=None):
         """
@@ -223,13 +222,12 @@ class VirtualToggle(Node):
         if self.timer and self.timer.is_alive():
             LOGGER.info("Switch, is mid TIMER, waiting for DON/DOF")
         else:
-            self.data['switch'] = OFF
-            self.setDriver('ST', OFF)
+            self.data["switch"] = OFF
+            self.setDriver("ST", OFF)
             self.reportCmd("DOF")
         store_values(self)
         LOGGER.debug("Exit")
 
-        
     def DFON_cmd(self, command=None):
         """
         Force the driver on, report cmd DFON, store values in db for persistence.
@@ -237,12 +235,11 @@ class VirtualToggle(Node):
         LOGGER.info(f"{self.name}, {command}")
         if self.timer and self.timer.is_alive():
             self.timer.cancel()
-        self.data['switch'] = ON
-        self.setDriver('ST', ON)
+        self.data["switch"] = ON
+        self.setDriver("ST", ON)
         self.reportCmd("DFON")
         store_values(self)
         LOGGER.debug("Exit")
-
 
     def DFOF_cmd(self, command=None):
         """
@@ -251,38 +248,35 @@ class VirtualToggle(Node):
         LOGGER.info(f"{self.name}, {command}")
         if self.timer and self.timer.is_alive():
             self.timer.cancel()
-        self.data['switch'] = OFF
-        self.setDriver('ST', OFF)
+        self.data["switch"] = OFF
+        self.setDriver("ST", OFF)
         self.reportCmd("DFOF")
         store_values(self)
         LOGGER.debug("Exit")
-
 
     def set_on_dur_cmd(self, command):
         """
         Setting of onDelay duration, 0-99999 sec
         """
         LOGGER.info(f"{self.name}, {command}")
-        ondelay = max(int(command.get('value', 1)), 1)
-        self.data['ondelay'] = ondelay
-        self.setDriver('DUR', ondelay)
+        ondelay = max(int(command.get("value", 1)), 1)
+        self.data["ondelay"] = ondelay
+        self.setDriver("DUR", ondelay)
         self.reportCmd("DUR", value=ondelay)
         store_values(self)
         LOGGER.debug("Exit")
-
 
     def set_off_dur_cmd(self, command):
         """
         Setting of offDelay duration, 0-99999 sec
         """
         LOGGER.info(f"{self.name}, {command}")
-        offdelay = max(int(command.get('value', 1)), 1)
-        self.data['offdelay'] = offdelay
-        self.setDriver('GV0', offdelay)
+        offdelay = max(int(command.get("value", 1)), 1)
+        self.data["offdelay"] = offdelay
+        self.setDriver("GV0", offdelay)
         self.reportCmd("GV0", value=offdelay)
         store_values(self)
         LOGGER.debug("Exit")
-
 
     def query(self, command=None):
         """
@@ -293,38 +287,47 @@ class VirtualToggle(Node):
         LOGGER.info(f"{self.name}, {command}")
         self.reportDrivers()
         LOGGER.debug("Exit")
-        
 
-    hint = '0x01020700'
+    hint = "0x01020700"
     # home, controller, scene controller
     # Hints See: https://github.com/UniversalDevicesInc/hints
-    
-    
+
     """
-    This is an array of dictionary items containing the variable names(drivers)
-    values and uoms(units of measure) from ISY. This is how ISY knows what kind
-    of variable to display. Check the UOM's in the WSDK for a complete list.
-    UOM 2 is boolean so the ISY will display 'True/False'
+    UOMs:
+    25: index
+    58: Duration in seconds
+
+    Driver controls:
+    ST: Status (Status)
+    DUR: Duration (onDuration)
+    GV0: Custom Control 0 (offDuration)
     """
     drivers = [
-        {'driver': 'ST', 'value': OFF, 'uom': 25, 'name': "Status"},
-        {'driver': 'DUR', 'value': 1, 'uom': 58, 'name': "onDuration"}, # uom 58, duration in seconds
-        {'driver': 'GV0', 'value': 1, 'uom': 58, 'name': "offDuration"}, # uom 58, duration in seconds
+        {"driver": "ST", "value": OFF, "uom": 25, "name": "Status"},
+        {
+            "driver": "DUR",
+            "value": 1,
+            "uom": 58,
+            "name": "onDuration",
+        },  # uom 58, duration in seconds
+        {
+            "driver": "GV0",
+            "value": 1,
+            "uom": 58,
+            "name": "offDuration",
+        },  # uom 58, duration in seconds
     ]
 
-    
     """
-    This is a dictionary of commands. If ISY sends a command to the NodeServer,
-    this tells it which method to call. DON calls setOn, etc.
+    Commands that this node can handle.
+    Should match the 'accepts' section of the nodedef file.
     """
     commands = {
-        'DON': DON_cmd,
-        'DOF': DOF_cmd,
-        'DFON': DFON_cmd,
-        'DFOF': DFOF_cmd,
-        'SETONDUR': set_on_dur_cmd,
-        'SETOFFDUR': set_off_dur_cmd,
-        'QUERY': query,
+        "DON": DON_cmd,
+        "DOF": DOF_cmd,
+        "DFON": DFON_cmd,
+        "DFOF": DFOF_cmd,
+        "SETONDUR": set_on_dur_cmd,
+        "SETOFFDUR": set_off_dur_cmd,
+        "QUERY": query,
     }
-
-        
