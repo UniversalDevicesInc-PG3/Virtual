@@ -60,7 +60,7 @@ def offdelay_node(mock_polyglot):
 class TestVirtualoffDelay:
     """Test suite for the VirtualoffDelay node."""
 
-    def test_init(self, offdelay_node, mock_polyglot):
+    def test_init(self, offdelay_node):
         """Test the initialization of the VirtualoffDelay node."""
         node, _ = offdelay_node
         assert node.name == "Test OffDelay"
@@ -136,3 +136,70 @@ class TestVirtualoffDelay:
         node.data["switch"] = TIMER
         node.stop()
         assert node.data["switch"] == RESET  # RESET is an alias for OFF
+
+    def test_start(self, offdelay_node):
+        """Test the start method loads data."""
+        node, _ = offdelay_node
+        with patch("nodes.VirtualoffDelay.load_persistent_data") as mock_load, \
+             patch("nodes.VirtualoffDelay.get_config_data") as mock_get_config:
+            node.start()
+            mock_load.assert_called_once()
+            mock_get_config.assert_called_once()
+            node.controller.ready_event.wait.assert_called_once()
+
+    def test_initialize_timer_exception(self, offdelay_node):
+        """Test _initialize_timer handles exceptions."""
+        node, _ = offdelay_node
+        with patch("nodes.VirtualoffDelay.Timer", side_effect=Exception("Timer error")):
+            node._initialize_timer()
+            assert node.timer is None
+
+    def test_don_cmd_with_exception(self, offdelay_node):
+        """Test DON_cmd handles exceptions gracefully."""
+        node, mocks = offdelay_node
+        node.data["delay"] = 5
+        # Simulate exception during timer creation
+        mocks["timer_class"].side_effect = Exception("Timer creation failed")
+        
+        node.DON_cmd()
+        
+        # Should not crash and should return early, so store_values should NOT be called
+        mocks["store"].assert_not_called()
+
+    def test_query(self, offdelay_node):
+        """Test the query command reports drivers."""
+        node, _ = offdelay_node
+        node.query()
+        node.reportDrivers.assert_called_once()
+
+    def test_stop_no_timer(self, offdelay_node):
+        """Test stop method when timer is None."""
+        node, _ = offdelay_node
+        node.timer = None
+        node.data["switch"] = OFF
+        
+        node.stop()
+        
+        # Should not crash
+
+    def test_don_cmd_cancels_existing_timer(self, offdelay_node):
+        """Test DON_cmd cancels existing timer before starting new one."""
+        node, _ = offdelay_node
+        node.timer.is_alive.return_value = True
+        node.data["delay"] = 3
+        
+        node.DON_cmd()
+        
+        node.timer.cancel.assert_called_once()
+        assert node.data["switch"] == TIMER
+
+    def test_dof_cmd_no_active_timer(self, offdelay_node):
+        """Test DOF_cmd when no timer is active."""
+        node, _ = offdelay_node
+        node.timer.is_alive.return_value = False
+        
+        node.DOF_cmd()
+        
+        assert node.data["switch"] == OFF
+        node.setDriver.assert_called_with("ST", OFF)
+        node.reportCmd.assert_called_with("DOF")

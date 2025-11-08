@@ -155,3 +155,226 @@ class TestVirtualTemp:
             node._update()
             mocks["pull"].assert_called_with(node, 1, 456)
             mock_set_temp.assert_called_with({"cmd": "data", "value": 80.0})
+
+    def test_start(self, temp_node):
+        """Test the start method."""
+        node, _ = temp_node
+        with patch("nodes.VirtualTemp.load_persistent_data") as mock_load, \
+             patch("nodes.VirtualTemp.get_config_data") as mock_get_config, \
+             patch("nodes.VirtualTemp.ISY") as mock_isy:
+            node.start()
+            mock_load.assert_called_once()
+            mock_get_config.assert_called_once()
+            node.controller.ready_event.wait.assert_called_once()
+            mock_isy.assert_called_with(node.poly)
+
+    def test_poll_short_poll(self, temp_node):
+        """Test poll on shortPoll."""
+        node, _ = temp_node
+        node.controller.ready_event = True
+        with patch.object(node, "_update") as mock_update:
+            node.poll("shortPoll")
+            mock_update.assert_called_once()
+
+    def test_poll_long_poll(self, temp_node):
+        """Test poll on longPoll (should not update)."""
+        node, _ = temp_node
+        with patch.object(node, "_update") as mock_update:
+            node.poll("longPoll")
+            mock_update.assert_not_called()
+
+    def test_update_max_time_cap(self, temp_node):
+        """Test _update caps time at 1440 minutes."""
+        node, mocks = temp_node
+        # Set last update to very old (more than 1440 minutes ago)
+        node.data["lastUpdateTime"] = 0.0
+        mocks["time"].time.return_value = 100000.0
+        
+        node._update()
+        
+        # Should cap at 1440
+        node.setDriver.assert_any_call("GV2", 1440)
+
+    def test_update_action2_push(self, temp_node):
+        """Test _update with action2 push."""
+        node, mocks = temp_node
+        node.data["action2"] = 1  # Push
+        node.data["action2type"] = 1
+        node.data["action2id"] = 789
+        node.data["tempVal"] = 65.5
+        
+        node._update()
+        
+        mocks["push"].assert_any_call(node, 1, 789, 65.5)
+
+    def test_update_action1_pull(self, temp_node):
+        """Test _update with action1 pull."""
+        node, mocks = temp_node
+        mocks["pull"].return_value = 72.0
+        node.data["action1"] = 2  # Pull
+        node.data["action1type"] = 2
+        node.data["action1id"] = 321
+        
+        with patch.object(node, "set_temp_cmd") as mock_set_temp:
+            node._update()
+            mocks["pull"].assert_called_with(node, 2, 321)
+            mock_set_temp.assert_called_with({"cmd": "data", "value": 72.0})
+
+    def test_update_pull_action_no_var(self, temp_node):
+        """Test _update with pull action but variable returns None."""
+        node, mocks = temp_node
+        mocks["pull"].return_value = None
+        node.data["action1"] = 2  # Pull
+        node.data["action1type"] = 1
+        node.data["action1id"] = 999
+        
+        with patch.object(node, "set_temp_cmd") as mock_set_temp:
+            node._update()
+            mocks["pull"].assert_called_with(node, 1, 999)
+            mock_set_temp.assert_not_called()
+
+    def test_set_action1_cmd(self, temp_node):
+        """Test set_action1_cmd."""
+        node, mocks = temp_node
+        command = {"value": "1"}
+        node.set_action1_cmd(command)
+        assert node.data["action1"] == 1
+        node.setDriver.assert_called_with("GV6", 1)
+        mocks["store"].assert_called()
+
+    def test_set_action1_id_cmd(self, temp_node):
+        """Test set_action1_id_cmd."""
+        node, mocks = temp_node
+        command = {"value": "123"}
+        node.set_action1_id_cmd(command)
+        assert node.data["action1id"] == 123
+        node.setDriver.assert_called_with("GV8", 123)
+        mocks["store"].assert_called()
+
+    def test_set_action1_type_cmd(self, temp_node):
+        """Test set_action1_type_cmd."""
+        node, mocks = temp_node
+        command = {"value": "2"}
+        node.set_action1_type_cmd(command)
+        assert node.data["action1type"] == 2
+        node.setDriver.assert_called_with("GV7", 2)
+        mocks["store"].assert_called()
+
+    def test_set_action2_cmd(self, temp_node):
+        """Test set_action2_cmd."""
+        node, mocks = temp_node
+        command = {"value": "2"}
+        node.set_action2_cmd(command)
+        assert node.data["action2"] == 2
+        node.setDriver.assert_called_with("GV9", 2)
+        mocks["store"].assert_called()
+
+    def test_set_action2_id_cmd(self, temp_node):
+        """Test set_action2_id_cmd."""
+        node, mocks = temp_node
+        command = {"value": "456"}
+        node.set_action2_id_cmd(command)
+        assert node.data["action2id"] == 456
+        node.setDriver.assert_called_with("GV11", 456)
+        mocks["store"].assert_called()
+
+    def test_set_action2_type_cmd(self, temp_node):
+        """Test set_action2_type_cmd."""
+        node, mocks = temp_node
+        command = {"value": "1"}
+        node.set_action2_type_cmd(command)
+        assert node.data["action2type"] == 1
+        node.setDriver.assert_called_with("GV10", 1)
+        mocks["store"].assert_called()
+
+    def test_set_c_to_f_cmd(self, temp_node):
+        """Test set_c_to_f_cmd."""
+        node, mocks = temp_node
+        with patch.object(node, "reset_stats_cmd") as mock_reset:
+            command = {"value": "1"}
+            node.set_c_to_f_cmd(command)
+            assert node.data["CtoF"] == 1
+            node.setDriver.assert_called_with("GV13", 1)
+            mock_reset.assert_called_once()
+            mocks["store"].assert_called()
+
+    def test_set_f_to_c_cmd(self, temp_node):
+        """Test set_f_to_c_cmd."""
+        node, mocks = temp_node
+        with patch.object(node, "reset_stats_cmd") as mock_reset:
+            command = {"value": "1"}
+            node.set_f_to_c_cmd(command)
+            assert node.data["FtoC"] == 1
+            node.setDriver.assert_called_with("GV13", 1)
+            mock_reset.assert_called_once()
+            mocks["store"].assert_called()
+
+    def test_set_raw_to_prec_cmd(self, temp_node):
+        """Test set_raw_to_prec_cmd."""
+        node, mocks = temp_node
+        with patch.object(node, "reset_stats_cmd") as mock_reset:
+            command = {"value": "1"}
+            node.set_raw_to_prec_cmd(command)
+            assert node.data["RtoPrec"] == 1
+            node.setDriver.assert_called_with("GV12", 1)
+            mock_reset.assert_called_once()
+            mocks["store"].assert_called()
+
+    def test_set_temp_cmd_with_data_command(self, temp_node):
+        """Test set_temp_cmd with cmd='data' applies transformations."""
+        node, mocks = temp_node
+        node.data["tempVal"] = None
+        node.data["RtoPrec"] = 1
+        node.data["CtoF"] = 0
+        node.data["FtoC"] = 0
+        mocks["time"].time.return_value = 2000.0
+        
+        command = {"cmd": "data", "value": "100"}
+        node.set_temp_cmd(command)
+        
+        # 100 with RtoPrec becomes 10.0
+        assert node.data["tempVal"] == 10.0
+        node.setDriver.assert_any_call("ST", 10.0)
+
+    def test_set_temp_cmd_with_data_no_change(self, temp_node):
+        """Test set_temp_cmd with cmd='data' returns early if value unchanged."""
+        node, _ = temp_node
+        node.data["tempVal"] = 75.0
+        node.data["RtoPrec"] = 0
+        node.data["CtoF"] = 0
+        node.data["FtoC"] = 0
+        
+        command = {"cmd": "data", "value": "75.0"}
+        
+        node.set_temp_cmd(command)
+        
+        # Should return early, value should remain unchanged
+        assert node.data["tempVal"] == 75.0
+
+    def test_check_high_low_with_none(self, temp_node):
+        """Test _check_high_low with None value returns early."""
+        node, _ = temp_node
+        node.data["highTemp"] = 80
+        node.data["lowTemp"] = 60
+        
+        node._check_high_low(None)
+        
+        # Should return early without changing anything
+        assert node.data["highTemp"] == 80
+        assert node.data["lowTemp"] == 60
+
+    def test_query(self, temp_node):
+        """Test query command."""
+        node, _ = temp_node
+        node.query()
+        node.reportDrivers.assert_called_once()
+
+    def test_reset_time(self, temp_node):
+        """Test _reset_time method."""
+        node, mocks = temp_node
+        mocks["time"].time.return_value = 5000.0
+        
+        node._reset_time()
+        
+        assert node.data["lastUpdateTime"] == 5000.0
+        node.setDriver.assert_called_with("GV2", 0.0)

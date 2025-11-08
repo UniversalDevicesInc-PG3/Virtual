@@ -60,6 +60,7 @@ class TestConvertToIsoUtcZ:
         input_str = "2025-11-07T19:55:10.531+00:00"
         result = convert_to_iso_utc_z(input_str)
 
+        assert result is not None
         assert result.endswith("Z")
         assert "2025-11-07T19:55:10.531Z" == result
 
@@ -77,6 +78,7 @@ class TestConvertToIsoUtcZ:
         result = convert_to_iso_utc_z(input_str)
 
         # Should add milliseconds (.000)
+        assert result is not None
         assert result.endswith("Z")
         assert "." in result
 
@@ -110,6 +112,7 @@ class TestConvertToIsoUtcZ:
         result = convert_to_iso_utc_z(input_str)
 
         # Parse and verify it's UTC
+        assert result is not None
         dt = datetime.fromisoformat(result.replace("Z", "+00:00"))
         assert dt.tzinfo == timezone.utc
 

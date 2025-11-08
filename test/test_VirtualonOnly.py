@@ -97,6 +97,16 @@ class TestVirtualonOnly:
         node.query()
         node.reportDrivers.assert_called_once()
 
+    def test_start(self, ononly_node):
+        """Test the start method."""
+        node, _ = ononly_node
+        with patch("nodes.VirtualonOnly.load_persistent_data") as mock_load, \
+             patch("nodes.VirtualonOnly.get_config_data") as mock_get_config:
+            node.start()
+            mock_load.assert_called_once()
+            mock_get_config.assert_called_once()
+            node.controller.ready_event.wait.assert_called_once()
+
     def test_node_definition_attributes(self, ononly_node):
         """Test that the node's defining attributes (id, drivers, commands) are correct."""
         node, _ = ononly_node

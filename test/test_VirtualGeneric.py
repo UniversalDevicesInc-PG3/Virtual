@@ -175,3 +175,140 @@ class TestVirtualGeneric:
         node, _ = generic_node
         node.query()
         node.reportDrivers.assert_called_once()
+
+    def test_start(self, generic_node):
+        """Test the start method."""
+        node, _ = generic_node
+        with patch("nodes.VirtualGeneric.load_persistent_data") as mock_load, \
+             patch("nodes.VirtualGeneric.get_config_data") as mock_get_config, \
+             patch.object(node, "query") as mock_query:
+            node.start()
+            mock_load.assert_called_once()
+            mock_get_config.assert_called_once()
+            node.controller.ready_event.wait.assert_called_once()
+            mock_query.assert_called_once()
+
+    def test_dfof_cmd_static(self, generic_node):
+        """Test DFOF (fast off) command with static onlevel."""
+        node, _ = generic_node
+        node.data["status"] = 50
+        node.data["onleveltype"] = STATIC
+        
+        node.DFOF_cmd()
+        
+        assert node.data["status"] == OFF
+        # onlevel should not change with STATIC
+        assert node.data["onlevel"] == FULL
+        node.setDriver.assert_any_call("ST", OFF)
+        node.reportCmd.assert_called_with("DFOF")
+
+    def test_dfof_cmd_dynamic_mid_level(self, generic_node):
+        """Test DFOF command with dynamic onlevel at mid-level."""
+        node, _ = generic_node
+        node.data["status"] = 50
+        node.data["onleveltype"] = DYNAMIC
+        
+        node.DFOF_cmd()
+        
+        assert node.data["status"] == OFF
+        # onlevel should update to last level with DYNAMIC
+        assert node.data["onlevel"] == 50
+        node.setDriver.assert_any_call("OL", 50)
+        node.setDriver.assert_any_call("ST", OFF)
+
+    def test_dfof_cmd_dynamic_at_full(self, generic_node):
+        """Test DFOF when status is FULL - onlevel should not change."""
+        node, _ = generic_node
+        node.data["status"] = FULL
+        node.data["onleveltype"] = DYNAMIC
+        
+        node.DFOF_cmd()
+        
+        assert node.data["status"] == OFF
+        # onlevel should not change when at FULL
+        assert node.data["onlevel"] == FULL
+
+    def test_dfof_cmd_dynamic_at_off(self, generic_node):
+        """Test DFOF when already OFF - onlevel should not change."""
+        node, _ = generic_node
+        node.data["status"] = OFF
+        node.data["onleveltype"] = DYNAMIC
+        
+        node.DFOF_cmd()
+        
+        assert node.data["status"] == OFF
+        # onlevel should not change when already OFF
+        assert node.data["onlevel"] == FULL
+
+    def test_brt_cmd_dynamic(self, generic_node):
+        """Test BRT command with dynamic onlevel."""
+        node, _ = generic_node
+        node.data["status"] = 50
+        node.data["onleveltype"] = DYNAMIC
+        
+        node.BRT_cmd()
+        
+        assert node.data["status"] == 52
+        # With DYNAMIC, onlevel should update
+        assert node.data["onlevel"] == 52
+        node.setDriver.assert_any_call("OL", 52)
+        node.setDriver.assert_any_call("ST", 52)
+
+    def test_brt_cmd_at_max(self, generic_node):
+        """Test BRT command when already at maximum."""
+        node, _ = generic_node
+        node.data["status"] = FULL
+        
+        node.BRT_cmd()
+        
+        # Should remain at FULL
+        assert node.data["status"] == FULL
+        node.setDriver.assert_any_call("ST", FULL)
+
+    def test_set_st_cmd_with_zero(self, generic_node):
+        """Test SETST command with value of 0 (should set to DIMLOWERLIMIT)."""
+        node, _ = generic_node
+        command = {"value": "0"}
+        
+        node.set_ST_cmd(command)
+        
+        assert node.data["status"] == DIMLOWERLIMIT
+        node.setDriver.assert_any_call("ST", DIMLOWERLIMIT)
+
+    def test_set_ol_cmd_with_zero(self, generic_node):
+        """Test SETOL command with value of 0."""
+        node, _ = generic_node
+        command = {"value": "0"}
+        
+        node.set_OL_cmd(command)
+        
+        # Bug in code: line 199 overwrites line 198, so it ends up as 0
+        # If line 198 was followed by 'else:', onlevel would be DIMLOWERLIMIT
+        assert node.data["onlevel"] == 0
+        node.setDriver.assert_any_call("OL", 0)
+
+    def test_dim_cmd_static_non_zero(self, generic_node):
+        """Test DIM command with STATIC onlevel and non-zero result."""
+        node, _ = generic_node
+        node.data["status"] = 50
+        node.data["onleveltype"] = STATIC
+        
+        node.DIM_cmd()
+        
+        assert node.data["status"] == 48
+        # With STATIC, onlevel should not change
+        assert node.data["onlevel"] == FULL
+        node.setDriver.assert_any_call("ST", 48)
+
+    def test_dim_cmd_dynamic_non_zero(self, generic_node):
+        """Test DIM command with DYNAMIC onlevel and non-zero result."""
+        node, _ = generic_node
+        node.data["status"] = 50
+        node.data["onleveltype"] = DYNAMIC
+        
+        node.DIM_cmd()
+        
+        assert node.data["status"] == 48
+        # With DYNAMIC, onlevel should update
+        assert node.data["onlevel"] == 48
+        node.setDriver.assert_any_call("OL", 48)
