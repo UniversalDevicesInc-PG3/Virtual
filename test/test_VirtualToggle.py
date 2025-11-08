@@ -163,8 +163,9 @@ class TestVirtualToggle:
     def test_start(self, toggle_node):
         """Test the start method loads data."""
         node, _ = toggle_node
-        with patch("nodes.VirtualToggle.load_persistent_data") as mock_load, \
-             patch("nodes.VirtualToggle.get_config_data") as mock_get_config:
+        with patch("nodes.VirtualToggle.load_persistent_data") as mock_load, patch(
+            "nodes.VirtualToggle.get_config_data"
+        ) as mock_get_config:
             node.start()
             mock_load.assert_called_once()
             mock_get_config.assert_called_once()
@@ -175,9 +176,9 @@ class TestVirtualToggle:
         node, mocks = toggle_node
         node.data["switch"] = ONTIMER
         node.timer.is_alive = MagicMock(return_value=True)
-        
+
         node.stop()
-        
+
         node.timer.cancel.assert_called_once()
         assert node.data["switch"] == ON
         mocks["store"].assert_called()
@@ -187,9 +188,9 @@ class TestVirtualToggle:
         node, mocks = toggle_node
         node.data["switch"] = OFFTIMER
         node.timer.is_alive = MagicMock(return_value=True)
-        
+
         node.stop()
-        
+
         node.timer.cancel.assert_called_once()
         assert node.data["switch"] == OFF
         mocks["store"].assert_called()
@@ -199,9 +200,9 @@ class TestVirtualToggle:
         node, mocks = toggle_node
         node.timer = None
         node.data["switch"] = OFF
-        
+
         node.stop()
-        
+
         # Should not crash and should store values
         mocks["store"].assert_called()
 
@@ -217,9 +218,9 @@ class TestVirtualToggle:
         node, mocks = toggle_node
         # Simulate exception during timer creation
         mocks["timer_class"].side_effect = Exception("Timer creation failed")
-        
+
         node.DON_cmd()
-        
+
         # Should not crash, state should not change
         assert node.data["switch"] == OFF
 
@@ -228,9 +229,9 @@ class TestVirtualToggle:
         node, _ = toggle_node
         node.timer.is_alive.return_value = True
         node.data["ondelay"] = 3
-        
+
         node.DON_cmd()
-        
+
         node.timer.cancel.assert_called_once()
         assert node.data["switch"] == ONTIMER
 
@@ -239,9 +240,9 @@ class TestVirtualToggle:
         node, _ = toggle_node
         node.data["switch"] = ONTIMER
         node.timer.is_alive.return_value = True
-        
+
         node.DOF_cmd()
-        
+
         # State should remain ONTIMER since timer is active
         assert node.data["switch"] == ONTIMER
         # setDriver should not be called for state change
@@ -252,9 +253,9 @@ class TestVirtualToggle:
         node, _ = toggle_node
         node.data["switch"] = ON
         node.timer.is_alive.return_value = False
-        
+
         node.DOF_cmd()
-        
+
         assert node.data["switch"] == OFF
         node.setDriver.assert_called_with("ST", OFF)
         node.reportCmd.assert_called_with("DOF")
@@ -263,9 +264,9 @@ class TestVirtualToggle:
         """Test DFON_cmd when no timer is active."""
         node, _ = toggle_node
         node.timer.is_alive.return_value = False
-        
+
         node.DFON_cmd()
-        
+
         assert node.data["switch"] == ON
         node.setDriver.assert_called_with("ST", ON)
         node.reportCmd.assert_called_with("DFON")
@@ -274,9 +275,9 @@ class TestVirtualToggle:
         """Test DFOF_cmd when no timer is active."""
         node, _ = toggle_node
         node.timer.is_alive.return_value = False
-        
+
         node.DFOF_cmd()
-        
+
         assert node.data["switch"] == OFF
         node.setDriver.assert_called_with("ST", OFF)
         node.reportCmd.assert_called_with("DFOF")
@@ -286,9 +287,9 @@ class TestVirtualToggle:
         node, _ = toggle_node
         node.timer.is_alive.return_value = True
         node.data["offdelay"] = 7
-        
+
         node._on_delay()
-        
+
         node.timer.cancel.assert_called_once()
         assert node.data["switch"] == OFFTIMER
 
@@ -297,8 +298,8 @@ class TestVirtualToggle:
         node, _ = toggle_node
         node.timer.is_alive.return_value = True
         node.data["ondelay"] = 4
-        
+
         node._off_delay()
-        
+
         node.timer.cancel.assert_called_once()
         assert node.data["switch"] == ONTIMER

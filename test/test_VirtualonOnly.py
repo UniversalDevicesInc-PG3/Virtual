@@ -100,8 +100,9 @@ class TestVirtualonOnly:
     def test_start(self, ononly_node):
         """Test the start method."""
         node, _ = ononly_node
-        with patch("nodes.VirtualonOnly.load_persistent_data") as mock_load, \
-             patch("nodes.VirtualonOnly.get_config_data") as mock_get_config:
+        with patch("nodes.VirtualonOnly.load_persistent_data") as mock_load, patch(
+            "nodes.VirtualonOnly.get_config_data"
+        ) as mock_get_config:
             node.start()
             mock_load.assert_called_once()
             mock_get_config.assert_called_once()

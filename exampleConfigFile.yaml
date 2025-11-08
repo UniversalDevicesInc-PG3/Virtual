@@ -41,4 +41,3 @@ devices:
   type: "toggle"
   ondelay: 600
   offdelay: 700
-

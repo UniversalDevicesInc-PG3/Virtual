@@ -4,26 +4,26 @@
 
 3.1.25 \
 DONE add onOnly device \
-DONE update generic project files 
- 
+DONE update generic project files
+
 3.1.24 \
-DONE configuration based optional overide initial default 
- 
+DONE configuration based optional overide initial default
+
 3.1.23 \
 DONE add onDelay, offDelay, toggle switch, update documentation \
-DONE magic number scrub 
- 
+DONE magic number scrub
+
 3.1.22 \
-DONE generic/dimmer static/dynamic behaviour 
- 
+DONE generic/dimmer static/dynamic behaviour
+
 3.1.21 \
 DONE generic/dimmer to model dimmer ST & OL \
 DONE name & address check using poly interface \
 DONE consistent use of poly versus polyglot \
 DONE fix nagging error check in main() \
 DONE controller discover refactor \
-DONE add notice for ISY authorized error (was only in logs) 
- 
+DONE add notice for ISY authorized error (was only in logs)
+
 3.1.20 \
 DONE fix controller ST "status" on at start, off at stop / delete, "control" still heartbeat \
 DONE garage send CMDs, motor, motion, obstruction ; get naming consistent \
@@ -36,7 +36,7 @@ DONE consolidate temp, tempC, tempRC into one module \
 DONE temp variable writing now with shortPoll (only upon change, considers precision) \
 DONE refactor function naming \
 DONE refactor garage, fix persistence, sse client \
-DONE backfeed garage improvements to switch(done), generic(done), temperature() 
+DONE backfeed garage improvements to switch(done), generic(done), temperature()
 
 3.1.15 \
 DONE generic, dimmer, change ST to OL, memory of level for DON, DFON/DFOF, command
@@ -83,20 +83,20 @@ FIX better solution to markdown2 issue
 
 3.1.4 docs updated for garage
 
-3.1.3 new device 'garage' door (update to/from variables option)  
+3.1.3 new device 'garage' door (update to/from variables option)
 
 3.1.2 ISY name changes based on updates to config / YAML / JSON
 
-3.1.1 YAML file option for configuration  
-      JSON option for web based configuration  
-      Discover button to update based on config updates  
+3.1.1 YAML file option for configuration
+      JSON option for web based configuration
+      Discover button to update based on config updates
 
-3.1.0 move version history out of README to own file  
-      update docs  
+3.1.0 move version history out of README to own file
+      update docs
 
 3.0.1 fix get value from variable for Temperature devices
 
-3.0.0 Add Control functionality to Switch device  
+3.0.0 Add Control functionality to Switch device
       Refactor plugin to modern PG3 template.
 
 1.2.3 Bug fix.
@@ -120,7 +120,7 @@ change occurs.
 1.0.20 Replaced parsing regex to more reliably and consistently pull in negative
 numbers
 
-1.0.19 Fixed possible error with parseDelay setting when setting float,  
+1.0.19 Fixed possible error with parseDelay setting when setting float,
 set default parseDelay to .1
 
 1.0.18 Fix the regex to parse negative numbers.

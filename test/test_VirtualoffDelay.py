@@ -140,8 +140,9 @@ class TestVirtualoffDelay:
     def test_start(self, offdelay_node):
         """Test the start method loads data."""
         node, _ = offdelay_node
-        with patch("nodes.VirtualoffDelay.load_persistent_data") as mock_load, \
-             patch("nodes.VirtualoffDelay.get_config_data") as mock_get_config:
+        with patch("nodes.VirtualoffDelay.load_persistent_data") as mock_load, patch(
+            "nodes.VirtualoffDelay.get_config_data"
+        ) as mock_get_config:
             node.start()
             mock_load.assert_called_once()
             mock_get_config.assert_called_once()
@@ -160,9 +161,9 @@ class TestVirtualoffDelay:
         node.data["delay"] = 5
         # Simulate exception during timer creation
         mocks["timer_class"].side_effect = Exception("Timer creation failed")
-        
+
         node.DON_cmd()
-        
+
         # Should not crash and should return early, so store_values should NOT be called
         mocks["store"].assert_not_called()
 
@@ -177,9 +178,9 @@ class TestVirtualoffDelay:
         node, _ = offdelay_node
         node.timer = None
         node.data["switch"] = OFF
-        
+
         node.stop()
-        
+
         # Should not crash
 
     def test_don_cmd_cancels_existing_timer(self, offdelay_node):
@@ -187,9 +188,9 @@ class TestVirtualoffDelay:
         node, _ = offdelay_node
         node.timer.is_alive.return_value = True
         node.data["delay"] = 3
-        
+
         node.DON_cmd()
-        
+
         node.timer.cancel.assert_called_once()
         assert node.data["switch"] == TIMER
 
@@ -197,9 +198,9 @@ class TestVirtualoffDelay:
         """Test DOF_cmd when no timer is active."""
         node, _ = offdelay_node
         node.timer.is_alive.return_value = False
-        
+
         node.DOF_cmd()
-        
+
         assert node.data["switch"] == OFF
         node.setDriver.assert_called_with("ST", OFF)
         node.reportCmd.assert_called_with("DOF")

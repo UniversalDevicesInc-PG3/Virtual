@@ -159,9 +159,9 @@ class TestVirtualTemp:
     def test_start(self, temp_node):
         """Test the start method."""
         node, _ = temp_node
-        with patch("nodes.VirtualTemp.load_persistent_data") as mock_load, \
-             patch("nodes.VirtualTemp.get_config_data") as mock_get_config, \
-             patch("nodes.VirtualTemp.ISY") as mock_isy:
+        with patch("nodes.VirtualTemp.load_persistent_data") as mock_load, patch(
+            "nodes.VirtualTemp.get_config_data"
+        ) as mock_get_config, patch("nodes.VirtualTemp.ISY") as mock_isy:
             node.start()
             mock_load.assert_called_once()
             mock_get_config.assert_called_once()
@@ -189,9 +189,9 @@ class TestVirtualTemp:
         # Set last update to very old (more than 1440 minutes ago)
         node.data["lastUpdateTime"] = 0.0
         mocks["time"].time.return_value = 100000.0
-        
+
         node._update()
-        
+
         # Should cap at 1440
         node.setDriver.assert_any_call("GV2", 1440)
 
@@ -202,9 +202,9 @@ class TestVirtualTemp:
         node.data["action2type"] = 1
         node.data["action2id"] = 789
         node.data["tempVal"] = 65.5
-        
+
         node._update()
-        
+
         mocks["push"].assert_any_call(node, 1, 789, 65.5)
 
     def test_update_action1_pull(self, temp_node):
@@ -214,7 +214,7 @@ class TestVirtualTemp:
         node.data["action1"] = 2  # Pull
         node.data["action1type"] = 2
         node.data["action1id"] = 321
-        
+
         with patch.object(node, "set_temp_cmd") as mock_set_temp:
             node._update()
             mocks["pull"].assert_called_with(node, 2, 321)
@@ -227,7 +227,7 @@ class TestVirtualTemp:
         node.data["action1"] = 2  # Pull
         node.data["action1type"] = 1
         node.data["action1id"] = 999
-        
+
         with patch.object(node, "set_temp_cmd") as mock_set_temp:
             node._update()
             mocks["pull"].assert_called_with(node, 1, 999)
@@ -328,10 +328,10 @@ class TestVirtualTemp:
         node.data["CtoF"] = 0
         node.data["FtoC"] = 0
         mocks["time"].time.return_value = 2000.0
-        
+
         command = {"cmd": "data", "value": "100"}
         node.set_temp_cmd(command)
-        
+
         # 100 with RtoPrec becomes 10.0
         assert node.data["tempVal"] == 10.0
         node.setDriver.assert_any_call("ST", 10.0)
@@ -343,11 +343,11 @@ class TestVirtualTemp:
         node.data["RtoPrec"] = 0
         node.data["CtoF"] = 0
         node.data["FtoC"] = 0
-        
+
         command = {"cmd": "data", "value": "75.0"}
-        
+
         node.set_temp_cmd(command)
-        
+
         # Should return early, value should remain unchanged
         assert node.data["tempVal"] == 75.0
 
@@ -356,9 +356,9 @@ class TestVirtualTemp:
         node, _ = temp_node
         node.data["highTemp"] = 80
         node.data["lowTemp"] = 60
-        
+
         node._check_high_low(None)
-        
+
         # Should return early without changing anything
         assert node.data["highTemp"] == 80
         assert node.data["lowTemp"] == 60
@@ -373,8 +373,8 @@ class TestVirtualTemp:
         """Test _reset_time method."""
         node, mocks = temp_node
         mocks["time"].time.return_value = 5000.0
-        
+
         node._reset_time()
-        
+
         assert node.data["lastUpdateTime"] == 5000.0
         node.setDriver.assert_called_with("GV2", 0.0)

@@ -179,9 +179,9 @@ class TestVirtualGeneric:
     def test_start(self, generic_node):
         """Test the start method."""
         node, _ = generic_node
-        with patch("nodes.VirtualGeneric.load_persistent_data") as mock_load, \
-             patch("nodes.VirtualGeneric.get_config_data") as mock_get_config, \
-             patch.object(node, "query") as mock_query:
+        with patch("nodes.VirtualGeneric.load_persistent_data") as mock_load, patch(
+            "nodes.VirtualGeneric.get_config_data"
+        ) as mock_get_config, patch.object(node, "query") as mock_query:
             node.start()
             mock_load.assert_called_once()
             mock_get_config.assert_called_once()
@@ -193,9 +193,9 @@ class TestVirtualGeneric:
         node, _ = generic_node
         node.data["status"] = 50
         node.data["onleveltype"] = STATIC
-        
+
         node.DFOF_cmd()
-        
+
         assert node.data["status"] == OFF
         # onlevel should not change with STATIC
         assert node.data["onlevel"] == FULL
@@ -207,9 +207,9 @@ class TestVirtualGeneric:
         node, _ = generic_node
         node.data["status"] = 50
         node.data["onleveltype"] = DYNAMIC
-        
+
         node.DFOF_cmd()
-        
+
         assert node.data["status"] == OFF
         # onlevel should update to last level with DYNAMIC
         assert node.data["onlevel"] == 50
@@ -221,9 +221,9 @@ class TestVirtualGeneric:
         node, _ = generic_node
         node.data["status"] = FULL
         node.data["onleveltype"] = DYNAMIC
-        
+
         node.DFOF_cmd()
-        
+
         assert node.data["status"] == OFF
         # onlevel should not change when at FULL
         assert node.data["onlevel"] == FULL
@@ -233,9 +233,9 @@ class TestVirtualGeneric:
         node, _ = generic_node
         node.data["status"] = OFF
         node.data["onleveltype"] = DYNAMIC
-        
+
         node.DFOF_cmd()
-        
+
         assert node.data["status"] == OFF
         # onlevel should not change when already OFF
         assert node.data["onlevel"] == FULL
@@ -245,9 +245,9 @@ class TestVirtualGeneric:
         node, _ = generic_node
         node.data["status"] = 50
         node.data["onleveltype"] = DYNAMIC
-        
+
         node.BRT_cmd()
-        
+
         assert node.data["status"] == 52
         # With DYNAMIC, onlevel should update
         assert node.data["onlevel"] == 52
@@ -258,9 +258,9 @@ class TestVirtualGeneric:
         """Test BRT command when already at maximum."""
         node, _ = generic_node
         node.data["status"] = FULL
-        
+
         node.BRT_cmd()
-        
+
         # Should remain at FULL
         assert node.data["status"] == FULL
         node.setDriver.assert_any_call("ST", FULL)
@@ -269,9 +269,9 @@ class TestVirtualGeneric:
         """Test SETST command with value of 0 (should set to DIMLOWERLIMIT)."""
         node, _ = generic_node
         command = {"value": "0"}
-        
+
         node.set_ST_cmd(command)
-        
+
         assert node.data["status"] == DIMLOWERLIMIT
         node.setDriver.assert_any_call("ST", DIMLOWERLIMIT)
 
@@ -279,9 +279,9 @@ class TestVirtualGeneric:
         """Test SETOL command with value of 0."""
         node, _ = generic_node
         command = {"value": "0"}
-        
+
         node.set_OL_cmd(command)
-        
+
         # Bug in code: line 199 overwrites line 198, so it ends up as 0
         # If line 198 was followed by 'else:', onlevel would be DIMLOWERLIMIT
         assert node.data["onlevel"] == 0
@@ -292,9 +292,9 @@ class TestVirtualGeneric:
         node, _ = generic_node
         node.data["status"] = 50
         node.data["onleveltype"] = STATIC
-        
+
         node.DIM_cmd()
-        
+
         assert node.data["status"] == 48
         # With STATIC, onlevel should not change
         assert node.data["onlevel"] == FULL
@@ -305,9 +305,9 @@ class TestVirtualGeneric:
         node, _ = generic_node
         node.data["status"] = 50
         node.data["onleveltype"] = DYNAMIC
-        
+
         node.DIM_cmd()
-        
+
         assert node.data["status"] == 48
         # With DYNAMIC, onlevel should update
         assert node.data["onlevel"] == 48

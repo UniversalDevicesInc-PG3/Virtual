@@ -265,13 +265,17 @@ class TestController:
         """Test handleLevelChange sets debug level."""
         with patch("nodes.Controller.LOG_HANDLER") as mock_handler:
             controller_node.handleLevelChange({"level": 5})
-            mock_handler.set_basic_config.assert_called_with(True, 10)  # logging.DEBUG = 10
+            mock_handler.set_basic_config.assert_called_with(
+                True, 10
+            )  # logging.DEBUG = 10
 
     def test_handle_level_change_warning(self, controller_node):
         """Test handleLevelChange sets warning level."""
         with patch("nodes.Controller.LOG_HANDLER") as mock_handler:
             controller_node.handleLevelChange({"level": 30})
-            mock_handler.set_basic_config.assert_called_with(True, 30)  # logging.WARNING = 30
+            mock_handler.set_basic_config.assert_called_with(
+                True, 30
+            )  # logging.WARNING = 30
 
     def test_poll_not_ready(self, controller_node):
         """Test poll exits when not ready - checking if ready_event truthy."""
@@ -341,7 +345,9 @@ class TestController:
     def test_handle_file_devices_missing_devices_key(self, controller_node):
         """Test _handle_file_devices with YAML missing 'devices' key."""
         with patch("builtins.open", create=True) as mock_open:
-            mock_open.return_value.__enter__.return_value.read.return_value = "no_devices: []"
+            mock_open.return_value.__enter__.return_value.read.return_value = (
+                "no_devices: []"
+            )
             with patch("yaml.safe_load", return_value={"no_devices": []}):
                 result = controller_node._handle_file_devices("test.yaml")
                 assert result is None
@@ -354,7 +360,10 @@ class TestController:
     def test_handle_file_devices_yaml_error(self, controller_node):
         """Test _handle_file_devices with invalid YAML."""
         with patch("builtins.open", create=True):
-            with patch("nodes.Controller.yaml.safe_load", side_effect=yaml.YAMLError("Invalid YAML")):
+            with patch(
+                "nodes.Controller.yaml.safe_load",
+                side_effect=yaml.YAMLError("Invalid YAML"),
+            ):
                 result = controller_node._handle_file_devices("test.yaml")
                 assert result is None
 
@@ -362,7 +371,10 @@ class TestController:
         """Test _handle_file_devices with valid YAML."""
         devices_list = [{"id": "1", "type": "switch"}]
         with patch("builtins.open", create=True):
-            with patch("nodes.Controller.yaml.safe_load", return_value={"devices": devices_list}):
+            with patch(
+                "nodes.Controller.yaml.safe_load",
+                return_value={"devices": devices_list},
+            ):
                 result = controller_node._handle_file_devices("test.yaml")
                 assert result == devices_list
 
@@ -407,7 +419,7 @@ class TestController:
         # Setup: Current nodes and DB nodes
         mock_polyglot.getNodes.return_value = {
             "controller": controller_node,
-            "node1": MagicMock()
+            "node1": MagicMock(),
         }
         mock_polyglot.getNodesFromDb.return_value = [
             {"address": "oldnode", "nodeDefId": "virtualswitch"}
@@ -454,7 +466,9 @@ class TestController:
         """Test _discover handles exceptions gracefully."""
         controller_node.devlist = [{"id": "1", "type": "switch"}]
         controller_node.setDriver = MagicMock()
-        controller_node._discover_nodes = MagicMock(side_effect=Exception("Test exception"))
+        controller_node._discover_nodes = MagicMock(
+            side_effect=Exception("Test exception")
+        )
         result = controller_node._discover()
         assert result is False
 
@@ -474,15 +488,21 @@ class TestController:
         controller_node._discover_nodes(nodes_existing, nodes_new)
         assert len(nodes_new) == 0
 
-    def test_discover_nodes_unsupported_device_type(self, controller_node, mock_polyglot):
+    def test_discover_nodes_unsupported_device_type(
+        self, controller_node, mock_polyglot
+    ):
         """Test _discover_nodes skips unsupported device type."""
-        controller_node.devlist = [{"id": "1", "type": "unsupported_type", "name": "Test"}]
+        controller_node.devlist = [
+            {"id": "1", "type": "unsupported_type", "name": "Test"}
+        ]
         nodes_existing = {"controller": controller_node}
         nodes_new = []
         mock_polyglot.getValidName.return_value = "Test"
-        
+
         # Patch DEVICE_TYPE_TO_NODE_CLASS to return None for unsupported_type
-        with patch("nodes.Controller.DEVICE_TYPE_TO_NODE_CLASS", {"unsupported_type": None}):
+        with patch(
+            "nodes.Controller.DEVICE_TYPE_TO_NODE_CLASS", {"unsupported_type": None}
+        ):
             controller_node._discover_nodes(nodes_existing, nodes_new)
             # Node is not added because node_class is None
             assert len(nodes_new) == 0
@@ -500,18 +520,21 @@ class TestController:
         """Test wait_for_node_done processes queue correctly."""
         # The fixture mocks wait_for_node_done, so we need to restore the real method
         from nodes.Controller import Controller
+
         real_wait_for_node_done = Controller.wait_for_node_done
-        
+
         # Temporarily restore the real method
-        controller_node.wait_for_node_done = lambda: real_wait_for_node_done(controller_node)
-        
+        controller_node.wait_for_node_done = lambda: real_wait_for_node_done(
+            controller_node
+        )
+
         # Add item to queue before calling wait_for_node_done
         controller_node.n_queue.append("test_address")
         assert len(controller_node.n_queue) == 1
-        
+
         # Call wait_for_node_done - since queue has an item, it won't wait and will pop
         controller_node.wait_for_node_done()
-        
+
         # The item should be popped now
         assert len(controller_node.n_queue) == 0
 
@@ -520,7 +543,7 @@ class TestController:
         mock_node = MagicMock()
         mock_polyglot.getNodes.return_value = {
             "controller": controller_node,
-            "oldnode": mock_node
+            "oldnode": mock_node,
         }
         mock_polyglot.getNodesFromDb.return_value = []
         controller_node._cleanup_nodes([], ["oldnode"])

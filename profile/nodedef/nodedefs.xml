@@ -135,15 +135,15 @@
           <st id="GV1" editor="temp" />
           <st id="GV2" editor="minutes" />
           <st id="GV3" editor="temp" />
-          <st id="GV4" editor="temp" />  
+          <st id="GV4" editor="temp" />
           <st id="GV5" editor="temp" />
           <st id="GV6" editor="action_type" />
           <st id="GV7" editor="variable_type" />
           <st id="GV8" editor="variableID" />
-          <st id="GV9" editor="action_type" />  
+          <st id="GV9" editor="action_type" />
           <st id="GV10" editor="variable_type" />
           <st id="GV11" editor="variableID" />
-          <st id="GV12" editor="on_off" />  
+          <st id="GV12" editor="on_off" />
           <st id="GV13" editor="on_off" />
         </sts>
         <cmds>
@@ -161,7 +161,7 @@
             </cmd>
             <cmd id="setAction1id">
               <p id="" editor="variableID" init="GV8" />
-            </cmd> 
+            </cmd>
             <cmd id="setAction2">
               <p id="" editor="action_type" init="GV9" />
             </cmd>
@@ -173,10 +173,10 @@
             </cmd>
             <cmd id="setRawToPrec">
               <p id="" editor="on_off" init="GV12"/>
-            </cmd>                
+            </cmd>
             <cmd id="setCtoF">
               <p id="" editor="on_off" init="GV13"/>
-            </cmd>                
+            </cmd>
           </accepts>
         </cmds>
     </nodeDef>
@@ -193,10 +193,10 @@
         <st id="GV6" editor="action_type" />
         <st id="GV7" editor="variable_type" />
         <st id="GV8" editor="variableID" />
-        <st id="GV9" editor="action_type" />  
+        <st id="GV9" editor="action_type" />
         <st id="GV10" editor="variable_type" />
         <st id="GV11" editor="variableID" />
-        <st id="GV12" editor="on_off" />  
+        <st id="GV12" editor="on_off" />
         <st id="GV13" editor="on_off" />
       </sts>
       <cmds>
@@ -214,7 +214,7 @@
           </cmd>
           <cmd id="setAction1id">
             <p id="" editor="variableID" init="GV8" />
-          </cmd> 
+          </cmd>
           <cmd id="setAction2">
             <p id="" editor="action_type" init="GV9" />
           </cmd>
@@ -226,10 +226,10 @@
           </cmd>
           <cmd id="setRawToPrec">
             <p id="" editor="on_off" init="GV12"/>
-          </cmd>                
+          </cmd>
           <cmd id="setFtoC">
             <p id="" editor="on_off" init="GV13"/>
-          </cmd>                
+          </cmd>
         </accepts>
         </cmds>
     </nodeDef>
@@ -282,7 +282,7 @@
           <st id="GV9" editor="GDOOR" />
           <st id="GV3" editor="GMOTION" />
           <st id="GV4" editor="GLOCK" />
-          <st id="GV5" editor="GOBST" />  
+          <st id="GV5" editor="GOBST" />
           <st id="GV6" editor="minutes" />
           <st id="GV7" editor="seconds" />
         </sts>

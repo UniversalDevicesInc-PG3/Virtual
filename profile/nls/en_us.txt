@@ -139,7 +139,7 @@ CMD-vtempc-setFtoC-NAME = Convert F to C
 
 ON_OFF-0 = Off
 ON_OFF-1 = On
- 
+
 ON_OFF_DELAY-0 = Off
 ON_OFF_DELAY-1 = On
 ON_OFF_DELAY-2 = Timer
@@ -225,4 +225,3 @@ GOBST-1 = Obstructed
 
 GLOCK-0 = Unlocked
 GLOCK-1 = Locked
-

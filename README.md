@@ -61,7 +61,7 @@ Status: \
   When plugin is stopped, if ST is TIMER, ST will be set to On for persistence. \
   Using Thread timers to fire switch, so for now I am not showing a status of
   how long left in the timer. Trying to keep a low overhead. \
-  
+
 ## onDelay switch
 
 Usage: \
@@ -93,7 +93,7 @@ Status: \
   When plugin is stopped, if ST is TIMER, ST set to On for persistence. \
   Using Thread timers to fire switch, so for now I am not showing a status of
   how long left in the timer.  Trying to keep a low overhead. \
-  
+
 ## toggle oscillator
 
 Usage: \
@@ -119,14 +119,14 @@ Set: \
   offDur (GV0) to seconds switch will, after sending DOF, wait to send DON. \
   range 1 - 99999 seconds which gives you more than 24 hrs for each On / Off \
   if either timer <= 0, it will be reset to 1 \
-  
+
 Status: \
   Off(0), On(1), onTimer(2), offTimer(3)  \
   When plugin is stopped, if ST is onTimer, ST set to On for persistence. \
   When plugin is stopped, if ST is offTimer, ST set to Off for persistence. \
   Using Thread timers to fire switch, so for now I am not showing a status of
   how long left in the timers. Trying to keep a low overhead. \
-  
+
 ## Temperature
 
 The virtual temperature device allows you to extract temperature information

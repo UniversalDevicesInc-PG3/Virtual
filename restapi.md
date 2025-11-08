@@ -92,4 +92,3 @@ Sync: button
 
 Toggle door: button
 /button/toggle_door/press
-

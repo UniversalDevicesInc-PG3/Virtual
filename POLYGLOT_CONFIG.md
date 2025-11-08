@@ -2,7 +2,7 @@
 <!-- markdownlint-disable-file MD036 MD007 -->
 See [README for manual][readme]
 
-**NEED TO SELECT ISY ACCESS AND SAVE IN CONFIGURATION**  
+**NEED TO SELECT ISY ACCESS AND SAVE IN CONFIGURATION**
 Required for variable write access
 
 **After updating you MAY need to restart your Admin Console**
@@ -118,8 +118,8 @@ Key (var ID)    Value (device type)
 ## Conversions Available
 
 - Raw Celsius data
-- F to C  (TempC node convert Raw data before F to C)  
-- C to F  
+- F to C  (TempC node convert Raw data before F to C)
+- C to F
 - Single precision conversion from Raw
 
 ## Discovery
@@ -167,7 +167,7 @@ devices:
   ratgdo: True # will find the Ratgdo device (slower startup)
   # ratgdo: False # no Ratgdo device
   # ratgdo: 10.0.1.41 # IP address (faster startup)
-  
+
   # below are optional & only individually used if defined
   # each name refers to feature
   # type {1: state var, 2:state init, 3:integer var, 4:integer init}

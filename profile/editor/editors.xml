@@ -3,11 +3,11 @@
 	<editor id="CTD">
 		<range uom="25" subset="0,1,2" nls="CTD" />
 	</editor>
-	
+
 	<editor id="ID">
 	  <range uom="107" min="0" max="9999"/>
 	</editor>
-	
+
     <editor id="bool">
         <range uom="2" subset="0,1" />
     </editor>
@@ -19,7 +19,7 @@
     <editor id="on_off">
         <range uom="25" subset="0,1" nls="ON_OFF" />
     </editor>
-    
+
 	<editor id="on_off_delay">
 		<range uom="25" subset="0,1,2" nls="ON_OFF_DELAY" />
 	</editor>
@@ -31,15 +31,15 @@
     <editor id="action_type">
         <range uom="25" subset="0-2" nls="ACTION" />
     </editor>
-    
+
 	<editor id="delay">
 		<range uom="58" min="0" max="99999" prec="0" step="1"/>
 	</editor>
 
     <editor id="variable_type">
         <range uom="25" subset="0-4" nls="TYPE" />
-    </editor>    
-    
+    </editor>
+
     <editor id="value">
         <range uom="56" min="0" max="100" prec="0" step="1"/>
     </editor>
@@ -47,15 +47,15 @@
     <editor id="variableID">
         <range uom="56" min="0" max="1000" prec="0" step="1"/>
     </editor>
-    
+
     <editor id="minutes">
         <range uom="45" min="0" max="9999" prec="2" step=".5"/>
     </editor>
-    
+
     <editor id="seconds">
         <range uom="58" min="0" max="9999" prec="0" step="1"/>
     </editor>
-    
+
     <editor id="level">
         <range uom="56" min="0" max="100" prec="0" step="1"/>
     </editor>
@@ -71,27 +71,27 @@
     <editor id="GLIGHT">
         <range uom="2" subset="0,1" nls="GLIGHT" />
     </editor>
-	
+
     <editor id="GDOOR">
         <range uom="25" subset="0,1,2,3,4" nls="GDOOR" />
     </editor>
-	
+
     <editor id="GCOMMAND">
         <range uom="25" subset="0,1,2,3,4" nls="GCOMMAND" />
     </editor>
-	
+
     <editor id="GMOTOR">
         <range uom="2" subset="0,1" nls="GMOTOR" />
     </editor>
-	
+
     <editor id="GMOTION">
         <range uom="2" subset="0,1" nls="GMOTION" />
     </editor>
-	
+
     <editor id="GLOCK">
         <range uom="2" subset="0,1" nls="GLOCK" />
     </editor>
-	
+
     <editor id="GOBST">
         <range uom="2" subset="0,1" nls="GOBST" />
     </editor>
