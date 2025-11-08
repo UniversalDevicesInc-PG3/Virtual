@@ -151,20 +151,26 @@ class VirtualGarage(Node):
         self.ratgdoOK = False  # checker for Ratgdo device
 
         # storage arrays, events, conditions, locks
-        self.ratgdo_event = []  # array, keeper of the Ratgdo events, json / dictionary
-        self.ratgdo_event_condition = (
-            Condition()
-        )  # condition to wait / hold event pollng for new events
-        self.stop_sse_client_event = (
-            Event()
-        )  # graceful exit for sse client and ratgdo_event thread
-        self.first_pass_event = (
-            Event()
-        )  # just to make sure first write of drivers happens
-        self._event_polling_thread = None  # thread to run event polling
-        self.ratgdo_poll_lock = (
-            Lock()
-        )  # lock to prevent re-running ratgdo direct polling
+
+        # array, keeper of the Ratgdo events, json / dictionary
+        self.ratgdo_event = []
+
+        # condition to hold event pollng
+        self.ratgdo_event_condition = Condition()
+
+        # thread exit of sse client & ratgdo_event
+        self.stop_sse_client_event = Event()
+
+        # make sure first write of drivers happens
+        self.first_pass_event = Event()
+
+        # thread to run event polling
+        self._event_polling_thread = None
+
+        # lock to prevent re-running ratgdo polling
+        self.ratgdo_poll_lock = Lock()
+
+        # ensure sse thread is launched once
         self.sse_lock = Lock()
 
         # debug flags
