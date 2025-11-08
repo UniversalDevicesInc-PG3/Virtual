@@ -1,14 +1,109 @@
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Project Specific
+logs/
+polyglot.py
+build.txt
+
+# C extensions
+*.so
+
+# Distribution / packaging
+.python-version
+env/
+.venv/
+venv/
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+*.egg-info/
+.installed.cfg
+*.egg
+
+# PyInstaller
+#  Usually these files are written by a python script from a template
+#  before PyInstaller builds the exe, so as to inject date/other infos into it.
+*.manifest
+*.spec
+
+# Installer logs
+pip-log.txt
+pip-delete-this-directory.txt
+
+# Unit test / coverage reports
+htmlcov/
+.tox/
+.coverage
+.coverage.*
+.cache
+.pytest_cache/
+nosetests.xml
+coverage.xml
+*,cover
+.hypothesis/
+
+# Translations
+*.mo
+*.pot
+
+# Django stuff:
+*.log
+test.py
+login.py
+
+# Sphinx documentation
+docs/_build/
+
+# PyBuilder
+target/
+
+# Ipython Notebook
+.ipynb_checkpoints
+.idea/
+
+# Type checkers
+.mypy_cache/
+.pytype/
+.pyre/
+
+# Linters
+.ruff_cache/
+
+# Environment variables
+.env
+.envrc
+
+# macOS
+.AppleDouble
+.DS_Store
+
+# Emacs
+*~
+.#*
+\#*\#
+
+# Vim
+*.swp
+*.swo
+*.swn
+
+#Project specific
+polyinterface
 *.cert
 *.key
 *.pid
-/logs/
-*.db
-.python-version
-__pycache__/
-*.~1~
-*.~2~
-*.~3~
-*.~4~
-/._POLYGLOT_CONFIG.html
-*.~5~
-/.coverage
+/.saves/
+.aider*
+/temp/
+*.zip
