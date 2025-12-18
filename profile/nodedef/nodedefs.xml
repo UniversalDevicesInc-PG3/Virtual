@@ -110,8 +110,6 @@
 		  <sends>
 			<cmd id="DON" />
 			<cmd id="DOF" />
-			<cmd id="ONTIMER" />
-			<cmd id="OFFTIMER" />
 		  </sends>
 		  <accepts>
 			<cmd id="DON" />

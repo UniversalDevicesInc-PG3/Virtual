@@ -2,3 +2,4 @@ udi_interface
 pyyaml
 requests
 aiohttp
+setuptools

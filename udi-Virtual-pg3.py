@@ -16,12 +16,10 @@ udi-Virtual-pg3 NodeServer/Plugin for EISY/Polisy
 import sys
 
 # external libraries
-import udi_interface
+from udi_interface import LOGGER, Interface
 
 # nodes
 from nodes import Controller
-
-LOGGER = udi_interface.LOGGER
 
 VERSION = "3.1.25"
 """
@@ -79,7 +77,7 @@ if __name__ == "__main__":
         * Optionally pass list of class names
           - PG2 had the controller node name here
         """
-        polyglot = udi_interface.Interface([])
+        polyglot = Interface([])
         """
         Starts MQTT and connects to Polyglot.
         """
