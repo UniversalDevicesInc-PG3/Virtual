@@ -364,7 +364,7 @@ class Controller(Node):
             List[Dict[str, Any]] | None: A list of device dictionaries if successful, None otherwise.
         """
         try:
-            with open(filename, "r") as f:
+            with open(filename) as f:
                 dev_yaml = yaml.safe_load(f)
 
             if "devices" not in dev_yaml:

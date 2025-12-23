@@ -183,7 +183,7 @@ class VirtualToggle(Node):
             self.timer.cancel()
         self.data["switch"] = ON
         self.setDriver("ST", ON)
-        self.reportCmd("DFON")
+        self.reportCmd("DON")
         store_values(self)
         LOGGER.debug("Exit")
 
@@ -194,7 +194,7 @@ class VirtualToggle(Node):
             self.timer.cancel()
         self.data["switch"] = OFF
         self.setDriver("ST", OFF)
-        self.reportCmd("DFOF")
+        self.reportCmd("DOF")
         store_values(self)
         LOGGER.debug("Exit")
 

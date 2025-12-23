@@ -162,7 +162,7 @@ class VirtualonDelay(Node):
             self.timer.cancel()
         self.data["switch"] = OFF
         self.setDriver("ST", OFF)
-        self.reportCmd("DFOF")
+        self.reportCmd("DOF")
         store_values(self)
         LOGGER.debug("Exit")
 

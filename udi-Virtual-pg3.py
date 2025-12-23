@@ -25,6 +25,7 @@ VERSION = "3.1.26"
 """
 3.1.26
 DONE add timeout to ratgdo requests and sse client to prevent hanging
+DONE chg DFOF to DOF for Toggle & onDelay
 
 3.1.25
 DONE add onOnly device

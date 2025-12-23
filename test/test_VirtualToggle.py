@@ -121,7 +121,7 @@ class TestVirtualToggle:
         node.timer.cancel.assert_called_once()
         assert node.data["switch"] == ON
         node.setDriver.assert_called_with("ST", ON)
-        node.reportCmd.assert_called_with("DFON")
+        node.reportCmd.assert_called_with("DON")
 
     def test_dfof_cmd_stops_oscillation(self, toggle_node):
         """Test DFOF command cancels an active timer and sets state to OFF."""
@@ -133,7 +133,7 @@ class TestVirtualToggle:
         node.timer.cancel.assert_called_once()
         assert node.data["switch"] == OFF
         node.setDriver.assert_called_with("ST", OFF)
-        node.reportCmd.assert_called_with("DFOF")
+        node.reportCmd.assert_called_with("DOF")
 
     @pytest.mark.parametrize("input_val, expected_val", [(5, 5), (0, 1), (-1, 1)])
     def test_set_on_dur_cmd(self, toggle_node, input_val, expected_val):
@@ -269,7 +269,7 @@ class TestVirtualToggle:
 
         assert node.data["switch"] == ON
         node.setDriver.assert_called_with("ST", ON)
-        node.reportCmd.assert_called_with("DFON")
+        node.reportCmd.assert_called_with("DON")
 
     def test_dfof_cmd_no_active_timer(self, toggle_node):
         """Test DFOF_cmd when no timer is active."""
@@ -280,7 +280,7 @@ class TestVirtualToggle:
 
         assert node.data["switch"] == OFF
         node.setDriver.assert_called_with("ST", OFF)
-        node.reportCmd.assert_called_with("DFOF")
+        node.reportCmd.assert_called_with("DOF")
 
     def test_on_delay_cancels_existing_timer(self, toggle_node):
         """Test _on_delay cancels existing timer if alive."""

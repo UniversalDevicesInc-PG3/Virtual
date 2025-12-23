@@ -135,7 +135,7 @@ class TestVirtualonDelay:
         node.timer.cancel.assert_called_once()
         assert node.data["switch"] == OFF
         node.setDriver.assert_called_with("ST", OFF)
-        node.reportCmd.assert_called_with("DFOF")
+        node.reportCmd.assert_called_with("DOF")
 
     def test_set_delay_cmd(self, ondelay_node):
         """Test the SETDELAY command."""
@@ -225,4 +225,4 @@ class TestVirtualonDelay:
 
         assert node.data["switch"] == OFF
         node.setDriver.assert_called_with("ST", OFF)
-        node.reportCmd.assert_called_with("DFOF")
+        node.reportCmd.assert_called_with("DOF")
