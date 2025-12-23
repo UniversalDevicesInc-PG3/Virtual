@@ -15,9 +15,10 @@ dev = [
     "markdown2",
     "pylsp-mypy",
     "pyls",
-    "pytest",
     "pre-commit",
     "pytest-cov",
+    "pytest-xdist>=3.8.0",
+    "setuptools>=80.9.0",
 ]
 
 [tool.uv]

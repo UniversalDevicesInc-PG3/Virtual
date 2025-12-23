@@ -33,13 +33,13 @@ zip:
 	zip -x@zip_exclude.lst -r ${NAME}.zip *
 
 test:
-	uv run pytest
+	uv run pytest -n auto
 
 coverage:
-	uv run pytest --cov=nodes --cov=utils --cov-report=term-missing
+	uv run pytest -n auto --cov=nodes --cov=utils --cov-report=term-missing
 
 coverage-html:
-	uv run pytest --cov=nodes --cov=utils --cov-report=html --cov-report=term-missing
+	uv run pytest -n auto --cov=nodes --cov=utils --cov-report=html --cov-report=term-missing
 	@echo ""
 	@echo "Coverage report generated! Open htmlcov/index.html in your browser."
 
