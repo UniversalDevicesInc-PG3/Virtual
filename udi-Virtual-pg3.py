@@ -21,8 +21,11 @@ from udi_interface import LOGGER, Interface
 # nodes
 from nodes import Controller
 
-VERSION = "3.1.25"
+VERSION = "3.1.26"
 """
+3.1.26
+DONE add timeout to ratgdo requests and sse client to prevent hanging
+
 3.1.25
 DONE add onOnly device
 DONE update generic project files

@@ -340,7 +340,7 @@ class VirtualGarage(Node):
             ipaddress.ip_address(self.ratgdo)
             resTxt = f"http://{self.ratgdo}{LIGHT}"
             LOGGER.debug(f"get {resTxt}")
-            res = requests.get(resTxt)
+            res = requests.get(resTxt, timeout=5)
             if res.ok:
                 LOGGER.debug(f"res.status_code = {res.status_code}")
             else:
@@ -366,7 +366,7 @@ class VirtualGarage(Node):
         if self.ratgdoOK:
             LOGGER.info(f"post:{post}")
             try:
-                rpost = requests.post(f"http://{post}")
+                rpost = requests.post(f"http://{post}", timeout=5)
                 if not rpost.ok:
                     LOGGER.error(f"{post}: {rpost.status_code}")
             except Exception as ex:
@@ -571,7 +571,10 @@ class VirtualGarage(Node):
         try:
             while not self.stop_sse_client_event.is_set():
                 try:
-                    async with aiohttp.ClientSession() as session:
+                    timeout = aiohttp.ClientTimeout(
+                        total=None, sock_connect=10, sock_read=10
+                    )
+                    async with aiohttp.ClientSession(timeout=timeout) as session:
                         async with session.get(url) as response:
                             retries = 0  # Reset retries on successful connection
                             async for val in response.content:
@@ -789,7 +792,7 @@ class VirtualGarage(Node):
         _data = {}
         resTxt = f"{self.ratgdo}{get}"
         try:
-            res = requests.get(f"http://{resTxt}")
+            res = requests.get(f"http://{resTxt}", timeout=5)
             if res.ok:
                 LOGGER.debug(f"res.status_code = {res.status_code}")
             else:
@@ -815,7 +818,7 @@ class VirtualGarage(Node):
 
         for path, handler, label in endpoints:
             try:
-                res = requests.get(f"http://{self.ratgdo}{path}")
+                res = requests.get(f"http://{self.ratgdo}{path}", timeout=5)
                 if not res.ok:
                     LOGGER.error(f"{label}: res.status_code = {res.status_code}")
                     return False
