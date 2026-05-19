@@ -241,7 +241,9 @@
       </sts>
       <cmds>
 		<sends>
-		  <cmd id="DON" />
+		  <cmd id="DON">
+			<p id="" editor="value" optional="true" />
+		  </cmd>
 		  <cmd id="DOF" />
 		  <cmd id="DFON" />
 		  <cmd id="DFOF" />
@@ -250,10 +252,13 @@
 		  <cmd id="ST" />
 		  <cmd id="SETST" />
 		  <cmd id="SETOL" />
+		  <cmd id="SETOLT" />
 		  <cmd id="OLTT" />
         </sends>
         <accepts>
-          <cmd id="DON" />
+          <cmd id="DON">
+			<p id="" editor="value" optional="true" />
+		  </cmd>
           <cmd id="DOF" />
 		  <cmd id="DFON" />
 		  <cmd id="DFOF" />
@@ -264,6 +269,9 @@
           </cmd>
 		  <cmd id="SETOL">
 			<p id="" editor="value" init="OL" />
+		  </cmd>
+		  <cmd id="SETOLT">
+			<p id="" editor="ONLEVELTYPE" init="GV0" />
 		  </cmd>
 		  <cmd id="OLTT" />
         </accepts>

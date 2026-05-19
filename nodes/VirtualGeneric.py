@@ -99,12 +99,18 @@ class VirtualGeneric(Node):
         LOGGER.info(f"data:{self.data}")
 
     def DON_cmd(self, command=None):
-        """Sets the device to its last known 'on level'."""
+        """Turns on to last on-level, or to an optional brightness level."""
         LOGGER.info(f"{self.lpfx}, {command}")
-        onlevel = self.data.get("onlevel", FULL)
-        self.data["status"] = onlevel if onlevel > OFF else FULL
+        if command and command.get("value") is not None:
+            status = int(command.get("value"))
+            if status == OFF:
+                status = DIMLOWERLIMIT
+            self.data["status"] = status
+        else:
+            onlevel = self.data.get("onlevel", FULL)
+            self.data["status"] = onlevel if onlevel > OFF else FULL
         self.setDriver("ST", self.data["status"])
-        self.setDriver("OL", self.data["onlevel"])
+        self.setDriver("OL", self.data.get("onlevel"))
         self.reportCmd("DON")
         store_values(self)
         LOGGER.debug("Exit")
@@ -196,9 +202,23 @@ class VirtualGeneric(Node):
         level = int(command.get("value"))
         if level == OFF:
             self.data["onlevel"] = DIMLOWERLIMIT
-        self.data["onlevel"] = level
-        self.setDriver("OL", level)
-        self.reportCmd("OL", value=level)
+        else:
+            self.data["onlevel"] = level
+        self.setDriver("OL", self.data["onlevel"])
+        self.reportCmd("OL", value=self.data["onlevel"])
+        store_values(self)
+        LOGGER.debug("Exit")
+
+    def set_OLT_cmd(self, command):
+        """Sets the 'on level' behavior to static or dynamic."""
+        LOGGER.info(f"{self.lpfx}, {command}")
+        onleveltype = int(command.get("value"))
+        if onleveltype not in (STATIC, DYNAMIC):
+            LOGGER.warning(f"{self.lpfx}, invalid on level type: {onleveltype}")
+            return
+        self.data["onleveltype"] = onleveltype
+        self.setDriver("GV0", onleveltype)
+        self.reportCmd("SETOLT", value=onleveltype)
         store_values(self)
         LOGGER.debug("Exit")
 
@@ -229,7 +249,7 @@ class VirtualGeneric(Node):
 
     """
     UOMs:
-    2: boolean
+    25: index (enumerated value)
     56: The raw value as reported by the device
 
     Driver controls:
@@ -240,7 +260,7 @@ class VirtualGeneric(Node):
     drivers = [
         {"driver": "ST", "value": OFF, "uom": 56, "name": "State"},
         {"driver": "OL", "value": FULL, "uom": 56, "name": "onLevel"},
-        {"driver": "GV0", "value": STATIC, "uom": 2, "name": "onLevelType"},
+        {"driver": "GV0", "value": STATIC, "uom": 25, "name": "onLevelType"},
     ]
 
     """
@@ -256,6 +276,7 @@ class VirtualGeneric(Node):
         "DIM": DIM_cmd,
         "SETST": set_ST_cmd,
         "SETOL": set_OL_cmd,
+        "SETOLT": set_OLT_cmd,
         "OLTT": OL_toggle_type_cmd,
         "QUERY": query,
     }

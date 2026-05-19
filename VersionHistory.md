@@ -2,6 +2,11 @@
 
 #### see udi-Virtual-pg3.py for current work
 
+3.1.27 \
+DONE virtualgeneric: DON optional level param (IoX dimmer convention, fixes #11) \
+DONE virtualgeneric: ONLEVELTYPE UOM 25 + SETOLT command (fixes #12) \
+DONE virtualgeneric: SETOL zero onlevel uses DIMLOWERLIMIT (else fix)
+
 3.1.25 \
 DONE add onOnly device \
 DONE update generic project files

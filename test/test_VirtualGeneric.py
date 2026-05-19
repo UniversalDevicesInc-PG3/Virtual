@@ -90,6 +90,20 @@ class TestVirtualGeneric:
         assert node.data["status"] == FULL
         node.setDriver.assert_any_call("ST", FULL)
 
+    def test_don_cmd_with_level(self, generic_node):
+        """Test DON with optional brightness parameter."""
+        node, _ = generic_node
+        node.DON_cmd({"value": "75"})
+        assert node.data["status"] == 75
+        node.setDriver.assert_any_call("ST", 75)
+
+    def test_don_cmd_with_zero_level(self, generic_node):
+        """Test DON with level 0 maps to DIMLOWERLIMIT like SETST."""
+        node, _ = generic_node
+        node.DON_cmd({"value": "0"})
+        assert node.data["status"] == DIMLOWERLIMIT
+        node.setDriver.assert_any_call("ST", DIMLOWERLIMIT)
+
     @pytest.mark.parametrize(
         "onleveltype, initial_status, expected_onlevel",
         [
@@ -169,6 +183,23 @@ class TestVirtualGeneric:
         node.OL_toggle_type_cmd()
         assert node.data["onleveltype"] == STATIC
         node.setDriver.assert_called_with("GV0", STATIC)
+
+    def test_set_olt_cmd(self, generic_node):
+        """Test the SETOLT command to set onlevel type directly."""
+        node, _ = generic_node
+        node.set_OLT_cmd({"value": "1"})
+        assert node.data["onleveltype"] == DYNAMIC
+        node.setDriver.assert_called_with("GV0", DYNAMIC)
+        node.set_OLT_cmd({"value": "0"})
+        assert node.data["onleveltype"] == STATIC
+        node.setDriver.assert_called_with("GV0", STATIC)
+
+    def test_set_olt_cmd_invalid(self, generic_node):
+        """Test SETOLT ignores invalid values."""
+        node, _ = generic_node
+        node.set_OLT_cmd({"value": "9"})
+        assert node.data["onleveltype"] == STATIC
+        node.setDriver.assert_not_called()
 
     def test_query(self, generic_node):
         """Test the query command."""
@@ -276,16 +307,14 @@ class TestVirtualGeneric:
         node.setDriver.assert_any_call("ST", DIMLOWERLIMIT)
 
     def test_set_ol_cmd_with_zero(self, generic_node):
-        """Test SETOL command with value of 0."""
+        """Test SETOL command with value of 0 maps to DIMLOWERLIMIT."""
         node, _ = generic_node
         command = {"value": "0"}
 
         node.set_OL_cmd(command)
 
-        # Bug in code: line 199 overwrites line 198, so it ends up as 0
-        # If line 198 was followed by 'else:', onlevel would be DIMLOWERLIMIT
-        assert node.data["onlevel"] == 0
-        node.setDriver.assert_any_call("OL", 0)
+        assert node.data["onlevel"] == DIMLOWERLIMIT
+        node.setDriver.assert_any_call("OL", DIMLOWERLIMIT)
 
     def test_dim_cmd_static_non_zero(self, generic_node):
         """Test DIM command with STATIC onlevel and non-zero result."""
