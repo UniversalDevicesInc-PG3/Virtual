@@ -278,14 +278,11 @@ class TestController:
             )  # logging.WARNING = 30
 
     def test_poll_not_ready(self, controller_node):
-        """Test poll exits when not ready - checking if ready_event truthy."""
-        # The code checks "if not self.ready_event" which checks truthiness of Event object
-        # An Event object is always truthy, so this condition never triggers
-        # Let's test the normal flow instead (ready event is truthy)
-        controller_node.ready_event.set()
+        """Test poll exits when controller is not ready."""
+        controller_node.ready_event.clear()
         original_heartbeat = controller_node.heartbeat
         controller_node.heartbeat = MagicMock()
-        controller_node.poll("shortPoll")  # Not a longPoll, so heartbeat not called
+        controller_node.poll("longPoll")
         controller_node.heartbeat.assert_not_called()
         controller_node.heartbeat = original_heartbeat
 

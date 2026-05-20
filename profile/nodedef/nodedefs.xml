@@ -34,6 +34,7 @@
             <cmd id="DON" />
             <cmd id="DOF" />
             <cmd id="TOGGLE" />
+            <cmd id="QUERY" />
           </accepts>
         </cmds>
     </nodeDef>
@@ -50,6 +51,7 @@
 		  <accepts>
 			<cmd id="DON" />
 			<cmd id="DOF" />
+			<cmd id="QUERY" />
 		  </accepts>
 		</cmds>
 	</nodeDef>
@@ -73,6 +75,7 @@
 			<cmd id="SETDELAY">
 			  <p id="" editor="delay" init="DUR" />
 			</cmd>
+			<cmd id="QUERY" />
 		  </accepts>
 		</cmds>
 	</nodeDef>
@@ -95,6 +98,7 @@
 			<cmd id="SETDELAY">
 			  <p id="" editor="delay" init="DUR" />
 			</cmd>
+			<cmd id="QUERY" />
 		  </accepts>
 		</cmds>
 	</nodeDef>
@@ -122,6 +126,7 @@
 			<cmd id="SETOFFDUR">
 			  <p id="" editor="delay" init="GV0" />
 			</cmd>
+			<cmd id="QUERY" />
 		  </accepts>
 		</cmds>
 	</nodeDef>
@@ -147,6 +152,7 @@
         <cmds>
           <sends />
           <accepts>
+            <cmd id="QUERY" />
             <cmd id="resetStats" />
             <cmd id="setTemp">
               <p id="" editor="temp" init="ST" />
@@ -200,6 +206,7 @@
       <cmds>
         <sends />
         <accepts>
+          <cmd id="QUERY" />
           <cmd id="resetStats" />
           <cmd id="setTemp">
             <p id="" editor="tempc" init="ST" />
@@ -249,7 +256,6 @@
 		  <cmd id="DFOF" />
 		  <cmd id="BRT" />
 		  <cmd id="DIM" />
-		  <cmd id="ST" />
 		  <cmd id="SETST" />
 		  <cmd id="SETOL" />
 		  <cmd id="SETOLT" />
@@ -274,6 +280,7 @@
 			<p id="" editor="ONLEVELTYPE" init="GV0" />
 		  </cmd>
 		  <cmd id="OLTT" />
+		  <cmd id="QUERY" />
         </accepts>
       </cmds>
     </nodeDef>

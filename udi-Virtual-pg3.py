@@ -21,8 +21,16 @@ from udi_interface import LOGGER, Interface
 # nodes
 from nodes import Controller
 
-VERSION = "3.1.27"
+VERSION = "3.1.28"
 """
+3.1.28
+DONE fix Controller/Temp ready_event poll gating (.is_set)
+DONE temp reset_stats clears prevVal; CtoF/FtoC mutual exclusion on GV13
+DONE VirtualTempC commands match nodedef (no setCtoF)
+DONE QUERY in nodedef for switch/delay/toggle/generic/temp nodes
+DONE onDelay reports TIMER; generic SETST send/report naming
+DONE NLS typo CMD-ctl-QUERY-NAME; onOnly docstring
+
 3.1.27
 DONE virtualgeneric: DON optional level param (IoX dimmer convention, fixes #11)
 DONE virtualgeneric: ONLEVELTYPE UOM 25 + SETOLT command (fixes #12)

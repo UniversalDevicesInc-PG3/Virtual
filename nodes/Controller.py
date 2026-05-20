@@ -440,7 +440,7 @@ class Controller(Node):
             flag (str): Indicates the type of poll event (e.g., 'longPoll').
         """
         # no updates until node is through start-up
-        if not self.ready_event:
+        if not self.ready_event.is_set():
             LOGGER.error("Node not ready yet, exiting")
             return
 

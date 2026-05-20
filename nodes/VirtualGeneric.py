@@ -192,7 +192,7 @@ class VirtualGeneric(Node):
         self.data["status"] = status
         self.setDriver("ST", status)
         self.setDriver("OL", self.data.get("onlevel"))
-        self.reportCmd("ST", value=status)
+        self.reportCmd("SETST", value=status)
         store_values(self)
         LOGGER.debug("Exit")
 

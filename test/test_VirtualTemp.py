@@ -5,7 +5,7 @@ Unit tests for the VirtualTemp node.
 import pytest
 from unittest.mock import MagicMock, patch
 
-from nodes.VirtualTemp import VirtualTemp, FIELDS
+from nodes.VirtualTemp import VirtualTemp, VirtualTempC, FIELDS
 
 
 # This fixture automatically mocks the udi_interface dependencies for all tests.
@@ -126,10 +126,12 @@ class TestVirtualTemp:
         """Test that reset_stats_cmd clears all statistics."""
         node, _ = temp_node
         node.data["highTemp"] = 80
+        node.data["prevVal"] = 72.0
         node.reset_stats_cmd()
         assert node.data["highTemp"] is None
         assert node.data["lowTemp"] is None
         assert node.data["currentAvgTemp"] is None
+        assert node.data["prevVal"] is None
 
     def test_update_push_action(self, temp_node):
         """Test the poll/update cycle with a push action."""
@@ -169,12 +171,31 @@ class TestVirtualTemp:
             mock_isy.assert_called_with(node.poly)
 
     def test_poll_short_poll(self, temp_node):
-        """Test poll on shortPoll."""
+        """Test poll on shortPoll when controller is ready."""
         node, _ = temp_node
-        node.controller.ready_event = True
+        from threading import Event
+
+        node.controller.ready_event = Event()
+        node.controller.ready_event.set()
         with patch.object(node, "_update") as mock_update:
             node.poll("shortPoll")
             mock_update.assert_called_once()
+
+    def test_poll_short_poll_not_ready(self, temp_node):
+        """Test poll on shortPoll skips update when controller is not ready."""
+        node, _ = temp_node
+        from threading import Event
+
+        node.controller.ready_event = Event()
+        with patch.object(node, "_update") as mock_update:
+            node.poll("shortPoll")
+            mock_update.assert_not_called()
+
+    def test_virtualtempc_commands(self):
+        """VirtualTempC exposes nodedef commands only (no setCtoF)."""
+        assert "setFtoC" in VirtualTempC.commands
+        assert "setCtoF" not in VirtualTempC.commands
+        assert "QUERY" in VirtualTempC.commands
 
     def test_poll_long_poll(self, temp_node):
         """Test poll on longPoll (should not update)."""
@@ -288,23 +309,27 @@ class TestVirtualTemp:
         mocks["store"].assert_called()
 
     def test_set_c_to_f_cmd(self, temp_node):
-        """Test set_c_to_f_cmd."""
+        """Test set_c_to_f_cmd clears FtoC when enabled."""
         node, mocks = temp_node
+        node.data["FtoC"] = 1
         with patch.object(node, "reset_stats_cmd") as mock_reset:
             command = {"value": "1"}
             node.set_c_to_f_cmd(command)
             assert node.data["CtoF"] == 1
+            assert node.data["FtoC"] == 0
             node.setDriver.assert_called_with("GV13", 1)
             mock_reset.assert_called_once()
             mocks["store"].assert_called()
 
     def test_set_f_to_c_cmd(self, temp_node):
-        """Test set_f_to_c_cmd."""
+        """Test set_f_to_c_cmd clears CtoF when enabled."""
         node, mocks = temp_node
+        node.data["CtoF"] = 1
         with patch.object(node, "reset_stats_cmd") as mock_reset:
             command = {"value": "1"}
             node.set_f_to_c_cmd(command)
             assert node.data["FtoC"] == 1
+            assert node.data["CtoF"] == 0
             node.setDriver.assert_called_with("GV13", 1)
             mock_reset.assert_called_once()
             mocks["store"].assert_called()

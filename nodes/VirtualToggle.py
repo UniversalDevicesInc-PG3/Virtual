@@ -107,10 +107,10 @@ class VirtualToggle(Node):
 
     def stop(self):
         """Cleans up the timer and sets the final state upon node stop."""
-        LOGGER.info(f"stop: ondelay:{self.name}")
+        LOGGER.info(f"stop: toggle:{self.name}")
         if self.timer:
             self.timer.cancel()
-        # for onDelay we want to end up on
+        # persist timer states as steady on/off on stop
         if self.data["switch"] == ONTIMER:
             self.data["switch"] = ON
         elif self.data["switch"] == OFFTIMER:

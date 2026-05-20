@@ -77,6 +77,7 @@ class TestVirtualonDelay:
 
         assert node.data["switch"] == TIMER
         node.setDriver.assert_called_with("ST", TIMER)
+        node.reportCmd.assert_called_with("TIMER")
         mocks["timer_class"].assert_called_with(10, node._on_delay)
         timer_instance = mocks["timer_class"].return_value
         timer_instance.start.assert_called_once()

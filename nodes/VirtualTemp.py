@@ -158,7 +158,7 @@ class VirtualTemp(Node):
 
     def poll(self, flag: str):
         """Handles incoming short poll events from the Polyglot interface."""
-        if "shortPoll" in flag and self.controller.ready_event:
+        if "shortPoll" in flag and self.controller.ready_event.is_set():
             LOGGER.debug(f"shortPoll {self.name}")
             self._update()
 
@@ -248,6 +248,8 @@ class VirtualTemp(Node):
         """Enables or disables Celsius to Fahrenheit conversion."""
         LOGGER.info(f"{self.name}, {command}")
         self.data["CtoF"] = int(command.get("value", 0))
+        if self.data["CtoF"]:
+            self.data["FtoC"] = 0
         self.setDriver("GV13", self.data["CtoF"])
         self.reset_stats_cmd()
         store_values(self)
@@ -257,6 +259,8 @@ class VirtualTemp(Node):
         """Enables or disables Fahrenheit to Celsius conversion."""
         LOGGER.info(f"{self.name}, {command}")
         self.data["FtoC"] = int(command.get("value", 0))
+        if self.data["FtoC"]:
+            self.data["CtoF"] = 0
         self.setDriver("GV13", self.data["FtoC"])
         self.reset_stats_cmd()
         store_values(self)
@@ -353,7 +357,7 @@ class VirtualTemp(Node):
         self.data["highTemp"] = None
         self.data["prevAvgTemp"] = None
         self.data["currentAvgTemp"] = None
-        self.data["prevTemp"] = None
+        self.data["prevVal"] = None
         self.data["tempVal"] = None
         # Reset drivers
         for driver in ["GV1", "GV3", "GV4", "GV5", "ST"]:
@@ -430,9 +434,9 @@ class VirtualTemp(Node):
         "setAction2id": set_action2_id_cmd,
         "setAction2type": set_action2_type_cmd,
         "setCtoF": set_c_to_f_cmd,
-        "setFtoC": set_f_to_c_cmd,
         "setRawToPrec": set_raw_to_prec_cmd,
         "resetStats": reset_stats_cmd,
+        "QUERY": query,
     }
 
 
@@ -441,6 +445,20 @@ class VirtualTemp(Node):
 ###############
 class VirtualTempC(VirtualTemp):
     id = "virtualtempc"
+
+    commands = {
+        "setTemp": VirtualTemp.set_temp_cmd,
+        "setAction1": VirtualTemp.set_action1_cmd,
+        "setAction1id": VirtualTemp.set_action1_id_cmd,
+        "setAction1type": VirtualTemp.set_action1_type_cmd,
+        "setAction2": VirtualTemp.set_action2_cmd,
+        "setAction2id": VirtualTemp.set_action2_id_cmd,
+        "setAction2type": VirtualTemp.set_action2_type_cmd,
+        "setFtoC": VirtualTemp.set_f_to_c_cmd,
+        "setRawToPrec": VirtualTemp.set_raw_to_prec_cmd,
+        "resetStats": VirtualTemp.reset_stats_cmd,
+        "QUERY": VirtualTemp.query,
+    }
 
     """
     UOMs:

@@ -2,7 +2,7 @@
 # controller
 ND-controller-NAME = Virtual Device Controller
 ND-controller-ICON = Switch
-CMD-ctl-QUERY"-NAME = Query
+CMD-ctl-QUERY-NAME = Query
 CMD-ctl-DISCOVER-NAME = Discover
 ST-ctl-ST-NAME = NodeServer Online
 ST-ctl-GV0-NAME = NumberOfNodes

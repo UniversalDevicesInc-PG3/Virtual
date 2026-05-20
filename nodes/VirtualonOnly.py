@@ -45,11 +45,11 @@ FIELDS: dict[str, FieldSpec] = {
 class VirtualonOnly(Node):
     id = "virtualononly"
 
-    """Represents a virtual switch that can only be turned on (momentary).
+    """Represents a virtual switch that only reports DON when turned on.
 
-    This node automatically turns itself off after reporting the 'ON' state,
-    making it suitable for triggering scenes or programs that only need a
-    single 'ON' command.
+    DOF is accepted to clear status but is not reported. Useful in scenes
+    where responders should receive DON only while the virtual node still
+    tracks on/off state.
     """
 
     def __init__(self, poly, primary, address, name):

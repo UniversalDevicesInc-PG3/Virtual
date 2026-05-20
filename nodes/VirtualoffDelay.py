@@ -106,7 +106,7 @@ class VirtualoffDelay(Node):
 
     def stop(self):
         """Cleans up the timer and sets the final state upon node stop."""
-        LOGGER.info(f"stop: ondelay:{self.name}")
+        LOGGER.info(f"stop: offdelay:{self.name}")
         if self.timer and self.timer.is_alive():
             self.timer.cancel()
         # for onDelay we want to end up on

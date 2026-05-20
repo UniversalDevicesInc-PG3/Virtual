@@ -127,6 +127,7 @@ class VirtualonDelay(Node):
                 self.timer.start()
                 self.data["switch"] = TIMER
                 self.setDriver("ST", TIMER)
+                self.reportCmd("TIMER")
             else:
                 self._on_delay()
         except Exception as ex:

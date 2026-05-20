@@ -2,6 +2,12 @@
 
 #### see udi-Virtual-pg3.py for current work
 
+3.1.28 \
+DONE fix Controller/Temp ready_event poll gating (.is_set) \
+DONE temp reset_stats clears prevVal; CtoF/FtoC mutual exclusion \
+DONE VirtualTempC commands match nodedef; QUERY in nodedefs \
+DONE onDelay TIMER report; generic SETST naming; NLS ctl QUERY typo
+
 3.1.27 \
 DONE virtualgeneric: DON optional level param (IoX dimmer convention, fixes #11) \
 DONE virtualgeneric: ONLEVELTYPE UOM 25 + SETOLT command (fixes #12) \
