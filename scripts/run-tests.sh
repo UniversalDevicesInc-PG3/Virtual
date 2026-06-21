@@ -5,7 +5,7 @@
 set -u
 
 ROOT="$(git rev-parse --show-toplevel)"
-cd "$ROOT"
+cd "$ROOT" || exit
 
 export PATH="${HOME}/.local/bin:/usr/local/bin:/opt/homebrew/bin:${PATH}"
 
