@@ -59,6 +59,7 @@ repos:
         language: system
         types: [python]
         pass_filenames: false # Always run the full suite
+        always_run: true # Run on every push, not only when Python files change
         # To run tests before you push instead of before you commit (recommended if tests are slow),
         # uncomment the following line and run `pre-commit install --hook-type pre-push`
         stages: [pre-push]
