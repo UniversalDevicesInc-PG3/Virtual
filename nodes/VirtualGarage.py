@@ -97,9 +97,8 @@ TURN_ON = "/turn_on"
 TURN_OFF = "/turn_off"
 TOGGLE = "/toggle"
 
-# We need an event loop as we run in a
-# thread which doesn't have a loop
-mainloop = asyncio.get_event_loop()
+# Dedicated event loop for the garage SSE thread (not the main thread loop).
+mainloop = asyncio.new_event_loop()
 
 
 class VirtualGarage(Node):
