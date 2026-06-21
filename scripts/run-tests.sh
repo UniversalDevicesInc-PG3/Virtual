@@ -88,7 +88,7 @@ resolve_python() {
 if ! PYTHON="$(resolve_python)"; then
   echo "Could not find Python 3.11 with pytest installed." >&2
   echo "EISY targets Python 3.11; a stale 3.14 pipenv venv may exist under" >&2
-  echo "~/.local/share/virtualenvs. From ${ROOT}, run:" >&2
+  echo "${HOME}/.local/share/virtualenvs. From ${ROOT}, run:" >&2
   echo "  pipenv --rm && pipenv install --dev" >&2
   exit 1
 fi
