@@ -1274,7 +1274,7 @@ requires-dist = [
     { name = "aiohttp" },
     { name = "pyyaml" },
     { name = "requests" },
-    { name = "udi-interface" },
+    { name = "udi-interface", specifier = ">=3.3.18" },
 ]
 
 [package.metadata.requires-dev]

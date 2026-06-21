@@ -19,7 +19,7 @@ import sys
 from udi_interface import LOGGER, Interface
 
 # nodes
-from nodes import Controller
+from nodes.Controller import Controller
 
 VERSION = "3.1.28"
 """
