@@ -8,6 +8,7 @@ udi-interface = ">=3.3.18"
 pyyaml = "*"
 requests = "*"
 aiohttp = "*"
+setuptools = ">=65.0,<81"
 
 [dev-packages]
 pytest = "*"

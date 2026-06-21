@@ -1254,6 +1254,7 @@ dependencies = [
     { name = "aiohttp" },
     { name = "pyyaml" },
     { name = "requests" },
+    { name = "setuptools" },
     { name = "udi-interface" },
 ]
 
@@ -1274,6 +1275,7 @@ requires-dist = [
     { name = "aiohttp" },
     { name = "pyyaml" },
     { name = "requests" },
+    { name = "setuptools", specifier = ">=65.0,<81" },
     { name = "udi-interface", specifier = ">=3.3.18" },
 ]
 
