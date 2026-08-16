@@ -2,6 +2,10 @@
 
 #### see udi-Virtual-pg3.py for current work
 
+3.1.29 \
+DONE upgrade dependencies to address Dependabot security alerts (aiohttp, requests, urllib3, ujson, black, and others) \
+DONE setuptools remains pinned <81 for pyisy/pkg_resources compatibility (udi_interface Node import)
+
 3.1.28 \
 DONE fix Controller/Temp ready_event poll gating (.is_set) \
 DONE temp reset_stats clears prevVal; CtoF/FtoC mutual exclusion \
