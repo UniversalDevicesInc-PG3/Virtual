@@ -10,22 +10,24 @@ a cleaner display in the AC and Remote tools.
 With this nodeserver you can create virtual switches or other devices
  for use in user programs.
 
-Devices store their status in a .db for retrieval on a restart.
+Persistance is achieved using built-in pb3x functions.  Depreciated
+.db files may exist from old installs.
 
 ## Example Virtual Device Uses
 
-- I use REST to switch a virtual device from an ESP8266 device
-- My Awning controller & heartbeat
-- from Alexa I switch a virtual device
-- The status of my daughter's goodnight routine
+- use REST to switch a virtual device from an ESP8266 device
+- awning controller & heartbeat
+- from Alexa switch a virtual device
+- Status of your daughter's goodnight routine
 - inserted as part of scenes or programs for both status and control
 - provide scene status if you make them part of a scene
-- consolidate data with the temp devices, & I am looking to add a garage device
+- consolidate data with the temp devices
 - delay devices can be used in place of timers
+- garage controller
 
 ## Switch
 
-You can add a virtual switch to a scene and that ON/OFF switch is polled to
+Add a virtual switch to a scene and that ON/OFF switch is polled to
 determine if the scene is ON or OFF. Programs can read / set as any device.
 
 ## onOnly Switch

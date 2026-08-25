@@ -4,6 +4,7 @@ Unit tests for the Controller node.
 
 import pytest
 import yaml
+from pathlib import Path
 from unittest.mock import MagicMock, patch
 
 # Since Controller imports all nodes, we need to patch them all
@@ -348,6 +349,7 @@ class TestController:
             with patch("yaml.safe_load", return_value={"no_devices": []}):
                 result = controller_node._handle_file_devices("test.yaml")
                 assert result is None
+                mock_open.assert_called_once_with(Path("data/test.yaml"))
 
     def test_handle_file_devices_file_not_found(self, controller_node):
         """Test _handle_file_devices with missing file."""
@@ -356,24 +358,50 @@ class TestController:
 
     def test_handle_file_devices_yaml_error(self, controller_node):
         """Test _handle_file_devices with invalid YAML."""
-        with patch("builtins.open", create=True):
+        with patch("builtins.open", create=True) as mock_open:
             with patch(
                 "nodes.Controller.yaml.safe_load",
                 side_effect=yaml.YAMLError("Invalid YAML"),
             ):
                 result = controller_node._handle_file_devices("test.yaml")
                 assert result is None
+                mock_open.assert_called_once_with(Path("data/test.yaml"))
 
     def test_handle_file_devices_success(self, controller_node):
         """Test _handle_file_devices with valid YAML."""
         devices_list = [{"id": "1", "type": "switch"}]
-        with patch("builtins.open", create=True):
+        with patch("builtins.open", create=True) as mock_open:
             with patch(
                 "nodes.Controller.yaml.safe_load",
                 return_value={"devices": devices_list},
             ):
                 result = controller_node._handle_file_devices("test.yaml")
                 assert result == devices_list
+                mock_open.assert_called_once_with(Path("data/test.yaml"))
+
+    def test_handle_file_devices_absolute_path(self, controller_node):
+        """Test _handle_file_devices uses absolute paths as given."""
+        devices_list = [{"id": "1", "type": "switch"}]
+        abs_path = "/home/admin/virtualdevice.yaml"
+        with patch("builtins.open", create=True) as mock_open:
+            with patch(
+                "nodes.Controller.yaml.safe_load",
+                return_value={"devices": devices_list},
+            ):
+                result = controller_node._handle_file_devices(abs_path)
+                assert result == devices_list
+                mock_open.assert_called_once_with(Path(abs_path))
+
+    def test_resolve_devfile_path_relative(self, controller_node):
+        """Test _resolve_devfile_path for a filename loads from data/."""
+        assert controller_node._resolve_devfile_path(
+            "exampleConfigFile.yaml"
+        ) == Path("data/exampleConfigFile.yaml")
+
+    def test_resolve_devfile_path_absolute(self, controller_node):
+        """Test _resolve_devfile_path preserves absolute paths."""
+        abs_path = "/home/admin/virtualdevice.yaml"
+        assert controller_node._resolve_devfile_path(abs_path) == Path(abs_path)
 
     def test_process_param_devfile_empty_value(self, controller_node):
         """Test _process_param with devfile but empty value."""

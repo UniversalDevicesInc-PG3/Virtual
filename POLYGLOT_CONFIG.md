@@ -104,10 +104,11 @@ Key (var ID)    Value (device type)
 
 ### YAML Configuration
 
-File name without path is within the node directory.
-Careful this file is deleted with the node.
-Better to use path and store within admin home directory.
-Make sure file permissions are available to node.
+Best practice is to upload the .yaml file in a .zip
+which is placed in the data/ folder within the node directory.
+Then define devFile as just the .yaml file name (example below).
+If you use an absolute reference and store the file somewhere else
+make sure permissions are open for read access (see example below).
 
 ```md
 Key (var ID)    Value (device type)

@@ -11,6 +11,7 @@ NodeServer lifecycle.
 # std libraries
 import json
 import logging
+from pathlib import Path
 from threading import Event, Condition
 from typing import Dict, Any, List, Tuple
 
@@ -353,34 +354,53 @@ class Controller(Node):
 
         return devices, has_error
 
+    def _resolve_devfile_path(self, filename: str) -> Path:
+        """
+        Resolve a devFile parameter to a filesystem path.
+
+        Relative filenames load from the node server's data/ directory.
+        Absolute paths are used as given by the user.
+
+        Args:
+            filename (str): The devFile parameter value.
+
+        Returns:
+            Path: The resolved path to the YAML configuration file.
+        """
+        path = Path(filename.strip())
+        if path.is_absolute():
+            return path
+        return Path("data") / path.name
+
     def _handle_file_devices(self, filename: str) -> List[Dict[str, Any]] | None:
         """
         Loads device configurations from a specified YAML file.
 
         Args:
-            filename (str): The path to the YAML file containing device definitions.
+            filename (str): The devFile value (filename or absolute path).
 
         Returns:
             List[Dict[str, Any]] | None: A list of device dictionaries if successful, None otherwise.
         """
+        filepath = self._resolve_devfile_path(filename)
         try:
-            with open(filename) as f:
+            with open(filepath) as f:
                 dev_yaml = yaml.safe_load(f)
 
             if "devices" not in dev_yaml:
                 LOGGER.error(
-                    f"Manual discovery file '{filename}' is missing 'devices' section."
+                    f"Manual discovery file '{filepath}' is missing 'devices' section."
                 )
                 return None
 
-            LOGGER.info(f"File '{filename}' loaded successfully.")
+            LOGGER.info(f"File '{filepath}' loaded successfully.")
             return dev_yaml["devices"]
         except FileNotFoundError as ex:
-            LOGGER.error(f"checkParams: Failed to open {filename}: {ex}")
+            LOGGER.error(f"checkParams: Failed to open {filepath}: {ex}")
             return None
         except yaml.YAMLError as ex:
             LOGGER.error(
-                f"checkParams: Failed to parse YAML content in {filename}: {ex}"
+                f"checkParams: Failed to parse YAML content in {filepath}: {ex}"
             )
             return None
 
