@@ -1,8 +1,9 @@
 
 NAME = Virtual
+ENTRY = udi-Virtual-pg3.py
 XML_FILES = profile/*/*.xml
 
-.PHONY: all check clean format fulltest install lint test coverage coverage-html coverage-report zip
+.PHONY: all check clean format fulltest install lint test coverage coverage-html coverage-report zip sync-version
 
 all: lint test
 
@@ -48,3 +49,6 @@ coverage-report: coverage-html
 
 fulltest:
 	uv run pre-commit run --all-files
+
+sync-version:
+	uv run python scripts/sync_version.py --entry $(ENTRY)
