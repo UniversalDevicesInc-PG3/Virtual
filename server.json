@@ -2,7 +2,7 @@
     "name": "Virtual Devices",
     "docs": "https://github.com/UniversalDevicesInc-PG3/Virtual",
     "type": "python3",
-    "executable": "udi-Virtual-pg3.py",
+    "executable": "udi-virtual-pg3x.py",
     "install": "install.sh",
     "description": "Virtual devices for use with Polyglot on EISY/Polisy.",
     "shortPoll": "60",

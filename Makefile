@@ -1,6 +1,6 @@
 
 NAME = Virtual
-ENTRY = udi-Virtual-pg3.py
+ENTRY = udi-virtual-pg3x.py
 XML_FILES = profile/*/*.xml
 
 .PHONY: all check clean format fulltest install lint test coverage coverage-html coverage-report zip sync-version

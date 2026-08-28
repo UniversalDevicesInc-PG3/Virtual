@@ -6,7 +6,7 @@ import re
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
-ENTRY = ROOT / "udi-Virtual-pg3.py"
+ENTRY = ROOT / "udi-virtual-pg3x.py"
 VERSION_FILE = ROOT / "profile" / "version.txt"
 
 
