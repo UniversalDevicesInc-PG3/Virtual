@@ -1,5 +1,5 @@
 
-NAME = Virtual
+NAME = ud-virtual-pg3x
 ENTRY = udi-virtual-pg3x.py
 XML_FILES = profile/*/*.xml
 

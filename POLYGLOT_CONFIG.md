@@ -193,4 +193,4 @@ devices:
   obstructId: 131
 ```
 
-[readme]: https://github.com/sejgit/Virtual/blob/master/README.md
+[readme]: https://github.com/sejgit-udi-plugins/ud-virtual-pg3x/blob/main/README.md
