@@ -2,6 +2,13 @@
 
 
 
+3.2.0 \
+DONE PG3 store manifest (server.json) with executable udi-virtual-pg3x.py — use Update from the store \
+DONE rename entry script from udi-Virtual-pg3.py to udi-virtual-pg3x.py \
+DONE load devFile YAML from data/ when given a bare filename (matches MQTT devfile behavior) \
+DONE standard bootstrap; VersionHistory.md renamed to CHANGELOG.md \
+DONE developer toolchain: uv, pytest profile sync test, Makefile, CONTRIBUTING (runtime install unchanged: install.sh + requirements.txt)
+
 3.1.29 \
 DONE upgrade dependencies to address Dependabot security alerts (aiohttp, requests, urllib3, ujson, black, and others) \
 DONE setuptools remains pinned <81 for pyisy/pkg_resources compatibility (udi_interface Node import)
