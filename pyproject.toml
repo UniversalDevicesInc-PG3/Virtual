@@ -16,12 +16,14 @@ dev = [
     "pytest",
     "pytest-cov",
     "pytest-xdist>=3.8.0",
-    "ruff",
     "markdown2",
     "pylsp-mypy",
     "pyls",
     "pyaml",
     "setuptools>=80.9.0",
+]
+lint = [
+    "ruff",
 ]
 
 [tool.uv]

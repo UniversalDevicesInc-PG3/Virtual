@@ -1674,8 +1674,10 @@ dev = [
     { name = "pytest" },
     { name = "pytest-cov" },
     { name = "pytest-xdist" },
-    { name = "ruff" },
     { name = "setuptools" },
+]
+lint = [
+    { name = "ruff" },
 ]
 
 [package.metadata]
@@ -1697,9 +1699,9 @@ dev = [
     { name = "pytest" },
     { name = "pytest-cov" },
     { name = "pytest-xdist", specifier = ">=3.8.0" },
-    { name = "ruff" },
     { name = "setuptools", specifier = ">=80.9.0" },
 ]
+lint = [{ name = "ruff" }]
 
 [[package]]
 name = "ujson"

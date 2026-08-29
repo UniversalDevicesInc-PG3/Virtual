@@ -3,7 +3,7 @@ NAME = udi-virtual-pg3x
 ENTRY = udi-virtual-pg3x.py
 XML_FILES = profile/*/*.xml
 
-.PHONY: all check clean format fulltest install lint test coverage coverage-html coverage-report zip sync-version
+.PHONY: all check clean format fulltest install install-eisy lint test coverage coverage-html coverage-report zip sync-version
 
 all: lint test
 
@@ -13,6 +13,9 @@ check:
 	xmllint --noout ${XML_FILES}
 
 install:
+	uv sync --dev --group lint
+
+install-eisy:
 	uv sync --dev
 
 lint:
