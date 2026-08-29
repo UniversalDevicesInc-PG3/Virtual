@@ -5,7 +5,7 @@ Virtual devices for use with Polyglot on EISY/Polisy.
 
 (C) 2025 Stephen Jenkins
 
-Version history: see VersionHistory.md
+Version history: see CHANGELOG.md
 """
 
 import sys

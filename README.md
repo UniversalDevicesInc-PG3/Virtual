@@ -154,7 +154,7 @@ see [POLYGLOT_CONFIG.md][config]
 
 ## Version History
 
-see [VersionHistory.md][versions]
+see [CHANGELOG.md][versions]
 
-[versions]: VersionHistory.md
+[versions]: CHANGELOG.md
 [config]: POLYGLOT_CONFIG.md
