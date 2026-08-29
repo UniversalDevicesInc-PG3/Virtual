@@ -20,13 +20,6 @@ dev = [
 lint = [
     "ruff",
 ]
-ide = [
-    "markdown2",
-    "pylsp-mypy",
-    "pyls",
-    "pyaml",
-    "setuptools>=80.9.0",
-]
 
 [tool.uv]
 package = false

@@ -13,7 +13,7 @@ check:
 	xmllint --noout ${XML_FILES}
 
 install:
-	uv sync --dev --group lint --group ide
+	uv sync --dev --group lint
 
 install-eisy:
 	uv sync --dev
@@ -34,6 +34,7 @@ clean:
 
 
 zip:
+	@test -f zip_exclude.lst || (echo "zip_exclude.lst missing" && exit 1)
 	zip -x@zip_exclude.lst -r ${NAME}.zip *
 
 test:
