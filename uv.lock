@@ -1666,14 +1666,16 @@ dependencies = [
 
 [package.dev-dependencies]
 dev = [
-    { name = "markdown2" },
     { name = "pre-commit" },
-    { name = "pyaml" },
-    { name = "pyls" },
-    { name = "pylsp-mypy" },
     { name = "pytest" },
     { name = "pytest-cov" },
     { name = "pytest-xdist" },
+]
+ide = [
+    { name = "markdown2" },
+    { name = "pyaml" },
+    { name = "pyls" },
+    { name = "pylsp-mypy" },
     { name = "setuptools" },
 ]
 lint = [
@@ -1691,14 +1693,16 @@ requires-dist = [
 
 [package.metadata.requires-dev]
 dev = [
-    { name = "markdown2" },
     { name = "pre-commit" },
-    { name = "pyaml" },
-    { name = "pyls" },
-    { name = "pylsp-mypy" },
     { name = "pytest" },
     { name = "pytest-cov" },
     { name = "pytest-xdist", specifier = ">=3.8.0" },
+]
+ide = [
+    { name = "markdown2" },
+    { name = "pyaml" },
+    { name = "pyls" },
+    { name = "pylsp-mypy" },
     { name = "setuptools", specifier = ">=80.9.0" },
 ]
 lint = [{ name = "ruff" }]

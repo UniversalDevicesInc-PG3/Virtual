@@ -13,7 +13,7 @@ check:
 	xmllint --noout ${XML_FILES}
 
 install:
-	uv sync --dev --group lint
+	uv sync --dev --group lint --group ide
 
 install-eisy:
 	uv sync --dev
