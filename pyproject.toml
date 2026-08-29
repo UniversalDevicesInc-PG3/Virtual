@@ -12,13 +12,15 @@ dependencies = [
 
 [dependency-groups]
 dev = [
-    "pyaml",
+    "pre-commit",
+    "pytest",
+    "pytest-cov",
+    "pytest-xdist>=3.8.0",
+    "ruff",
     "markdown2",
     "pylsp-mypy",
     "pyls",
-    "pre-commit",
-    "pytest-cov",
-    "pytest-xdist>=3.8.0",
+    "pyaml",
     "setuptools>=80.9.0",
 ]
 
