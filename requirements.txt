@@ -2,4 +2,3 @@ udi_interface
 pyyaml
 requests
 aiohttp
-setuptools>=65.0,<81
