@@ -226,7 +226,20 @@ class Controller(Node):
             params (dict): The custom parameters received from Polyglot.
         """
         LOGGER.info("parmHandler: Loading parameters now")
-        self.Parameters.load(params)
+        if params:
+            self.Parameters.load(params)
+
+        defaults = {
+            "devfile": "data/exampleConfigFile.yaml",
+            "1": "switch",
+            "2": "dimmer",
+        }
+        for param, default_value in defaults.items():
+            if param not in self.Parameters:
+                self.Parameters[param] = default_value
+            elif default_value and not str(self.Parameters.get(param, "")).strip():
+                self.Parameters[param] = default_value
+
         self.handler_params_st = True
         LOGGER.info("parmHandler Done...")
         self.check_handlers()
