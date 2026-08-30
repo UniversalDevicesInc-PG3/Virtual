@@ -8,7 +8,11 @@
     "shortPoll": "60",
     "longPoll": "300",
     "logLevel": "INFO",
-    "customParams": {},
+    "customParams": {
+        "devfile": "data/exampleConfigFile.yaml",
+        "1": "switch",
+        "2": "dimmer"
+    },
     "credits": [
         {
             "title": "Virtual Device Controller",
