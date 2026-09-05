@@ -217,6 +217,7 @@ class TestController:
         params = {"1": "switch"}
         controller_node.parameterHandler(params)
         controller_node.Parameters.load.assert_called_with(params)
+        controller_node.Parameters.__setitem__.assert_not_called()
         assert controller_node.handler_params_st is True
         controller_node.check_handlers.assert_called()
 

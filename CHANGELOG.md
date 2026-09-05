@@ -2,6 +2,11 @@
 
 
 
+3.2.1 \
+DONE fix config overwrite: stop re-injecting example devfile and sample devices on every parameter load \
+DONE remove example customParams from server.json so Polyglot updates do not reset user configuration \
+DONE clear "Waiting on valid configuration" notice when discovery fails
+
 3.2.0 \
 DONE PG3 store manifest (server.json) with executable udi-virtual-pg3x.py — use Update from the store \
 DONE rename entry script from udi-Virtual-pg3.py to udi-virtual-pg3x.py \
