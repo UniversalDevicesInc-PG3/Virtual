@@ -107,8 +107,9 @@ Key (var ID)    Value (device type)
 Best practice is to upload the .yaml file in a .zip
 which is placed in the data/ folder within the node directory.
 Then define devFile as just the .yaml file name (example below).
-If you use an absolute reference and store the file somewhere else
-make sure permissions are open for read access (see example below).
+On eisy-ui, prefer the filename only — files outside the node server
+directory may hit permission errors. Absolute paths are supported but not
+recommended (see example below).
 
 ```md
 Key (var ID)    Value (device type)
