@@ -1,8 +1,6 @@
-# Virtual Device Nodeserver
+# Virtual Device Plugin
 
-Polyglot V3 NodeServer for **EISY** or **Polisy** that creates **virtual ISY devices** without physical hardware — switches, dimmers, on-only switches, off-delay timers, temperature (°C/°F), heartbeat, garage, awning, and generic nodes. External systems (REST, MQTT, scripts, other integrations) update device state; virtual nodes appear in the Admin Console, scenes, and programs like real devices. Configure devices with inline JSON (**devlist**) or a YAML file (**devfile**). State persists via built-in PG3x storage (legacy `.db` files from older installs may still exist).
-
-## Plugin for Universal Devices Isy
+Plugin for **EISY/Polisy** (eisy-ui or PG3 environment) that creates **virtual ISY devices** without physical hardware — switches, dimmers, on-only switches, off-delay timers, temperature (°C/°F), heartbeat, garage, awning, and generic nodes. External systems (REST, MQTT, scripts, other integrations) update device state; virtual nodes appear in the Admin Console, scenes, and programs like real devices. Configure devices with inline JSON (**devlist**) or a YAML file (**devfile**). State persists via built-in plugin storage (legacy `.db` files from older installs may still exist).
 
 ## Example Virtual Device Uses
 
