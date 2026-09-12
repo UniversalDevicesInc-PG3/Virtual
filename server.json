@@ -8,6 +8,7 @@
     "shortPoll": "60",
     "longPoll": "300",
     "logLevel": "INFO",
+    "profile_version": "1",
     "customParams": {
         "devfile": "exampleConfigFile.yaml",
         "1": "switch",
@@ -17,7 +18,7 @@
         {
             "title": "Virtual Device Controller",
             "author": "Stephen Jenkins",
-            "version": "3.2.1",
+            "version": "3.2.2",
             "date": "August 2026",
             "source": "https://github.com/UniversalDevicesInc-PG3/Virtual",
             "license": "https://github.com/UniversalDevicesInc-PG3/Virtual/blob/main/LICENSE"

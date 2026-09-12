@@ -2,6 +2,9 @@
 
 
 
+3.2.2 \
+DONE dynamic JSON profiles (Phase 1): updateJsonProfile instead of static profile/ zip for eisy-ui sync; requires IoX 6.0.6+, PG3x 3.4.5+, udi_interface 3.4.5+; install.sh renames profile/ to profile.static/ on EISY; profile/ XML remains source for data/base_profile.json; bump profile_version in server.json when JSON base changes
+
 3.2.1 \
 DONE fix config overwrite: stop re-injecting example devfile and sample devices on every parameter load \
 DONE remove example customParams from server.json so Polyglot updates do not reset user configuration \

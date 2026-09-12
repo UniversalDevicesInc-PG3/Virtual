@@ -3,3 +3,9 @@
 # even when packages installed. PG3 treats non-zero install.sh as HTTP 500.
 pip3 install -r requirements.txt --user --disable-pip-version-check
 python3 -c "import udi_interface, yaml, aiohttp"
+
+# Dynamic profiles: PG3 must not upload static profile/ (race with JSON push).
+if [ -d profile ] && [ ! -L profile ]; then
+  rm -rf profile.static
+  mv profile profile.static
+fi

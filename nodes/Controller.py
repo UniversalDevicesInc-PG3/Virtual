@@ -132,8 +132,10 @@ class Controller(Node):
         self.Notices["hello"] = "Start-up"
         self.setDriver("ST", 1, report=True, force=True)
 
-        # Send the profile files to the ISY if neccessary or version changed.
-        self.poly.updateProfile()
+        # Push dynamic JSON profile (static profile/ must not be installed; see install.sh).
+        from utils.json_profile import push_json_profile
+
+        push_json_profile(self.poly, wait=True)
 
         # Send the default custom parameters documentation file to Polyglot
         self.poly.setCustomParamsDoc()
