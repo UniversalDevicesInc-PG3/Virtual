@@ -132,8 +132,9 @@ class Controller(Node):
         self.Notices["hello"] = "Start-up"
         self.setDriver("ST", 1, report=True, force=True)
 
-        # Send the profile files to the ISY if neccessary or version changed.
-        self.poly.updateProfile()
+        from utils.json_profile import sync_profile_to_isy
+
+        sync_profile_to_isy(self.poly, wait_json=True)
 
         # Send the default custom parameters documentation file to Polyglot
         self.poly.setCustomParamsDoc()
@@ -166,6 +167,9 @@ class Controller(Node):
 
         self.Notices.delete("waiting")
         LOGGER.info("Started Virtual Device NodeServer v%s", self.poly.serverdata)
+        from utils.node_funcs import reconcile_all_node_driver_uoms
+
+        reconcile_all_node_driver_uoms(self.poly)
         self.query(command=f"{self.name}: STARTUP")
 
         # signal to the nodes, its ok to start
@@ -484,6 +488,14 @@ class Controller(Node):
             nodes[node].reportDrivers()
         LOGGER.debug("Exit")
 
+    def updateProfile(self, command=None):
+        """Re-send JSON + static profile to IoX (Update Profile command)."""
+        LOGGER.info("Enter %s", command)
+        from utils.json_profile import sync_profile_to_isy
+
+        sync_profile_to_isy(self.poly, wait_json=True)
+        LOGGER.debug("Exit")
+
     def discover_cmd(self, command=None):
         """
         Initiates the device discovery process.
@@ -577,7 +589,7 @@ class Controller(Node):
         """
         if "name" in dev:
             return self.poly.getValidName(dev.get("name"))
-        return self.poly.getValidVame(f"{dev.get('type')} {dev.get('id')}")
+        return self.poly.getValidName(f"{dev.get('type')} {dev.get('id')}")
 
     def _cleanup_nodes(self, nodes_new: List[str], nodes_old: List[str]):
         """
@@ -690,4 +702,5 @@ class Controller(Node):
     commands = {
         "QUERY": query,
         "DISCOVER": discover_cmd,
+        "UPDATE_PROFILE": updateProfile,
     }

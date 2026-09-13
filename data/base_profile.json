@@ -1,0 +1,1312 @@
+{
+  "editors": [
+    {
+      "id": "CTD",
+      "ranges": [
+        {
+          "uom": "25",
+          "subset": "0,1,2",
+          "names": {
+            "0": "Disconnected",
+            "1": "Connected",
+            "2": "Failed"
+          }
+        }
+      ]
+    },
+    {
+      "id": "ID",
+      "ranges": [
+        {
+          "uom": "107",
+          "min": 0,
+          "max": 9999
+        }
+      ]
+    },
+    {
+      "id": "bool",
+      "ranges": [
+        {
+          "uom": "2",
+          "subset": "0,1"
+        }
+      ]
+    },
+    {
+      "id": "ONLEVELTYPE",
+      "ranges": [
+        {
+          "uom": "25",
+          "subset": "0,1",
+          "names": {
+            "0": "Static",
+            "1": "Dynamic"
+          }
+        }
+      ]
+    },
+    {
+      "id": "on_off",
+      "ranges": [
+        {
+          "uom": "25",
+          "subset": "0,1",
+          "names": {
+            "0": "Off",
+            "1": "On"
+          }
+        }
+      ]
+    },
+    {
+      "id": "on_off_delay",
+      "ranges": [
+        {
+          "uom": "25",
+          "subset": "0,1,2",
+          "names": {
+            "0": "Off",
+            "1": "On",
+            "2": "Timer"
+          }
+        }
+      ]
+    },
+    {
+      "id": "on_off_toggle",
+      "ranges": [
+        {
+          "uom": "25",
+          "subset": "0,1,2,3",
+          "names": {
+            "0": "Off",
+            "1": "On",
+            "2": "onTimer",
+            "3": "offTimer"
+          }
+        }
+      ]
+    },
+    {
+      "id": "action_type",
+      "ranges": [
+        {
+          "uom": "25",
+          "subset": "0-2",
+          "names": {
+            "0": "None",
+            "1": "Push to",
+            "2": "Pull from"
+          }
+        }
+      ]
+    },
+    {
+      "id": "delay",
+      "ranges": [
+        {
+          "uom": "58",
+          "min": 0,
+          "max": 99999,
+          "prec": 0,
+          "step": 1
+        }
+      ]
+    },
+    {
+      "id": "variable_type",
+      "ranges": [
+        {
+          "uom": "25",
+          "subset": "0-4",
+          "names": {
+            "0": "None",
+            "1": "State Var",
+            "2": "State Init",
+            "3": "Integer Var",
+            "4": "Integer Init"
+          }
+        }
+      ]
+    },
+    {
+      "id": "value",
+      "ranges": [
+        {
+          "uom": "56",
+          "min": 0,
+          "max": 100,
+          "prec": 0,
+          "step": 1
+        }
+      ]
+    },
+    {
+      "id": "variableID",
+      "ranges": [
+        {
+          "uom": "56",
+          "min": 0,
+          "max": 1000,
+          "prec": 0,
+          "step": 1
+        }
+      ]
+    },
+    {
+      "id": "minutes",
+      "ranges": [
+        {
+          "uom": "45",
+          "min": 0,
+          "max": 9999,
+          "prec": 2,
+          "step": 0.5
+        }
+      ]
+    },
+    {
+      "id": "seconds",
+      "ranges": [
+        {
+          "uom": "58",
+          "min": 0,
+          "max": 9999,
+          "prec": 0,
+          "step": 1
+        }
+      ]
+    },
+    {
+      "id": "level",
+      "ranges": [
+        {
+          "uom": "56",
+          "min": 0,
+          "max": 100,
+          "prec": 0,
+          "step": 1
+        }
+      ]
+    },
+    {
+      "id": "temp",
+      "ranges": [
+        {
+          "uom": "17",
+          "min": -30,
+          "max": 130,
+          "prec": 1,
+          "step": 1
+        }
+      ]
+    },
+    {
+      "id": "tempc",
+      "ranges": [
+        {
+          "uom": "4",
+          "min": -60,
+          "max": 130,
+          "prec": 1,
+          "step": 1
+        }
+      ]
+    },
+    {
+      "id": "GLIGHT",
+      "ranges": [
+        {
+          "uom": "2",
+          "subset": "0,1",
+          "names": {
+            "0": "LtOff",
+            "1": "LtOn"
+          }
+        }
+      ]
+    },
+    {
+      "id": "GDOOR",
+      "ranges": [
+        {
+          "uom": "25",
+          "subset": "0,1,2,3,4",
+          "names": {
+            "0": "Closed"
+          }
+        }
+      ]
+    },
+    {
+      "id": "GCOMMAND",
+      "ranges": [
+        {
+          "uom": "25",
+          "subset": "0,1,2,3,4",
+          "names": {
+            "0": "---",
+            "1": "Open",
+            "2": "Close",
+            "3": "Trigger",
+            "4": "Stop"
+          }
+        }
+      ]
+    },
+    {
+      "id": "GMOTOR",
+      "ranges": [
+        {
+          "uom": "2",
+          "subset": "0,1",
+          "names": {
+            "0": "MotorOff",
+            "1": "MotorOn"
+          }
+        }
+      ]
+    },
+    {
+      "id": "GMOTION",
+      "ranges": [
+        {
+          "uom": "2",
+          "subset": "0,1",
+          "names": {
+            "0": "NoMotion",
+            "1": "Motion"
+          }
+        }
+      ]
+    },
+    {
+      "id": "GLOCK",
+      "ranges": [
+        {
+          "uom": "2",
+          "subset": "0,1",
+          "names": {
+            "0": "Unlocked",
+            "1": "Locked"
+          }
+        }
+      ]
+    },
+    {
+      "id": "GOBST",
+      "ranges": [
+        {
+          "uom": "2",
+          "subset": "0,1",
+          "names": {
+            "0": "Clear",
+            "1": "Obstructed"
+          }
+        }
+      ]
+    }
+  ],
+  "nodedefs": [
+    {
+      "id": "controller",
+      "name": "Virtual Device Controller",
+      "icon": "Switch",
+      "properties": [
+        {
+          "id": "ST",
+          "editor": "CTD",
+          "name": "NodeServer Online"
+        },
+        {
+          "id": "GV0",
+          "editor": "ID",
+          "name": "NumberOfNodes"
+        }
+      ],
+      "cmds": {
+        "sends": [
+          {
+            "id": "DON"
+          },
+          {
+            "id": "DOF"
+          }
+        ],
+        "accepts": [
+          {
+            "id": "QUERY",
+            "name": "Query"
+          },
+          {
+            "id": "DISCOVER",
+            "name": "Discover"
+          },
+          {
+            "id": "UPDATE_PROFILE",
+            "name": "Update Profile"
+          }
+        ]
+      }
+    },
+    {
+      "id": "virtualswitch",
+      "name": "Virtual Switch",
+      "icon": "Switch",
+      "properties": [
+        {
+          "id": "ST",
+          "editor": "on_off",
+          "name": "Switch Status"
+        }
+      ],
+      "cmds": {
+        "sends": [
+          {
+            "id": "DON",
+            "name": "On"
+          },
+          {
+            "id": "DOF",
+            "name": "Off"
+          }
+        ],
+        "accepts": [
+          {
+            "id": "DON",
+            "name": "On"
+          },
+          {
+            "id": "DOF",
+            "name": "Off"
+          },
+          {
+            "id": "TOGGLE",
+            "name": "Toggle"
+          },
+          {
+            "id": "QUERY"
+          }
+        ]
+      }
+    },
+    {
+      "id": "virtualononly",
+      "name": "Virtual OnOnly",
+      "icon": "Switch",
+      "properties": [
+        {
+          "id": "ST",
+          "editor": "on_off",
+          "name": "Switch Status"
+        }
+      ],
+      "cmds": {
+        "sends": [
+          {
+            "id": "DON",
+            "name": "On"
+          }
+        ],
+        "accepts": [
+          {
+            "id": "DON",
+            "name": "On"
+          },
+          {
+            "id": "DOF",
+            "name": "Off"
+          },
+          {
+            "id": "QUERY"
+          }
+        ]
+      }
+    },
+    {
+      "id": "virtualondelay",
+      "name": "Virtual onDelay Switch",
+      "icon": "Switch",
+      "properties": [
+        {
+          "id": "ST",
+          "editor": "on_off_delay",
+          "name": "Switch Status"
+        },
+        {
+          "id": "DUR",
+          "editor": "delay",
+          "name": "onDelay"
+        }
+      ],
+      "cmds": {
+        "sends": [
+          {
+            "id": "DON",
+            "name": "On"
+          },
+          {
+            "id": "DOF",
+            "name": "Off"
+          },
+          {
+            "id": "TIMER",
+            "name": "Timer"
+          }
+        ],
+        "accepts": [
+          {
+            "id": "DON",
+            "name": "On"
+          },
+          {
+            "id": "DFOF",
+            "name": "FOff(cancel)"
+          },
+          {
+            "id": "DOF",
+            "name": "Off"
+          },
+          {
+            "id": "SETDELAY",
+            "name": "Set onDelay",
+            "parameters": [
+              {
+                "id": "",
+                "editor": "delay",
+                "init": "DUR"
+              }
+            ]
+          },
+          {
+            "id": "QUERY"
+          }
+        ]
+      }
+    },
+    {
+      "id": "virtualoffdelay",
+      "name": "Virtual offDelay Switch",
+      "icon": "Switch",
+      "properties": [
+        {
+          "id": "ST",
+          "editor": "on_off_delay",
+          "name": "Switch Status"
+        },
+        {
+          "id": "DUR",
+          "editor": "delay",
+          "name": "offDelay"
+        }
+      ],
+      "cmds": {
+        "sends": [
+          {
+            "id": "DON",
+            "name": "On"
+          },
+          {
+            "id": "DOF",
+            "name": "Off"
+          },
+          {
+            "id": "TIMER",
+            "name": "Timer"
+          }
+        ],
+        "accepts": [
+          {
+            "id": "DON",
+            "name": "On"
+          },
+          {
+            "id": "DOF",
+            "name": "Off"
+          },
+          {
+            "id": "SETDELAY",
+            "name": "Set offDelay",
+            "parameters": [
+              {
+                "id": "",
+                "editor": "delay",
+                "init": "DUR"
+              }
+            ]
+          },
+          {
+            "id": "QUERY"
+          }
+        ]
+      }
+    },
+    {
+      "id": "virtualtoggle",
+      "name": "Virtual Toggle Switch",
+      "icon": "Switch",
+      "properties": [
+        {
+          "id": "ST",
+          "editor": "on_off_toggle",
+          "name": "Switch Status"
+        },
+        {
+          "id": "DUR",
+          "editor": "delay",
+          "name": "onDuration"
+        },
+        {
+          "id": "GV0",
+          "editor": "delay",
+          "name": "offDuration"
+        }
+      ],
+      "cmds": {
+        "sends": [
+          {
+            "id": "DON",
+            "name": "On"
+          },
+          {
+            "id": "DOF",
+            "name": "Off"
+          }
+        ],
+        "accepts": [
+          {
+            "id": "DON",
+            "name": "On"
+          },
+          {
+            "id": "DOF",
+            "name": "Off"
+          },
+          {
+            "id": "DFON",
+            "name": "FOn(cancel)"
+          },
+          {
+            "id": "DFOF",
+            "name": "FOff(cancel)"
+          },
+          {
+            "id": "SETONDUR",
+            "name": "Set onDur",
+            "parameters": [
+              {
+                "id": "",
+                "editor": "delay",
+                "init": "DUR"
+              }
+            ]
+          },
+          {
+            "id": "SETOFFDUR",
+            "name": "Set offDur",
+            "parameters": [
+              {
+                "id": "",
+                "editor": "delay",
+                "init": "GV0"
+              }
+            ]
+          },
+          {
+            "id": "QUERY"
+          }
+        ]
+      }
+    },
+    {
+      "id": "virtualtemp",
+      "name": "Virtual Temperature",
+      "icon": "TempSensor",
+      "properties": [
+        {
+          "id": "ST",
+          "editor": "temp",
+          "name": "Current"
+        },
+        {
+          "id": "GV1",
+          "editor": "temp",
+          "name": "Previous"
+        },
+        {
+          "id": "GV2",
+          "editor": "minutes",
+          "name": "Since Last Update"
+        },
+        {
+          "id": "GV3",
+          "editor": "temp",
+          "name": "Highest"
+        },
+        {
+          "id": "GV4",
+          "editor": "temp",
+          "name": "Lowest"
+        },
+        {
+          "id": "GV5",
+          "editor": "temp",
+          "name": "Average"
+        },
+        {
+          "id": "GV6",
+          "editor": "action_type",
+          "name": "Action 1"
+        },
+        {
+          "id": "GV7",
+          "editor": "variable_type",
+          "name": "Variable Type"
+        },
+        {
+          "id": "GV8",
+          "editor": "variableID",
+          "name": "Variable ID"
+        },
+        {
+          "id": "GV9",
+          "editor": "action_type",
+          "name": "Action 2"
+        },
+        {
+          "id": "GV10",
+          "editor": "variable_type",
+          "name": "Variable Type"
+        },
+        {
+          "id": "GV11",
+          "editor": "variableID",
+          "name": "Variable ID"
+        },
+        {
+          "id": "GV12",
+          "editor": "on_off",
+          "name": "Convert Raw to Prec"
+        },
+        {
+          "id": "GV13",
+          "editor": "on_off",
+          "name": "Convert F to C"
+        }
+      ],
+      "cmds": {
+        "sends": [],
+        "accepts": [
+          {
+            "id": "QUERY"
+          },
+          {
+            "id": "resetStats",
+            "name": "Reset Statistics"
+          },
+          {
+            "id": "setTemp",
+            "name": "Set Current",
+            "parameters": [
+              {
+                "id": "",
+                "editor": "temp",
+                "init": "ST"
+              }
+            ]
+          },
+          {
+            "id": "setAction1",
+            "name": "Action 1",
+            "parameters": [
+              {
+                "id": "",
+                "editor": "action_type",
+                "init": "GV6"
+              }
+            ]
+          },
+          {
+            "id": "setAction1type",
+            "name": "Action 1 Var Type",
+            "parameters": [
+              {
+                "id": "",
+                "editor": "variable_type",
+                "init": "GV7"
+              }
+            ]
+          },
+          {
+            "id": "setAction1id",
+            "name": "Action 1 Var ID",
+            "parameters": [
+              {
+                "id": "",
+                "editor": "variableID",
+                "init": "GV8"
+              }
+            ]
+          },
+          {
+            "id": "setAction2",
+            "name": "Action 2",
+            "parameters": [
+              {
+                "id": "",
+                "editor": "action_type",
+                "init": "GV9"
+              }
+            ]
+          },
+          {
+            "id": "setAction2type",
+            "name": "Action 2 Var Type",
+            "parameters": [
+              {
+                "id": "",
+                "editor": "variable_type",
+                "init": "GV10"
+              }
+            ]
+          },
+          {
+            "id": "setAction2id",
+            "name": "Action 2 Var ID",
+            "parameters": [
+              {
+                "id": "",
+                "editor": "variableID",
+                "init": "GV11"
+              }
+            ]
+          },
+          {
+            "id": "setRawToPrec",
+            "name": "Convert Raw to Prec",
+            "parameters": [
+              {
+                "id": "",
+                "editor": "on_off",
+                "init": "GV12"
+              }
+            ]
+          },
+          {
+            "id": "setCtoF",
+            "name": "Convert C to F",
+            "parameters": [
+              {
+                "id": "",
+                "editor": "on_off",
+                "init": "GV13"
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "id": "virtualtempc",
+      "name": "Virtual Temperature C",
+      "icon": "TempSensor",
+      "properties": [
+        {
+          "id": "ST",
+          "editor": "tempc",
+          "name": "Current"
+        },
+        {
+          "id": "GV1",
+          "editor": "tempc",
+          "name": "Previous"
+        },
+        {
+          "id": "GV2",
+          "editor": "minutes",
+          "name": "Since Last Update"
+        },
+        {
+          "id": "GV3",
+          "editor": "tempc",
+          "name": "Highest"
+        },
+        {
+          "id": "GV4",
+          "editor": "tempc",
+          "name": "Lowest"
+        },
+        {
+          "id": "GV5",
+          "editor": "tempc",
+          "name": "Average"
+        },
+        {
+          "id": "GV6",
+          "editor": "action_type",
+          "name": "Action 1"
+        },
+        {
+          "id": "GV7",
+          "editor": "variable_type",
+          "name": "Variable Type"
+        },
+        {
+          "id": "GV8",
+          "editor": "variableID",
+          "name": "Variable ID"
+        },
+        {
+          "id": "GV9",
+          "editor": "action_type",
+          "name": "Action 2"
+        },
+        {
+          "id": "GV10",
+          "editor": "variable_type",
+          "name": "Variable Type"
+        },
+        {
+          "id": "GV11",
+          "editor": "variableID",
+          "name": "Variable ID"
+        },
+        {
+          "id": "GV12",
+          "editor": "on_off",
+          "name": "Convert Raw to Prec"
+        },
+        {
+          "id": "GV13",
+          "editor": "on_off",
+          "name": "Convert F to C"
+        }
+      ],
+      "cmds": {
+        "sends": [],
+        "accepts": [
+          {
+            "id": "QUERY"
+          },
+          {
+            "id": "resetStats",
+            "name": "Reset Statistics"
+          },
+          {
+            "id": "setTemp",
+            "name": "Set Current",
+            "parameters": [
+              {
+                "id": "",
+                "editor": "tempc",
+                "init": "ST"
+              }
+            ]
+          },
+          {
+            "id": "setAction1",
+            "name": "Action 1",
+            "parameters": [
+              {
+                "id": "",
+                "editor": "action_type",
+                "init": "GV6"
+              }
+            ]
+          },
+          {
+            "id": "setAction1type",
+            "name": "Action 1 Var Type",
+            "parameters": [
+              {
+                "id": "",
+                "editor": "variable_type",
+                "init": "GV7"
+              }
+            ]
+          },
+          {
+            "id": "setAction1id",
+            "name": "Action 1 Var ID",
+            "parameters": [
+              {
+                "id": "",
+                "editor": "variableID",
+                "init": "GV8"
+              }
+            ]
+          },
+          {
+            "id": "setAction2",
+            "name": "Action 2",
+            "parameters": [
+              {
+                "id": "",
+                "editor": "action_type",
+                "init": "GV9"
+              }
+            ]
+          },
+          {
+            "id": "setAction2type",
+            "name": "Action 2 Var Type",
+            "parameters": [
+              {
+                "id": "",
+                "editor": "variable_type",
+                "init": "GV10"
+              }
+            ]
+          },
+          {
+            "id": "setAction2id",
+            "name": "Action 2 Var ID",
+            "parameters": [
+              {
+                "id": "",
+                "editor": "variableID",
+                "init": "GV11"
+              }
+            ]
+          },
+          {
+            "id": "setRawToPrec",
+            "name": "Convert Raw to Prec",
+            "parameters": [
+              {
+                "id": "",
+                "editor": "on_off",
+                "init": "GV12"
+              }
+            ]
+          },
+          {
+            "id": "setFtoC",
+            "name": "Convert F to C",
+            "parameters": [
+              {
+                "id": "",
+                "editor": "on_off",
+                "init": "GV13"
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "id": "virtualgeneric",
+      "name": "Virtual Generic",
+      "icon": "Switch",
+      "properties": [
+        {
+          "id": "ST",
+          "editor": "value",
+          "name": "Status"
+        },
+        {
+          "id": "OL",
+          "editor": "value",
+          "name": "On Level"
+        },
+        {
+          "id": "GV0",
+          "editor": "ONLEVELTYPE",
+          "name": "On Level Type"
+        }
+      ],
+      "cmds": {
+        "sends": [
+          {
+            "id": "DON",
+            "name": "On",
+            "parameters": [
+              {
+                "id": "",
+                "editor": "value"
+              }
+            ]
+          },
+          {
+            "id": "DOF",
+            "name": "Off"
+          },
+          {
+            "id": "DFON",
+            "name": "Fast On"
+          },
+          {
+            "id": "DFOF",
+            "name": "Fast Off"
+          },
+          {
+            "id": "BRT",
+            "name": "Brighten"
+          },
+          {
+            "id": "DIM",
+            "name": "Dim"
+          },
+          {
+            "id": "SETST",
+            "name": "Set Status"
+          },
+          {
+            "id": "SETOL",
+            "name": "Set On Level"
+          },
+          {
+            "id": "SETOLT",
+            "name": "Set On Level Type"
+          },
+          {
+            "id": "OLTT",
+            "name": "Toggle on Level Type"
+          }
+        ],
+        "accepts": [
+          {
+            "id": "DON",
+            "name": "On",
+            "parameters": [
+              {
+                "id": "",
+                "editor": "value"
+              }
+            ]
+          },
+          {
+            "id": "DOF",
+            "name": "Off"
+          },
+          {
+            "id": "DFON",
+            "name": "Fast On"
+          },
+          {
+            "id": "DFOF",
+            "name": "Fast Off"
+          },
+          {
+            "id": "BRT",
+            "name": "Brighten"
+          },
+          {
+            "id": "DIM",
+            "name": "Dim"
+          },
+          {
+            "id": "SETST",
+            "name": "Set Status",
+            "parameters": [
+              {
+                "id": "",
+                "editor": "value",
+                "init": "ST"
+              }
+            ]
+          },
+          {
+            "id": "SETOL",
+            "name": "Set On Level",
+            "parameters": [
+              {
+                "id": "",
+                "editor": "value",
+                "init": "OL"
+              }
+            ]
+          },
+          {
+            "id": "SETOLT",
+            "name": "Set On Level Type",
+            "parameters": [
+              {
+                "id": "",
+                "editor": "ONLEVELTYPE",
+                "init": "GV0"
+              }
+            ]
+          },
+          {
+            "id": "OLTT",
+            "name": "Toggle on Level Type"
+          },
+          {
+            "id": "QUERY"
+          }
+        ]
+      }
+    },
+    {
+      "id": "virtualgarage",
+      "name": "MQTT Ratgdo",
+      "icon": "GenericRspCtl",
+      "properties": [
+        {
+          "id": "GV0",
+          "editor": "GLIGHT",
+          "name": "Light"
+        },
+        {
+          "id": "GV1",
+          "editor": "GDOOR",
+          "name": "Door"
+        },
+        {
+          "id": "GV2",
+          "editor": "GCOMMAND",
+          "name": "Command"
+        },
+        {
+          "id": "GV8",
+          "editor": "GMOTOR",
+          "name": "Motor"
+        },
+        {
+          "id": "GV9",
+          "editor": "GDOOR",
+          "name": "Position"
+        },
+        {
+          "id": "GV3",
+          "editor": "GMOTION",
+          "name": "Motion"
+        },
+        {
+          "id": "GV4",
+          "editor": "GLOCK",
+          "name": "Lock"
+        },
+        {
+          "id": "GV5",
+          "editor": "GOBST",
+          "name": "Obstruction"
+        },
+        {
+          "id": "GV6",
+          "editor": "minutes",
+          "name": "UpdateTime"
+        },
+        {
+          "id": "GV7",
+          "editor": "seconds",
+          "name": "OpenTime"
+        }
+      ],
+      "cmds": {
+        "sends": [
+          {
+            "id": "DON"
+          },
+          {
+            "id": "DOF"
+          },
+          {
+            "id": "LT_ON",
+            "name": "LtOn"
+          },
+          {
+            "id": "LT_OFF",
+            "name": "LtOff"
+          },
+          {
+            "id": "OPEN",
+            "name": "Open"
+          },
+          {
+            "id": "CLOSE",
+            "name": "Close"
+          },
+          {
+            "id": "TRIGGER",
+            "name": "Trigger"
+          },
+          {
+            "id": "STOP",
+            "name": "Stop"
+          },
+          {
+            "id": "LOCK",
+            "name": "Lock"
+          },
+          {
+            "id": "UNLOCK",
+            "name": "Unlock"
+          },
+          {
+            "id": "MOTORON",
+            "name": "MotorON"
+          },
+          {
+            "id": "MOTOROFF",
+            "name": "MotorOFF"
+          },
+          {
+            "id": "MOTION",
+            "name": "Motion"
+          },
+          {
+            "id": "NOMOTION",
+            "name": "NoMotion"
+          },
+          {
+            "id": "OBSTRUCTION",
+            "name": "Obstructed"
+          },
+          {
+            "id": "NOOBSTRUCTION",
+            "name": "Clear"
+          },
+          {
+            "id": "resetStats",
+            "name": "ResetStats"
+          }
+        ],
+        "accepts": [
+          {
+            "id": "LT_ON",
+            "name": "LtOn"
+          },
+          {
+            "id": "LT_OFF",
+            "name": "LtOff"
+          },
+          {
+            "id": "OPEN",
+            "name": "Open"
+          },
+          {
+            "id": "CLOSE",
+            "name": "Close"
+          },
+          {
+            "id": "TRIGGER",
+            "name": "Trigger"
+          },
+          {
+            "id": "STOP",
+            "name": "Stop"
+          },
+          {
+            "id": "LOCK",
+            "name": "Lock"
+          },
+          {
+            "id": "UNLOCK",
+            "name": "Unlock"
+          },
+          {
+            "id": "QUERY",
+            "name": "Query"
+          },
+          {
+            "id": "resetStats",
+            "name": "ResetStats"
+          }
+        ]
+      }
+    }
+  ]
+}

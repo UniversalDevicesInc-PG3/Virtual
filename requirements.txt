@@ -1,4 +1,4 @@
-udi_interface
+udi_interface>=3.4.5
 pyyaml
 requests
 aiohttp

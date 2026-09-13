@@ -13,7 +13,7 @@ EDITORS = PROFILE / "editor" / "editors.xml"
 VERSION_FILE = PROFILE / "version.txt"
 ENTRY = ROOT / "udi-virtual-pg3x.py"
 
-CONTROLLER_COMMANDS = {"QUERY", "DISCOVER"}
+CONTROLLER_COMMANDS = {"QUERY", "DISCOVER", "UPDATE_PROFILE"}
 CONTROLLER_NODEDEF = "controller"
 
 

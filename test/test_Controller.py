@@ -536,11 +536,9 @@ class TestController:
     def test_get_node_name_without_name(self, controller_node, mock_polyglot):
         """Test _get_node_name without name field falls back to type+id."""
         dev = {"type": "switch", "id": "1"}
-        # Note: There's a typo in the actual code (getValidVame instead of getValidName)
-        # but we'll test the actual behavior
-        mock_polyglot.getValidVame = MagicMock(return_value="switch 1")
+        mock_polyglot.getValidName.return_value = "switch 1"
         _ = controller_node._get_node_name(dev)
-        mock_polyglot.getValidVame.assert_called_with("switch 1")
+        mock_polyglot.getValidName.assert_called_with("switch 1")
 
     def test_wait_for_node_done_empties_queue(self, controller_node):
         """Test wait_for_node_done processes queue correctly."""

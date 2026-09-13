@@ -22,7 +22,7 @@ Required for variable write access
     - delay       {0-99999}
 - offdelay
     - switch      {0=Off, 1=On}
-    - delay       {0-99999}
+    - delay       {0-99999} (devfile sets initial delay; **SETDELAY** or saved node data keeps delay across restarts and overrides devfile)
 - toggle
     - switch      {0=Off, 1=On}
     - ondelay       {0-99999}
@@ -193,5 +193,22 @@ devices:
   obstructT: 1
   obstructId: 131
 ```
+
+## Dynamic profiles (3.2.2+)
+
+This plugin pushes its profile with **dynamic JSON** (`updateJsonProfile`) instead of the static `profile/` zip. On install, `install.sh` renames `profile/` to `profile.static/` on the EISY so Polyglot does not upload XML in parallel with the JSON push.
+
+**Requirements:** IoX 6.0.6+, PG3x 3.4.5+, `udi_interface` 3.4.5+.
+
+On startup the controller pushes the JSON base profile, then runs **Install Profile** from the static `profile/` tree (symlinked from `profile.static/` after install) so IoX and eisy-ui receive nodedefs. Use **Update Profile** on the Virtual Device Controller to repeat that sync.
+
+### Easy UI: “Profiles loaded but nodedefs missing”
+
+If **Easy UI** shows that error on the controller (or a blank node list) but the Java Admin Console or UD Mobile look fine:
+
+1. Run **Update Profile** on the Virtual Device Controller (or restart the NodeServer).
+2. Close Easy UI completely, clear Safari cache for the EISY site, and sign in again.
+
+A full EISY reboot alone may not refresh Easy UI’s cached profile.
 
 [readme]: https://github.com/sejgit-udi-plugins/udi-virtual-pg3x/blob/main/README.md

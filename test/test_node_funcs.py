@@ -16,6 +16,7 @@ from utils.node_funcs import (
     _apply_state,
     _check_db_files_and_migrate,
     _push_drivers,
+    _reconcile_driver_uoms,
     _shelve_file_candidates,
     _VARIABLE_TYPE_MAP,
 )
@@ -192,6 +193,22 @@ class TestStoreValues:
         store_values(mock_self)
 
         assert mock_controller.Data["TestNode"] == {"new": "data"}
+
+
+class TestReconcileDriverUoms:
+    """Tests for _reconcile_driver_uoms."""
+
+    def test_corrects_stale_uom_from_db(self):
+        class FakeToggle:
+            drivers = [
+                {"driver": "ST", "value": 0, "uom": 25, "name": "Status"},
+            ]
+
+        node = FakeToggle()
+        node.name = "toggle 70"
+        node.drivers = [{"driver": "ST", "value": 0, "uom": 4}]
+        _reconcile_driver_uoms(node)
+        assert node.drivers[0]["uom"] == 25
 
 
 class TestPushDrivers:
@@ -561,6 +578,7 @@ class TestGetConfigData:
         mock_self.name = "TestNode"
         mock_self.address = "addr123"
         mock_self.data = {"field1": "default1", "field2": "default2"}
+        mock_self._loaded_from_persistence = False
         mock_self.controller = Mock()
         mock_self.controller.devlist = [
             {"id": "other", "field1": "wrong"},
@@ -579,6 +597,30 @@ class TestGetConfigData:
         assert result is True
         assert mock_self.data["field1"] == "config_value1"
         assert mock_self.data["field2"] == "config_value2"
+
+    def test_get_config_data_keeps_persisted_delay_over_yaml(self):
+        """Persisted delay (SETDELAY) must not be replaced by devfile on restart."""
+        from utils.node_funcs import get_config_data
+
+        mock_self = Mock()
+        mock_self.name = "Test offDelay"
+        mock_self.address = "60"
+        mock_self.data = {"switch": 0, "delay": 4}
+        mock_self._loaded_from_persistence = True
+        mock_self.controller = Mock()
+        mock_self.controller.devlist = [
+            {"id": "60", "type": "offdelay", "name": "Test offDelay", "delay": 60},
+        ]
+        mock_self.setDriver = Mock()
+        mock_self.controller.Data = {"Test offDelay": {"switch": 0, "delay": 4}}
+
+        FIELDS = {
+            "switch": FieldSpec(driver="ST", default=0, data_type="state"),
+            "delay": FieldSpec(driver="DUR", default=0, data_type="state"),
+        }
+
+        assert get_config_data(mock_self, FIELDS) is True
+        assert mock_self.data["delay"] == 4
 
     def test_get_config_data_no_device_found(self):
         """Test get_config_data when device not in devlist."""

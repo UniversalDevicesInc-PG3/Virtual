@@ -54,9 +54,11 @@ def load_persistent_data(self, FIELDS) -> None:
     """
     Load state from Polyglot persistence or migrate from old shelve DB files.
     """
+    self._loaded_from_persistence = False
     data = self.controller.Data.get(self.name)
 
     if data is not None:
+        self._loaded_from_persistence = True
         _apply_state(self, data, FIELDS)
         LOGGER.info("%s, Loaded from persistence", self.name)
     else:
@@ -131,10 +133,47 @@ def store_values(self) -> None:
     self.controller.Data[self.name] = self.data
 
 
+def reconcile_all_node_driver_uoms(poly) -> None:
+    """Reconcile every node in this NodeServer against its class driver template."""
+    for node in poly.getNodes().values():
+        _reconcile_driver_uoms(node)
+
+
+def _reconcile_driver_uoms(node) -> None:
+    """Restore driver UOMs from the node class template.
+
+    PG3 can persist stale UOMs when an address is reused for a different nodedef
+    (e.g. toggle at an address that previously held a Celsius temperature node).
+    """
+    template = getattr(type(node), "drivers", None)
+    if not template:
+        return
+    expected_uom = {
+        entry["driver"]: entry["uom"]
+        for entry in template
+        if isinstance(entry, dict) and "driver" in entry and "uom" in entry
+    }
+    for driver in node.drivers:
+        name = driver.get("driver")
+        if name not in expected_uom:
+            continue
+        want = expected_uom[name]
+        if driver.get("uom") != want:
+            LOGGER.warning(
+                "%s: correcting driver %s UOM %s -> %s",
+                node.name,
+                name,
+                driver.get("uom"),
+                want,
+            )
+            driver["uom"] = want
+
+
 def _push_drivers(self, FIELDS) -> None:
     """
     Push only fields that have a driver mapping
     """
+    _reconcile_driver_uoms(self)
     for field, spec in FIELDS.items():
         if spec.should_update():
             self.setDriver(spec.driver, self.data[field], report=True, force=True)
@@ -166,12 +205,25 @@ def get_config_data(self, FIELDS):
         LOGGER.error(f"No configuration data found for node {self.name}.")
         return False
 
-    # Iterate through fields and update from self.dev if key exists
+    # Yaml/devfile values apply on first run; persisted node data wins on later startups
+    # (e.g. SETDELAY must not be overridden by exampleConfig delay after slot reinstall).
     try:
+        persisted_keys: set[str] = set()
+        if getattr(self, "_loaded_from_persistence", False):
+            persisted_keys = set((self.controller.Data.get(self.name) or {}).keys())
         for field, _ in FIELDS.items():
-            # Use a safe get to retrieve config data
-            if field in self.dev:
-                self.data[field] = self.dev[field]
+            if field not in self.dev:
+                continue
+            if field in persisted_keys:
+                LOGGER.debug(
+                    "%s: keeping persisted %s=%s (yaml had %s)",
+                    self.name,
+                    field,
+                    self.data.get(field),
+                    self.dev[field],
+                )
+                continue
+            self.data[field] = self.dev[field]
         # Persist and push drivers
         store_values(self)
         _push_drivers(self, FIELDS)
