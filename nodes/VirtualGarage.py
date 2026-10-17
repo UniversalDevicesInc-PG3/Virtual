@@ -36,12 +36,12 @@ GETLIST = [' ',
 
 # ratdgo constants
 BUTTON = "/binary_sensor/button"
-LIGHT = "/light/light"
-DOOR = "/cover/door"
-LOCK_REMOTES = "/lock/lock_remotes"
-MOTION = "/binary_sensor/motion"
-MOTOR = "/binary_sensor/motor"
-OBSTRUCTION = "/binary_sensor/obstruction"
+LIGHT = "/light/Light"
+DOOR = "/cover/Door"
+LOCK_REMOTES = "/lock/Lock%20remotes"
+MOTION = "/binary_sensor/Motion"
+MOTOR = "/binary_sensor/Motor"
+OBSTRUCTION = "/binary_sensor/Obstruction"
 
 LOCK = "/lock"
 UNLOCK = "/unlock"
@@ -224,7 +224,7 @@ class VirtualGarage(udi_interface.Node):
                 LOGGER.info(f'self.ratgdo = {self.ratgdo}')
                 if self.ratgdo != False:
                     res = requests.get(f'http://{self.ratgdo}/{LIGHT}')
-                    if res.json()['id'] == 'light-light':
+                    if res.json()['id'] in ('light-light', 'light/Light'):
                         LOGGER.info('RATGDO communications good!')
                     else:
                         self.controller.Notices['ratgdo'] = 'RATGDO communications failed!'
