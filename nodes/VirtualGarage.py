@@ -76,13 +76,12 @@ FIELDS: dict[str, FieldSpec] = {
 RATGDO = "ratgdov25i-fad8fd"
 
 BUTTON = "/binary_sensor/button"
-LIGHT = "/light/light"
-DOOR = "/cover/door"
-LOCK_REMOTES = "/lock/lock_remotes"
-MOTOR = "/binary_sensor/motor"
-MOTION = "/binary_sensor/motion"
-MOTOR = "/binary_sensor/motor"
-OBSTRUCT = "/binary_sensor/obstruction"
+LIGHT = "/light/Light"
+DOOR = "/cover/Door"
+LOCK_REMOTES = "/lock/Lock%20remotes"
+MOTOR = "/binary_sensor/Motor"
+MOTION = "/binary_sensor/Motion"
+OBSTRUCT = "/binary_sensor/Obstruction"
 TRIGGER = "/button/toggle_door/press"
 EVENTS = "/events"
 
@@ -346,7 +345,7 @@ class VirtualGarage(Node):
                 error = f"RATGDO communications error code: {res.status_code}"
                 LOGGER.error(f"{error}")
                 self.controller.Notices["ratgdo"] = error
-            if res.json()["id"] == "light-light":
+            if res.json()["id"] in ("light-light", "light/Light"):
                 LOGGER.info("RATGDO communications good!")
                 self.controller.Notices.delete("ratgdo")
                 self.ratgdoOK = True
@@ -487,22 +486,25 @@ class VirtualGarage(Node):
                         msg = event.get("data")
                         if msg:
                             id = msg.get("id")
-                            if id == "light-light":
+                            if id in ("light-light", "light/Light"):
                                 self._set_ratgdo_light(msg)
                                 LOGGER.info(f"event:state - processed id:{id}")
-                            elif id == "cover-door":
+                            elif id in ("cover-door", "cover/Door"):
                                 self._set_ratgdo_door(msg)
                                 LOGGER.info(f"event:state - processed id:{id}")
-                            elif id == "binary_sensor-motor":
+                            elif id in ("binary_sensor-motor", "binary_sensor/Motor"):
                                 self._set_ratgdo_motor(msg)
                                 LOGGER.info(f"event:state - processed id:{id}")
-                            elif id == "binary_sensor-motion":
+                            elif id in ("binary_sensor-motion", "binary_sensor/Motion"):
                                 self._set_ratgdo_motion(msg)
                                 LOGGER.info(f"event:state - processed id:{id}")
-                            elif id == "lock-lock_remotes":
+                            elif id in ("lock-lock_remotes", "lock/Lock remotes"):
                                 self._set_ratgdo_lock(msg)
                                 LOGGER.info(f"event:state - processed id:{id}")
-                            elif id == "binary_sensor-obstruction":
+                            elif id in (
+                                "binary_sensor-obstruction",
+                                "binary_sensor/Obstruction",
+                            ):
                                 self._set_ratgdo_obstruct(msg)
                                 LOGGER.info(f"event:state - processed id:{id}")
                             else:
