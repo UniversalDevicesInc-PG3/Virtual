@@ -16,7 +16,7 @@ Closing duration: number in range
 /set?value=24
 
 Door: state: OPEN/CLOSED current_operation: OPENING/CLOSING/IDLE value: number position: number
-/cover/door
+/cover/Door
 /open
 /close
 /stop
@@ -42,24 +42,24 @@ Learn: ON/OFF
 /toggle
 
 Light: ON/OFF
-/light/light
+/light/Light
 /turn_on
 /turn_off
 /toggle
 
 Lock remotes: LOCKED/UNLOCKED
-/lock/lock_remotes
+/lock/Lock%20remotes
 /lock
 /unlock
 
 Motion: ON/OFF
-/binary_sensor/motion
+/binary_sensor/Motion
 
 Motor: ON/OFF
-/binary_sensor/motor
+/binary_sensor/Motor
 
 Obstruction: ON/OFF
-/binary_sensor/obstruction
+/binary_sensor/Obstruction
 
 Opening duration: time in seconds
 /number/opening_duration
