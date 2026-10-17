@@ -44,13 +44,12 @@ GETLIST = [' ',
 RATGDO = "ratgdov25i-fad8fd"
 
 BUTTON = "/binary_sensor/button"
-LIGHT = "/light/light"
-DOOR = "/cover/door"
-LOCK_REMOTES = "/lock/lock_remotes"
-MOTOR = "/binary_sensor/motor"
-MOTION = "/binary_sensor/motion"
-MOTOR = "/binary_sensor/motor"
-OBSTRUCT = "/binary_sensor/obstruction"
+LIGHT = "/light/Light"
+DOOR = "/cover/Door"
+LOCK_REMOTES = "/lock/Lock%20remotes"
+MOTOR = "/binary_sensor/Motor"
+MOTION = "/binary_sensor/Motion"
+OBSTRUCT = "/binary_sensor/Obstruction"
 TRIGGER = "/button/toggle_door/press"
 EVENTS = "/events"
 
@@ -431,7 +430,7 @@ class VirtualGarage(udi_interface.Node):
                 error = f"RATGDO communications error code: {res.status_code}"
                 LOGGER.error(f"{error}")
                 self.controller.Notices['ratgdo'] = error
-            if res.json()['id'] == 'light-light':
+            if res.json()['id'] in ('light-light', 'light/Light'):
                 LOGGER.info('RATGDO communications good!')
                 self.controller.Notices.delete('ratgdo')
                 self.ratgdoOK = True
@@ -483,17 +482,20 @@ class VirtualGarage(udi_interface.Node):
                             id = 'bad'
                         finally:
                             LOGGER.info(f"event:state: {id}")
-                            if id == 'light-light':
+                            if id in ('light-light', 'light/Light'):
                                 self.setRatgdoLight(msg)
-                            elif id == 'cover-door':
+                            elif id in ('cover-door', 'cover/Door'):
                                 self.setRatgdoDoor(msg)
-                            elif id == 'binary_sensor-motor':
+                            elif id in ('binary_sensor-motor', 'binary_sensor/Motor'):
                                 self.setRatgdoMotor(msg)
-                            elif id == 'binary_sensor-motion':
+                            elif id in ('binary_sensor-motion', 'binary_sensor/Motion'):
                                 self.setRatgdoMotion(msg)
-                            elif id == 'lock-lock_remotes':
+                            elif id in ('lock-lock_remotes', 'lock/Lock remotes'):
                                 self.setRatgdoLock(msg)
-                            elif id == 'binary_sensor-obstruction': 
+                            elif id in (
+                                'binary_sensor-obstruction',
+                                'binary_sensor/Obstruction',
+                            ):
                                 self.setRatgdoObstruct(msg)
                             else:
                                 LOGGER.warning(f'event:state - NO ACTION - {id}')
